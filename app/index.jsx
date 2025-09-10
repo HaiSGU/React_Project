@@ -13,11 +13,19 @@ const app = () => {
          style={style.image}
       >
       <Text style={style.title}>FoodFast</Text>
+
+      <Link href="/menu" style={{marginHorizontal: 'auto'}} asChild>
+      <Pressable style={style.button}>
+      <Text style={style.buttonText}>Menu</Text>
+      </Pressable>
+      </Link>
+
       <Link href="/contact" style={{marginHorizontal: 'auto'}} asChild>
       <Pressable style={style.button}>
       <Text style={style.buttonText}>Contact Us</Text>
       </Pressable>
       </Link>
+
       </ImageBackground>
     </View>
   )
@@ -47,10 +55,12 @@ const style= StyleSheet.create({
   },
   button: {
     height: 60,
+    width: 150,
     borderRadius: 20,
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.75)',
     padding: 6,
+    marginBottom: 50,
 
   },
   buttonText: {
