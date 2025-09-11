@@ -1,4 +1,4 @@
-import { Appearance, StyleSheet, View, Text, Image, ScrollView, Platform, SafeAreaView, FlatList} from "react-native";
+import { Appearance, StyleSheet, View, Text, Image, ScrollView, Platform, SafeAreaView, TouchableOpacity, FlatList} from "react-native";
 import { Colors } from "@/constants/Colors";
 import { MENU_ITEMS } from '@/constants/MenuItems'
 import MENU_IMAGES from '@/constants/MenuImages'
@@ -31,8 +31,8 @@ export default function MenuScreen(){
                     <View style={style.menuTextRow}>
                         <Text style={style.menuItemTitle}>{item.title}</Text>
                         <Text style={style.menuItemText}>{item.description}</Text>
-                        <TouchableOpacity style={styles.Orderbutton}>
-                           <Text style={styles.ButtonText}>Order Now</Text>
+                        <TouchableOpacity style={style.Orderbutton}>
+                           <Text style={style.ButtonText}>Order Now</Text>
                         </TouchableOpacity>
                     </View>
                     
