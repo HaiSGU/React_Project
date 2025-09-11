@@ -2,6 +2,7 @@ import { Appearance, StyleSheet, View, Text, Image, ScrollView, Platform, SafeAr
 import { Colors } from "@/constants/Colors";
 import { MENU_ITEMS } from '@/constants/MenuItems'
 import MENU_IMAGES from '@/constants/MenuImages'
+import { Button } from "@react-navigation/elements";
 
 export default function MenuScreen(){
     const colorScheme = Appearance.getColorScheme()
@@ -30,7 +31,11 @@ export default function MenuScreen(){
                     <View style={style.menuTextRow}>
                         <Text style={style.menuItemTitle}>{item.title}</Text>
                         <Text style={style.menuItemText}>{item.description}</Text>
+                        <TouchableOpacity style={styles.Orderbutton}>
+                           <Text style={styles.ButtonText}>Order Now</Text>
+                        </TouchableOpacity>
                     </View>
+                    
                     <Image
                        source={MENU_IMAGES[item.id - 1]}
                        style={style.menuImage}
@@ -95,6 +100,27 @@ function createStyles(theme, colorScheme){
         menuImage:{
             width:100,
             height:100,
+        },
+        Orderbutton: {
+            width:'50%',
+            height: '50%',
+            backgroundColor: "#000",   
+            paddingVertical: 14,
+            paddingHorizontal: 24,
+            borderRadius: 30,             
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 5,  
+        },
+        ButtonText: {
+            color: "#fff",
+            fontSize: 16,
+            fontWeight: "600",
+            letterSpacing: 1,
         }
 
     })
