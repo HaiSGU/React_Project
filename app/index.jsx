@@ -1,17 +1,23 @@
 import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable } from 'react-native'
-import React from 'react'
-import {Link} from 'expo-router'
+import React, { useState } from 'react'
+import { Link, useRouter } from 'expo-router'
 import { RESTAURANTS } from '@/constants/RestaurantsList'
+import { CATEGORIES } from '@/constants/CategoryList'
 import ShipperImg from "@assets/images/shipperimage.jpeg"
 
-const app = () => {
-   // Hàm render từng nhà hàng
+
+const App = () => {
+  const router = useRouter()
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true')
+
+
+
+  // Render từng nhà hàng nổi bật
   const renderRestaurant = ({ item }) => (
     <View style={style.restaurantCard}>
       <Image source={item.image} style={style.restaurantImage} />
       <Text style={style.restaurantName}>{item.name}</Text>
       <Text style={style.restaurantRating}>⭐ {item.rating}</Text>
-      {/* Nút Menu cho từng nhà hàng */}
       <Link href={`/menu/${item.id}`} asChild>
         <Pressable style={style.button}>
           <Text style={style.buttonText}>Menu</Text>
@@ -20,8 +26,37 @@ const app = () => {
     </View>
   );
 
+  // Render từng danh mục, chuyển trang khi nhấn
+  const renderCategory = ({ item }) => (
+    <Link href={`/category/${item.key}`} asChild>
+      <Pressable style={style.categoryButton}>
+        <Image source={item.icon} style={style.categoryIcon} />
+        <Text style={style.categoryText}>{item.label}</Text>
+      </Pressable>
+    </Link>
+  );
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn')
+    setIsLoggedIn(false)
+    router.replace('/login')
+  }
+
   return (
     <View style={style.container}>
+      {/* Nút đăng nhập/đăng xuất */}
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 16 }}>
+        {isLoggedIn ? (
+          <Pressable onPress={handleLogout} style={[style.button, { width: 100, backgroundColor: '#e53935' }]}>
+            <Text style={style.buttonText}>Đăng xuất</Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={() => router.push('/login')} style={[style.button, { width: 100 }]}>
+            <Text style={style.buttonText}>Đăng nhập</Text>
+          </Pressable>
+        )}
+      </View>
+
       <ImageBackground
         source={ShipperImg}
         resizeMode="cover"
@@ -29,7 +64,20 @@ const app = () => {
       >
         <Text style={style.title}>FoodFast</Text>
 
-        {/* Danh sách nhà hàng cuộn ngang */}
+        {/* Danh mục */}
+        <View style={style.categorySection}>
+          <Text style={style.sectionTitle}>Danh mục</Text>
+          <FlatList
+            data={CATEGORIES.filter(c => c.key !== 'all')}
+            renderItem={renderCategory}
+            keyExtractor={item => item.key}
+            horizontal
+            showsHorizontalScrollIndicator={true} // Hiện thanh cuộn ngang
+            contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
+          />
+        </View>
+
+        {/* Nhà hàng nổi bật */}
         <View style={{ marginBottom: 40 }}>
           <Text style={style.sectionTitle}>Nhà hàng nổi bật</Text>
           <FlatList
@@ -42,19 +90,17 @@ const app = () => {
           />
         </View>
 
-        {/* Nếu muốn giữ nút Contact Us ở ngoài */}
         <Link href="/contact" style={{ marginHorizontal: 'auto' }} asChild>
           <Pressable style={style.button}>
             <Text style={style.buttonText}>Contact Us</Text>
           </Pressable>
         </Link>
-
       </ImageBackground>
     </View>
   )
 }
 
-export default app
+export default App
 
 const style = StyleSheet.create({
   container: {
@@ -87,6 +133,35 @@ const style = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     borderRadius: 6,
+  },
+  categorySection: {
+    marginBottom: 24,
+  },
+  categoryButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginRight: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    minWidth: 90,
+  },
+  categoryIcon: {
+    width: 32,
+    height: 32,
+    marginBottom: 6,
+  },
+  categoryText: {
+    color: '#00b14f',
+    fontWeight: 'bold',
+    fontSize: 15,
+    textAlign: 'center',
   },
   restaurantCard: {
     width: 140,
@@ -134,5 +209,5 @@ const style = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
     padding: 2,
-  }
+  },
 })
