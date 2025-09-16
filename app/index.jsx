@@ -1,18 +1,25 @@
-import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable, ScrollView } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import { Link, useRouter } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { RESTAURANTS } from '@/constants/RestaurantsList'
 import { CATEGORIES } from '@/constants/CategoryList'
+import { DISCOUNTS } from '@/constants/DiscountList'
 import ShipperImg from "@assets/images/shipperimage.jpeg"
-
 
 const App = () => {
   const router = useRouter()
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
+  // Lấy trạng thái đăng nhập từ AsyncStorage khi app mở
+  useEffect(() => {
+    const loadLoginStatus = async () => {
+      const value = await AsyncStorage.getItem('isLoggedIn')
+      setIsLoggedIn(value === 'true')
+    }
+    loadLoginStatus()
+  }, [])
 
-
-  // Render từng nhà hàng nổi bật
   const renderRestaurant = ({ item }) => (
     <View style={style.restaurantCard}>
       <Image source={item.image} style={style.restaurantImage} />
@@ -24,9 +31,8 @@ const App = () => {
         </Pressable>
       </Link>
     </View>
-  );
+  )
 
-  // Render từng danh mục, chuyển trang khi nhấn
   const renderCategory = ({ item }) => (
     <Link href={`/category/${item.key}`} asChild>
       <Pressable style={style.categoryButton}>
@@ -34,67 +40,97 @@ const App = () => {
         <Text style={style.categoryText}>{item.label}</Text>
       </Pressable>
     </Link>
-  );
+  )
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn')
+  const renderDiscount = ({ item }) => (
+    <Link href={`/discount/${item.type}`} asChild>
+      <Pressable style={style.discountButton}>
+        <Text style={style.discountText}>{item.label}</Text>
+      </Pressable>
+    </Link>
+  )
+
+  // Xử lý đăng xuất
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('isLoggedIn')
     setIsLoggedIn(false)
     router.replace('/login')
   }
 
+  // (Ví dụ) khi đăng nhập xong thì gọi hàm này để lưu lại trạng thái
+  const handleLogin = async () => {
+    await AsyncStorage.setItem('isLoggedIn', 'true')
+    setIsLoggedIn(true)
+    router.replace('/') // trở về trang chính
+  }
+
   return (
     <View style={style.container}>
-      {/* Nút đăng nhập/đăng xuất */}
+      {/* Thanh đăng nhập / đăng xuất */}
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 16 }}>
         {isLoggedIn ? (
           <Pressable onPress={handleLogout} style={[style.button, { width: 100, backgroundColor: '#e53935' }]}>
             <Text style={style.buttonText}>Đăng xuất</Text>
           </Pressable>
         ) : (
-          <Pressable onPress={() => router.push('/login')} style={[style.button, { width: 100 }]}>
+          <Pressable onPress={handleLogin} style={[style.button, { width: 100 }]}>
             <Text style={style.buttonText}>Đăng nhập</Text>
           </Pressable>
         )}
       </View>
 
-      <ImageBackground
-        source={ShipperImg}
-        resizeMode="cover"
-        style={style.image}
-      >
-        <Text style={style.title}>FoodFast</Text>
+      {/* Bọc toàn bộ phần nội dung bên trong ScrollView */}
+      <ImageBackground source={ShipperImg} style={style.image}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
+          <Text style={style.title}>FoodFast</Text>
 
-        {/* Danh mục */}
-        <View style={style.categorySection}>
-          <Text style={style.sectionTitle}>Danh mục</Text>
-          <FlatList
-            data={CATEGORIES.filter(c => c.key !== 'all')}
-            renderItem={renderCategory}
-            keyExtractor={item => item.key}
-            horizontal
-            showsHorizontalScrollIndicator={true} // Hiện thanh cuộn ngang
-            contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
-          />
-        </View>
+          {/* Danh mục */}
+          <View style={style.categorySection}>
+            <Text style={style.sectionTitle}>Danh mục</Text>
+            <FlatList
+              data={CATEGORIES.filter(c => c.key !== 'all')}
+              renderItem={renderCategory}
+              keyExtractor={item => item.key}
+              horizontal
+              showsHorizontalScrollIndicator={true}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
+            />
+          </View>
 
-        {/* Nhà hàng nổi bật */}
-        <View style={{ marginBottom: 40 }}>
-          <Text style={style.sectionTitle}>Nhà hàng nổi bật</Text>
-          <FlatList
-            data={RESTAURANTS}
-            renderItem={renderRestaurant}
-            keyExtractor={item => item.id.toString()}
+          {/* Mã giảm giá */}
+          <View style={{ marginBottom: 24 }}>
+            <Text style={style.sectionTitle}>Chương trình giảm giá</Text>
+            <FlatList
+            data={DISCOUNTS}
+            renderItem={renderDiscount}
+            keyExtractor={item => item.type}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 16 }}
-          />
-        </View>
+            />
+            </View>
 
-        <Link href="/contact" style={{ marginHorizontal: 'auto' }} asChild>
-          <Pressable style={style.button}>
-            <Text style={style.buttonText}>Contact Us</Text>
-          </Pressable>
-        </Link>
+          
+
+          {/* Nhà hàng nổi bật */}
+          <View style={{ marginBottom: 40 }}>
+            <Text style={style.sectionTitle}>Nhà hàng nổi bật</Text>
+            <FlatList
+              data={RESTAURANTS}
+              renderItem={renderRestaurant}
+              keyExtractor={item => item.id.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16 }}
+            />
+          </View>
+
+          <Link href="/contact" style={{ marginHorizontal: 'auto' }} asChild>
+            <Pressable style={style.button}>
+              <Text style={style.buttonText}>Contact Us</Text>
+            </Pressable>
+          </Link>
+        </ScrollView>
       </ImageBackground>
     </View>
   )
@@ -209,5 +245,26 @@ const style = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
     padding: 2,
+  },
+  discountButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginRight: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    minWidth: 90,
+  },
+  discountText: {
+    color: '#00b14f',
+    fontWeight: 'bold',
+    fontSize: 15,
+    textAlign: 'center',
   },
 })

@@ -1,7 +1,7 @@
 import { Appearance, StyleSheet, View, Text, Image, ScrollView, Platform, SafeAreaView, Pressable, FlatList } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { MENU_ITEMS } from '@/constants/MenuItems'
-import MENU_IMAGES from '@/constants/MenuImages'
+
 import { Button } from "@react-navigation/elements";
 import { Link, useLocalSearchParams } from 'expo-router'
 import React, { useState } from "react";
@@ -49,7 +49,7 @@ export default function MenuScreen() {
                 renderItem={({ item }) => (
                     <View style={style.card}>
                         <Image
-                            source={MENU_IMAGES[item.id - 1]}
+                            source={item.image}
                             style={style.menuImage}
                             resizeMode="cover"
                         />

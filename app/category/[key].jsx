@@ -5,21 +5,30 @@ import { CATEGORIES } from '@/constants/CategoryList'
 
 export default function CategoryScreen() {
   const { key } = useLocalSearchParams()
-  const filteredRestaurants = RESTAURANTS.filter(r => r.category === key)
+  const filteredRestaurants = RESTAURANTS.filter(r =>
+    Array.isArray(r.category)
+      ? r.category.includes(key)
+      : r.category === key
+  )
 
-  // Lấy label danh mục từ key
   const categoryLabel = CATEGORIES.find(c => c.key === key)?.label || key
 
   const renderRestaurant = ({ item }) => (
     <View style={styles.restaurantCard}>
+      {/* Logo bên trái */}
       <Image source={item.image} style={styles.restaurantImage} />
-      <Text style={styles.restaurantName}>{item.name}</Text>
-      <Text style={styles.restaurantRating}>⭐ {item.rating}</Text>
-      <Link href={`/menu/${item.id}`} asChild>
-        <Pressable style={styles.menuButton}>
-          <Text style={styles.menuButtonText}>Menu</Text>
-        </Pressable>
-      </Link>
+
+      {/* Thông tin bên phải */}
+      <View style={styles.infoContainer}>
+        <Text style={styles.restaurantName}>{item.name}</Text>
+        <Text style={styles.restaurantRating}>⭐ {item.rating}</Text>
+
+        <Link href={`/menu/${item.id}`} asChild>
+          <Pressable style={styles.menuButton}>
+            <Text style={styles.menuButtonText}>Menu</Text>
+          </Pressable>
+        </Link>
+      </View>
     </View>
   )
 
@@ -45,6 +54,7 @@ const styles = StyleSheet.create({
     color: '#00b14f'
   },
   restaurantCard: {
+    flexDirection: 'row', // nằm ngang
     backgroundColor: '#fff',
     borderRadius: 14,
     padding: 12,
@@ -57,35 +67,37 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   restaurantImage: {
-    width: 90,
-    height: 70,
+    width: 80,
+    height: 80,
     borderRadius: 10,
-    marginBottom: 6,
+    marginRight: 12,
+  },
+  infoContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   restaurantName: {
     fontWeight: 'bold',
-    fontSize: 15,
+    fontSize: 16,
     color: '#222',
-    textAlign: 'center',
+    marginBottom: 4,
   },
   restaurantRating: {
     color: '#00b14f',
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: 14,
     marginBottom: 8,
   },
   menuButton: {
-    height: 36,
+    height: 32,
     width: 80,
-    borderRadius: 12,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#00b14f',
-    marginTop: 6,
   },
   menuButtonText: {
     color: 'white',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 'bold',
   },
 })
