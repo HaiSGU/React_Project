@@ -66,18 +66,37 @@ const App = () => {
 
   return (
     <View style={style.container}>
-      {/* Thanh đăng nhập / đăng xuất */}
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 16 }}>
-        {isLoggedIn ? (
-          <Pressable onPress={handleLogout} style={[style.button, { width: 100, backgroundColor: '#e53935' }]}>
-            <Text style={style.buttonText}>Đăng xuất</Text>
-          </Pressable>
-        ) : (
-          <Pressable onPress={handleLogin} style={[style.button, { width: 100 }]}>
-            <Text style={style.buttonText}>Đăng nhập</Text>
-          </Pressable>
-        )}
-      </View>
+      {/* Thanh chào + đăng nhập/đăng xuất */}
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            backgroundColor: '#00b14f' // xanh lá đặc trưng
+          }}>
+            {/* Greeting (hiện khi login) */}
+            {isLoggedIn ? (
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
+                👋 Xin chào, hôm nay ăn gì nè?
+              </Text>
+            ) : (
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
+                Chào mừng bạn đến với FoodFast
+              </Text>
+            )}
+
+            {/* Button login/logout */}
+            {isLoggedIn ? (
+              <Pressable onPress={handleLogout} style={[style.button, { width: 90, backgroundColor: '#e53935' }]}>
+                <Text style={style.buttonText}>Đăng xuất</Text>
+              </Pressable>
+            ) : (
+              <Pressable onPress={handleLogin} style={[style.button, { width: 90, backgroundColor: '#222' }]}>
+                <Text style={style.buttonText}>Đăng nhập</Text>
+              </Pressable>
+            )}
+          </View>
 
       {/* Bọc toàn bộ phần nội dung bên trong ScrollView */}
       <ImageBackground source={ShipperImg} style={style.image}>
@@ -92,7 +111,7 @@ const App = () => {
               renderItem={renderCategory}
               keyExtractor={item => item.key}
               horizontal
-              showsHorizontalScrollIndicator={true}
+              showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
             />
           </View>
@@ -116,7 +135,7 @@ const App = () => {
           <View style={{ marginBottom: 40 }}>
             <Text style={style.sectionTitle}>Nhà hàng nổi bật</Text>
             <FlatList
-              data={RESTAURANTS}
+              data={RESTAURANTS.filter(r => r.isFeatured)} 
               renderItem={renderRestaurant}
               keyExtractor={item => item.id.toString()}
               horizontal

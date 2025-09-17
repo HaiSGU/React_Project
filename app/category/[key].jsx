@@ -105,6 +105,4 @@ menuButtonText: {
   fontSize: 14,
   fontWeight: 'bold',
 },
-
-
 })

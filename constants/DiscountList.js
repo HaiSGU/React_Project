@@ -1,4 +1,3 @@
-// constants/DiscountList.js
 export const DISCOUNTS = [
   { 
     type: 'freeship', 
