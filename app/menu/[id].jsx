@@ -1,11 +1,8 @@
 import { Appearance, StyleSheet, View, Text, Image, ScrollView, Platform, SafeAreaView, Pressable, FlatList } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { MENU_ITEMS } from '@/constants/MenuItems'
-
-import { Button } from "@react-navigation/elements";
-import { Link, useLocalSearchParams } from 'expo-router'
-import React, { useState } from "react";
-
+import { Link, useLocalSearchParams, useRouter } from 'expo-router'
+import React, { useState, useMemo } from "react";
 
 export default function MenuScreen() {
     const colorScheme = Appearance.getColorScheme()
@@ -13,13 +10,19 @@ export default function MenuScreen() {
     const style = createStyles(theme, colorScheme)
     const Container = Platform.OS === 'web' ? ScrollView : SafeAreaView;
     const [quantities, setQuantities] = useState({});
+    const router = useRouter();
 
     // Lấy id nhà hàng từ URL
     const { id } = useLocalSearchParams();
     const restaurantId = parseInt(id);
 
     // Lọc menu theo nhà hàng
-    const menuForRestaurant = MENU_ITEMS.filter(item => item.restaurantId === restaurantId);
+    const menuForRestaurant = MENU_ITEMS.filter(item => {
+    if (Array.isArray(item.restaurantId)) {
+    return item.restaurantId.includes(restaurantId);
+    }
+    return item.restaurantId === restaurantId;
+    });
 
     const increaseQty = (id) => {
         setQuantities(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
@@ -32,56 +35,94 @@ export default function MenuScreen() {
         });
     };
 
+    // Tính tổng tiền
+    const totalPrice = useMemo(() => {
+        return menuForRestaurant.reduce((sum, item) => {
+            const qty = quantities[item.id] || 0;
+            return sum + qty * item.price;
+        }, 0);
+    }, [quantities, menuForRestaurant]);
+
     const separatorComp = <View style={style.separator} />
     const footerComp = <Text style={{ color: theme.text }}>End of Menu</Text>
 
+    // Gom dữ liệu giỏ hàng
+    const cartItems = useMemo(() => {
+    return menuForRestaurant
+    .filter(item => (quantities[item.id] || 0) > 0)
+    .map(item => ({
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      quantity: quantities[item.id] || 0,
+    }));
+    }, [quantities, menuForRestaurant]);
+
+
     return (
-        <Container>
-            <FlatList
-                data={menuForRestaurant}
-                keyExtractor={(item) => item.id.toString()}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={style.contentContainer}
-                ItemSeparatorComponent={separatorComp}
-                ListFooterComponent={footerComp}
-                ListFooterComponentStyle={style.footerComp}
-                ListEmptyComponent={<Text>No items</Text>}
-                renderItem={({ item }) => (
-                    <View style={style.card}>
-                        <Image
-                            source={item.image}
-                            style={style.menuImage}
-                            resizeMode="cover"
-                        />
-                        <View style={style.menuInfo}>
-                            <Text style={style.menuItemTitle}>{item.title}</Text>
-                            <Text style={style.menuItemText}>{item.description}</Text>
-                            <View style={style.rowBetween}>
-                                <Text style={style.priceText}>{item.price.toLocaleString()} đ</Text>
-                                <Text style={style.ratingText}>⭐ {item.rating || 4.5} | Đã bán: {item.sold || 100}</Text>
+        <View style={{ flex: 1 }}>
+            <Container>
+                <FlatList
+                    data={menuForRestaurant}
+                    keyExtractor={(item) => item.id.toString()}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={style.contentContainer}
+                    ItemSeparatorComponent={separatorComp}
+                    ListFooterComponent={footerComp}
+                    ListFooterComponentStyle={style.footerComp}
+                    ListEmptyComponent={<Text>No items</Text>}
+                    renderItem={({ item }) => (
+                        <View style={style.card}>
+                            <Image
+                                source={item.image}
+                                style={style.menuImage}
+                                resizeMode="cover"
+                            />
+                            <View style={style.menuInfo}>
+                                <Text style={style.menuItemTitle}>{item.title}</Text>
+                                <Text style={style.menuItemText}>{item.description}</Text>
+                                <View style={style.rowBetween}>
+                                    <Text style={style.priceText}>{item.price.toLocaleString()} đ</Text>
+                                    <Text style={style.ratingText}>⭐ {item.rating || 4.5} | Đã bán: {item.sold || 100}</Text>
+                                </View>
+                                <View style={style.actionRow}>
+                                    <Pressable onPress={() => decreaseQty(item.id)} style={style.qtyButton}>
+                                        <Text style={style.qtyText}>-</Text>
+                                    </Pressable>
+                                    <Text style={style.qtyNumber}>{quantities[item.id] || 0}</Text>
+                                    <Pressable onPress={() => increaseQty(item.id)} style={style.qtyButton}>
+                                        <Text style={style.qtyText}>+</Text>
+                                    </Pressable>
+                                </View>
                             </View>
-                            <View style={style.actionRow}>
-                                <Pressable onPress={() => decreaseQty(item.id)} style={style.qtyButton}>
-                                    <Text style={style.qtyText}>-</Text>
-                                </Pressable>
-                                <Text style={style.qtyNumber}>{quantities[item.id] || 0}</Text>
-                                <Pressable onPress={() => increaseQty(item.id)} style={style.qtyButton}>
-                                    <Text style={style.qtyText}>+</Text>
-                                </Pressable>
-                                <Pressable style={style.addToCartBtn}>
-                                    <Text style={style.addToCartText}>Thêm vào giỏ</Text>
-                                </Pressable>
-                            </View>
+                            {item.discount && (
+                                <View style={style.discountBadge}>
+                                    <Text style={style.discountText}>-{item.discount}%</Text>
+                                </View>
+                            )}
                         </View>
-                        {item.discount && (
-                            <View style={style.discountBadge}>
-                                <Text style={style.discountText}>-{item.discount}%</Text>
-                            </View>
-                        )}
-                    </View>
-                )}>
-            </FlatList>
-        </Container>
+                    )}>
+                </FlatList>
+            </Container>
+
+            {/* Thanh tổng tiền */}
+            {totalPrice > 0 && (
+                <Pressable
+                   style={style.checkoutBar}
+                   onPress={() =>
+                   router.push({
+                   pathname: "/checkout",
+                   params: { cart: JSON.stringify(cartItems) },
+                   })
+                   }
+                >
+                <Text style={style.checkoutText}>
+                    Tổng cộng: {totalPrice.toLocaleString()} đ
+                </Text>
+                <Text style={style.checkoutAction}>Thanh toán ➜</Text>
+                </Pressable>
+            )}
+        </View>
     )
 }
 
@@ -89,7 +130,7 @@ function createStyles(theme, colorScheme) {
     return StyleSheet.create({
         contentContainer: {
             paddingTop: 10,
-            paddingBottom: 20,
+            paddingBottom: 80, // chừa chỗ cho thanh tổng tiền
             paddingHorizontal: 12,
             backgroundColor: theme.background,
         },
@@ -102,7 +143,6 @@ function createStyles(theme, colorScheme) {
             marginBottom: 10,
         },
         footerComp: {
-
             marginHorizontal: 'auto'
         },
         card: {
@@ -118,30 +158,9 @@ function createStyles(theme, colorScheme) {
             elevation: 3,
             position: 'relative',
         },
-        row: {
-            flexDirection: 'row',
-            width: '100%',
-            maxWidth: 600,
-            height: 100,
-            marginBottom: 10,
-            borderStyle: 'solid',
-            borderColor: colorScheme === 'dark' ? 'papayawhip' : '#000',
-            borderWidth: 1,
-            borderRadius: 20,
-            overflow: 'hidden',
-            marginHorizontal: 'auto',
-        },
-        menuTextRow: {
-            width: '65%',
-            paddingTop: 10,
-            paddingLeft: 10,
-            paddingRight: 5,
-            flexGrow: 1,
-        },
         menuItemTitle: {
             fontSize: 18,
-            textDecorationLine: 'underline',
-
+            fontWeight: 'bold',
         },
         menuItemText: {
             color: theme.text,
@@ -191,17 +210,6 @@ function createStyles(theme, colorScheme) {
             fontWeight: 'bold',
             fontSize: 16,
         },
-        addToCartBtn: {
-            backgroundColor: '#00b14f',
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 8,
-            marginLeft: 10,
-        },
-        addToCartText: {
-            color: '#fff',
-            fontWeight: 'bold',
-        },
         discountBadge: {
             position: 'absolute',
             top: 8,
@@ -220,5 +228,27 @@ function createStyles(theme, colorScheme) {
             color: '#888',
             fontSize: 13,
         },
+        checkoutBar: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: '#00b14f',
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        checkoutText: {
+            color: '#fff',
+            fontSize: 16,
+            fontWeight: 'bold',
+        },
+        checkoutAction: {
+            color: '#fff',
+            fontSize: 16,
+            fontWeight: 'bold',
+        }
     })
 }

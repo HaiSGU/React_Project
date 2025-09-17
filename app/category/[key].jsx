@@ -14,23 +14,25 @@ export default function CategoryScreen() {
   const categoryLabel = CATEGORIES.find(c => c.key === key)?.label || key
 
   const renderRestaurant = ({ item }) => (
-    <View style={styles.restaurantCard}>
-      {/* Logo bên trái */}
-      <Image source={item.image} style={styles.restaurantImage} />
+  <View style={styles.restaurantCard}>
+    {/* Logo bên trái */}
+    <Image source={item.image} style={styles.restaurantImage} />
 
-      {/* Thông tin bên phải */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.restaurantName}>{item.name}</Text>
-        <Text style={styles.restaurantRating}>⭐ {item.rating}</Text>
+    {/* Thông tin bên phải */}
+    <View style={styles.infoContainer}>
+      <Text style={styles.restaurantName}>{item.name}</Text>
+      <Text style={styles.restaurantRating}>⭐ {item.rating}</Text>
 
-        <Link href={`/menu/${item.id}`} asChild>
-          <Pressable style={styles.menuButton}>
-            <Text style={styles.menuButtonText}>Menu</Text>
-          </Pressable>
-        </Link>
-      </View>
+      <Link href={`/menu/${item.id}`} asChild>
+        <Pressable style={styles.menuButton}>
+          <Text style={styles.menuButtonText}>Menu</Text>
+        </Pressable>
+      </Link>
     </View>
-  )
+  </View>
+)
+
+
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f8f8f8', paddingTop: 40 }}>
@@ -54,50 +56,55 @@ const styles = StyleSheet.create({
     color: '#00b14f'
   },
   restaurantCard: {
-    flexDirection: 'row', // nằm ngang
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  restaurantImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    marginRight: 12,
-  },
-  infoContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  restaurantName: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: '#222',
-    marginBottom: 4,
-  },
-  restaurantRating: {
-    color: '#00b14f',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  menuButton: {
-    height: 32,
-    width: 80,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#00b14f',
-  },
-  menuButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
+  flexDirection: 'row',
+  backgroundColor: '#fff',
+  borderRadius: 14,
+  padding: 12,
+  marginBottom: 16,
+  alignItems: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 4,
+  elevation: 2,
+},
+restaurantImage: {
+  width: 70,
+  height: 70,
+  borderRadius: 10,
+  marginRight: 12,
+  resizeMode: 'contain',
+},
+infoContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center', // căn giữa theo chiều ngang
+},
+restaurantName: {
+  fontWeight: 'bold',
+  fontSize: 16,
+  color: '#222',
+  marginBottom: 4,
+  textAlign: 'center',
+},
+restaurantRating: {
+  color: '#444',
+  fontSize: 14,
+  marginBottom: 8,
+},
+menuButton: {
+  height: 32,
+  width: 80,
+  borderRadius: 10,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: '#00b14f',
+},
+menuButtonText: {
+  color: 'white',
+  fontSize: 14,
+  fontWeight: 'bold',
+},
+
+
 })

@@ -39,5 +39,13 @@ export const MENU_ITEMS = [
         image: require('@/assets/images/menu/Pasta.jpg'),
         price: 50000
     },
+    {
+        id: 6,
+        restaurantId: [4,5], 
+        title: "Matcha Latte",
+        description: "...",
+        image: require('@/assets/images/menu/matcha.jpg'),
+        price: 40000
+    },
     
 ]
