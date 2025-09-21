@@ -13,7 +13,10 @@ import {
   Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DRIVERS } from "../constants/DriversList";
+import { QRScanner } from "../components/QRScanner";
+import { useNotifications, scheduleOrderNotification } from "../components/NotificationService";
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -22,14 +25,44 @@ export default function CheckoutScreen() {
   const parsedCart = cart ? JSON.parse(cart) : [];
 
   // State
-  const [address, setAddress] = useState("123 Đường ABC, Quận 1");
+  const [userInfo, setUserInfo] = useState(null);
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [fullName, setFullName] = useState("");
   const [voucher, setVoucher] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState("fast");
   const [assignedDriver, setAssignedDriver] = useState(null);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // Notifications
+  const { scheduleOrderNotification } = useNotifications();
 
-  // Random driver khi mở trang
+  // Load thông tin người dùng và random driver
   useEffect(() => {
+    const loadUserInfo = async () => {
+      try {
+        const isLoggedInValue = await AsyncStorage.getItem('isLoggedIn');
+        const userInfoValue = await AsyncStorage.getItem('userInfo');
+        
+        setIsLoggedIn(isLoggedInValue === 'true');
+        if (userInfoValue) {
+          const user = JSON.parse(userInfoValue);
+          setUserInfo(user);
+          setAddress(user.address || '');
+          setPhone(user.phone || '');
+          setFullName(user.fullName || user.username || '');
+        }
+      } catch (error) {
+        console.log('Error loading user info:', error);
+      }
+    };
+    
+    loadUserInfo();
+    
+    // Random driver
     const random = DRIVERS[Math.floor(Math.random() * DRIVERS.length)];
     setAssignedDriver(random);
   }, []);
@@ -73,13 +106,29 @@ export default function CheckoutScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
         <Text style={styles.header}>Thanh toán</Text>
 
-        {/* Địa chỉ */}
+        {/* Thông tin người nhận */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📍 Địa chỉ giao hàng</Text>
+          <Text style={styles.sectionTitle}>👤 Thông tin người nhận</Text>
           <TextInput
             style={styles.input}
+            placeholder="Họ và tên *"
+            value={fullName}
+            onChangeText={setFullName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Số điện thoại *"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+          />
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Địa chỉ giao hàng *"
             value={address}
             onChangeText={setAddress}
+            multiline
+            numberOfLines={3}
           />
         </View>
 
@@ -157,6 +206,73 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
+        {/* Phương thức thanh toán */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>💳 Phương thức thanh toán</Text>
+          <View style={{ flexDirection: "row", gap: 12, flexWrap: 'wrap' }}>
+            <Pressable
+              style={[
+                styles.methodButton,
+                paymentMethod === "cash" && styles.methodActive,
+              ]}
+              onPress={() => setPaymentMethod("cash")}
+            >
+              <Text
+                style={
+                  paymentMethod === "cash"
+                    ? styles.methodActiveText
+                    : styles.methodText
+                }
+              >
+                💵 Tiền mặt
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.methodButton,
+                paymentMethod === "qr" && styles.methodActive,
+              ]}
+              onPress={() => setPaymentMethod("qr")}
+            >
+              <Text
+                style={
+                  paymentMethod === "qr"
+                    ? styles.methodActiveText
+                    : styles.methodText
+                }
+              >
+                📱 QR Code
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.methodButton,
+                paymentMethod === "card" && styles.methodActive,
+              ]}
+              onPress={() => setPaymentMethod("card")}
+            >
+              <Text
+                style={
+                  paymentMethod === "card"
+                    ? styles.methodActiveText
+                    : styles.methodText
+                }
+              >
+                💳 Thẻ
+              </Text>
+            </Pressable>
+          </View>
+          
+          {paymentMethod === "qr" && (
+            <Pressable
+              style={styles.qrButton}
+              onPress={() => setShowQRScanner(true)}
+            >
+              <Text style={styles.qrButtonText}>📱 Quét QR thanh toán</Text>
+            </Pressable>
+          )}
+        </View>
+
         {/* Tài xế */}
         {assignedDriver && (
           <View style={styles.section}>
@@ -183,12 +299,43 @@ export default function CheckoutScreen() {
         </Text>
         <Pressable
           style={styles.payButton}
-          onPress={() =>
+          onPress={() => {
+            // Kiểm tra thông tin bắt buộc
+            if (!fullName.trim()) {
+              Alert.alert('Lỗi đặt hàng', 'Vui lòng nhập họ tên người nhận!');
+              return;
+            }
+            if (!phone.trim()) {
+              Alert.alert('Lỗi đặt hàng', 'Vui lòng nhập số điện thoại!');
+              return;
+            }
+            if (!address.trim()) {
+              Alert.alert('Lỗi đặt hàng', 'Vui lòng nhập địa chỉ giao hàng!');
+              return;
+            }
+            if (parsedCart.length === 0) {
+              Alert.alert('Lỗi đặt hàng', 'Giỏ hàng trống!');
+              return;
+            }
+            
+            // Tạo order ID
+            const orderId = `FF${Date.now()}`;
+            
+            // Lên lịch thông báo đơn hàng
+            scheduleOrderNotification(orderId, deliveryMethod === "fast" ? 30 : 45);
+            
+            // Hiển thị thông báo đặt hàng thành công
             Alert.alert(
-              "Đặt hàng thành công",
-              `Đơn hàng sẽ được giao bởi tài xế ${assignedDriver.name}`
-            )
-          }
+              "🎉 Đặt hàng thành công!",
+              `Đơn hàng #${orderId} của ${fullName} sẽ được giao bởi tài xế ${assignedDriver.name} đến địa chỉ ${address}.\n\nTổng tiền: ${totalPrice.toLocaleString()} đ\nPhương thức: ${paymentMethod === 'qr' ? 'QR Code' : paymentMethod === 'cash' ? 'Tiền mặt' : 'Thẻ'}`,
+              [
+                {
+                  text: "OK",
+                  onPress: () => router.replace('/')
+                }
+              ]
+            );
+          }}
         >
           <Text style={styles.payButtonText}>Đặt hàng</Text>
         </Pressable>
@@ -224,6 +371,19 @@ export default function CheckoutScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* QR Scanner */}
+      <QRScanner
+        visible={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScanSuccess={(qrData) => {
+          Alert.alert(
+            'QR Code đã được quét!',
+            'Bạn có thể tiếp tục đặt hàng.',
+            [{ text: 'OK' }]
+          );
+        }}
+      />
     </View>
   );
 }
@@ -250,6 +410,11 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 6,
     backgroundColor: "#f9f9f9",
+    marginBottom: 12,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
   },
   itemRow: {
     flexDirection: "row",
@@ -325,4 +490,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   closeModal: { marginTop: 12, alignItems: "center" },
+  qrButton: {
+    backgroundColor: '#00b14f',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  qrButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

@@ -8,6 +8,10 @@ export const RESTAURANTS = [
     rating: 4.7,
     menu: [],
     isFeatured: true,
+    coordinates: {
+      latitude: 10.7769,
+      longitude: 106.7009
+    }
   },
   {
     id: 2,
@@ -18,6 +22,10 @@ export const RESTAURANTS = [
     rating: 4.5,
     menu: [],
     isFeatured: true,
+    coordinates: {
+      latitude: 10.7829,
+      longitude: 106.7009
+    }
   },
   {
     id: 3,
@@ -28,6 +36,10 @@ export const RESTAURANTS = [
     rating: 4.5,
     menu: [],
     isFeatured: false,
+    coordinates: {
+      latitude: 10.7889,
+      longitude: 106.7009
+    }
   },
   {
     id: 4,
@@ -38,6 +50,10 @@ export const RESTAURANTS = [
     rating: 4.6,
     menu: [],
     isFeatured: true,
+    coordinates: {
+      latitude: 10.7329,
+      longitude: 106.7209
+    }
   },
   {
     id: 5,
@@ -48,6 +64,10 @@ export const RESTAURANTS = [
     rating: 4.6,
     menu: [],
     isFeatured: true,
+    coordinates: {
+      latitude: 10.7429,
+      longitude: 106.7309
+    }
   },
   {
     id: 6,

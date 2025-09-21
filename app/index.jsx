@@ -1,30 +1,77 @@
-import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { Link, useRouter } from 'expo-router'
+import { Link, useRouter, useFocusEffect } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { RESTAURANTS } from '@/constants/RestaurantsList'
 import { CATEGORIES } from '@/constants/CategoryList'
 import { DISCOUNTS } from '@/constants/DiscountList'
-import ShipperImg from "@assets/images/shipperimage.jpeg"
+import { useLocation, sortRestaurantsByDistance } from '@/components/LocationService'
+import { useNotifications, sendNearbyRestaurantNotification } from '@/components/NotificationService'
+import ShipperImg from "../assets/images/shipperimage.jpeg"
 
 const App = () => {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userInfo, setUserInfo] = useState(null)
+  const [nearbyRestaurants, setNearbyRestaurants] = useState([])
+  const [showNearby, setShowNearby] = useState(false)
+  
+  // GPS và Notifications
+  const { location, errorMsg, isLoading, getCurrentLocation } = useLocation()
+  const { sendNearbyRestaurantNotification } = useNotifications()
 
-  // Lấy trạng thái đăng nhập từ AsyncStorage khi app mở
+  // Lắng nghe khi focus vào trang để cập nhật trạng thái đăng nhập
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadLoginStatus = async () => {
+        const isLoggedInValue = await AsyncStorage.getItem('isLoggedIn')
+        const userInfoValue = await AsyncStorage.getItem('userInfo')
+        
+        setIsLoggedIn(isLoggedInValue === 'true')
+        if (userInfoValue) {
+          setUserInfo(JSON.parse(userInfoValue))
+        }
+      }
+      loadLoginStatus()
+    }, [])
+  )
+
+  // Xử lý GPS và sắp xếp nhà hàng theo khoảng cách
   useEffect(() => {
-    const loadLoginStatus = async () => {
-      const value = await AsyncStorage.getItem('isLoggedIn')
-      setIsLoggedIn(value === 'true')
+    if (location) {
+      const sortedRestaurants = sortRestaurantsByDistance(RESTAURANTS, location)
+      setNearbyRestaurants(sortedRestaurants)
+      
+      // Gửi thông báo nhà hàng gần nhất (chỉ 1 lần)
+      if (sortedRestaurants.length > 0 && sortedRestaurants[0].distance) {
+        const nearestRestaurant = sortedRestaurants[0]
+        if (nearestRestaurant.distance < 2) { // Trong vòng 2km
+          sendNearbyRestaurantNotification(
+            nearestRestaurant.name, 
+            nearestRestaurant.distance
+          )
+        }
+      }
     }
-    loadLoginStatus()
-  }, [])
+  }, [location, sendNearbyRestaurantNotification])
+
+  // Xử lý lỗi GPS
+  useEffect(() => {
+    if (errorMsg) {
+      Alert.alert('Lỗi vị trí', errorMsg)
+    }
+  }, [errorMsg])
 
   const renderRestaurant = ({ item }) => (
     <View style={style.restaurantCard}>
       <Image source={item.image} style={style.restaurantImage} />
       <Text style={style.restaurantName}>{item.name}</Text>
       <Text style={style.restaurantRating}>⭐ {item.rating}</Text>
+      {item.distance && (
+        <Text style={style.restaurantDistance}>
+          📍 {item.distance.toFixed(1)}km
+        </Text>
+      )}
       <Link href={`/menu/${item.id}`} asChild>
         <Pressable style={style.button}>
           <Text style={style.buttonText}>Menu</Text>
@@ -53,15 +100,15 @@ const App = () => {
   // Xử lý đăng xuất
   const handleLogout = async () => {
     await AsyncStorage.removeItem('isLoggedIn')
+    await AsyncStorage.removeItem('userInfo')
     setIsLoggedIn(false)
+    setUserInfo(null)
     router.replace('/login')
   }
 
-  // (Ví dụ) khi đăng nhập xong thì gọi hàm này để lưu lại trạng thái
-  const handleLogin = async () => {
-    await AsyncStorage.setItem('isLoggedIn', 'true')
-    setIsLoggedIn(true)
-    router.replace('/') // trở về trang chính
+  // Chuyển hướng đến trang đăng nhập
+  const handleLogin = () => {
+    router.push('/login')
   }
 
   return (
@@ -78,7 +125,7 @@ const App = () => {
             {/* Greeting (hiện khi login) */}
             {isLoggedIn ? (
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
-                👋 Xin chào, hôm nay ăn gì nè?
+                👋 Xin chào {userInfo?.username || 'bạn'}, hôm nay ăn gì nè?
               </Text>
             ) : (
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
@@ -131,17 +178,42 @@ const App = () => {
 
           
 
-          {/* Nhà hàng nổi bật */}
+          {/* Nhà hàng nổi bật / Gần nhất */}
           <View style={{ marginBottom: 40 }}>
-            <Text style={style.sectionTitle}>Nhà hàng nổi bật</Text>
-            <FlatList
-              data={RESTAURANTS.filter(r => r.isFeatured)} 
-              renderItem={renderRestaurant}
-              keyExtractor={item => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16 }}
-            />
+            <View style={style.sectionHeader}>
+              <Text style={style.sectionTitle}>
+                {showNearby ? '📍 Nhà hàng gần nhất' : '⭐ Nhà hàng nổi bật'}
+              </Text>
+              {location && (
+                <Pressable 
+                  style={style.toggleButton}
+                  onPress={() => setShowNearby(!showNearby)}
+                >
+                  <Text style={style.toggleButtonText}>
+                    {showNearby ? 'Nổi bật' : 'Gần nhất'}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+            
+            {isLoading ? (
+              <View style={style.loadingContainer}>
+                <ActivityIndicator size="large" color="#00b14f" />
+                <Text style={style.loadingText}>Đang tìm vị trí...</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={showNearby && nearbyRestaurants.length > 0 
+                  ? nearbyRestaurants.slice(0, 10) // Top 10 gần nhất
+                  : RESTAURANTS.filter(r => r.isFeatured)
+                } 
+                renderItem={renderRestaurant}
+                keyExtractor={item => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16 }}
+              />
+            )}
           </View>
 
           <Link href="/contact" style={{ marginHorizontal: 'auto' }} asChild>
@@ -285,5 +357,39 @@ const style = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
     textAlign: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginLeft: 16,
+    marginBottom: 10,
+  },
+  toggleButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    marginRight: 16,
+  },
+  toggleButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  restaurantDistance: {
+    color: '#666',
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    color: 'white',
+    fontSize: 16,
+    marginTop: 10,
   },
 })

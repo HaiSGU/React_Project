@@ -9,14 +9,28 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Ứng dụng cần truy cập vị trí để hiển thị nhà hàng gần nhất",
+        "NSCameraUsageDescription": "Ứng dụng cần truy cập camera để quét QR thanh toán",
+        "NSMicrophoneUsageDescription": "Ứng dụng cần truy cập microphone để ghi âm"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "WAKE_LOCK"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -32,6 +46,25 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Ứng dụng cần truy cập vị trí để hiển thị nhà hàng gần nhất"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#00b14f"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ứng dụng cần truy cập camera để quét QR thanh toán"
         }
       ]
     ],
