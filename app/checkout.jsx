@@ -15,8 +15,9 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DRIVERS } from "../constants/DriversList";
-import { QRScanner } from "../components/QRScanner";
-import { useNotifications, scheduleOrderNotification } from "../components/NotificationService";
+
+// ❌ bỏ useNotifications nếu bạn cũng không cần notification
+// import { useNotifications, scheduleOrderNotification } from "../components/NotificationService";
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -33,12 +34,11 @@ export default function CheckoutScreen() {
   const [deliveryMethod, setDeliveryMethod] = useState("fast");
   const [assignedDriver, setAssignedDriver] = useState(null);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
-  const [showQRScanner, setShowQRScanner] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
-  // Notifications
-  const { scheduleOrderNotification } = useNotifications();
+  // ❌ bỏ Notifications nếu không dùng
+  // const { scheduleOrderNotification } = useNotifications();
 
   // Load thông tin người dùng và random driver
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function CheckoutScreen() {
   }, []);
 
   // Voucher giả lập
-   const vouchers = [
+  const vouchers = [
     { code: "SALE10", label: "Giảm 10%", type: "percent", value: 0.1 },     
     { code: "SHIPFREE", label: "Miễn phí ship", type: "shipping" },         
     { code: "OFF20K", label: "Giảm 20.000đ", type: "fixed", value: 20000 },
@@ -79,27 +79,22 @@ export default function CheckoutScreen() {
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-    const shippingFee = deliveryMethod === "fast" ? 25000 : 15000;
+  const shippingFee = deliveryMethod === "fast" ? 25000 : 15000;
 
   let itemDiscount = 0;
   let shippingDiscount = 0;
 
   if (voucher) {
     if (voucher.type === "percent") {
-      itemDiscount = subtotal * voucher.value; // % trên subtotal
+      itemDiscount = subtotal * voucher.value;
     } else if (voucher.type === "fixed") {
-      itemDiscount = voucher.value; // giảm cố định trên subtotal
-      // tránh giảm vượt quá subtotal
-      if (itemDiscount > subtotal) itemDiscount = subtotal;
+      itemDiscount = Math.min(voucher.value, subtotal);
     } else if (voucher.type === "shipping") {
-      // miễn phí shipping => shippingDiscount = toàn bộ shippingFee
       shippingDiscount = shippingFee;
     }
   }
 
-
   const totalPrice = subtotal - itemDiscount + shippingFee - shippingDiscount;
-
 
   return (
     <View style={styles.container}>
@@ -132,7 +127,7 @@ export default function CheckoutScreen() {
           />
         </View>
 
-        {/* Danh sách món */}
+        {/* Giỏ hàng */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🛒 Giỏ hàng</Text>
           <FlatList
@@ -165,112 +160,58 @@ export default function CheckoutScreen() {
           </Pressable>
         </View>
 
-        {/* Phương thức giao hàng */}
+        {/* Giao hàng */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🚚 Hình thức giao hàng</Text>
           <View style={{ flexDirection: "row", gap: 12 }}>
             <Pressable
-              style={[
-                styles.methodButton,
-                deliveryMethod === "fast" && styles.methodActive,
-              ]}
+              style={[styles.methodButton, deliveryMethod === "fast" && styles.methodActive]}
               onPress={() => setDeliveryMethod("fast")}
             >
-              <Text
-                style={
-                  deliveryMethod === "fast"
-                    ? styles.methodActiveText
-                    : styles.methodText
-                }
-              >
+              <Text style={deliveryMethod === "fast" ? styles.methodActiveText : styles.methodText}>
                 Nhanh (25k)
               </Text>
             </Pressable>
             <Pressable
-              style={[
-                styles.methodButton,
-                deliveryMethod === "standard" && styles.methodActive,
-              ]}
+              style={[styles.methodButton, deliveryMethod === "standard" && styles.methodActive]}
               onPress={() => setDeliveryMethod("standard")}
             >
-              <Text
-                style={
-                  deliveryMethod === "standard"
-                    ? styles.methodActiveText
-                    : styles.methodText
-                }
-              >
+              <Text style={deliveryMethod === "standard" ? styles.methodActiveText : styles.methodText}>
                 Tiêu chuẩn (15k)
               </Text>
             </Pressable>
           </View>
         </View>
 
-        {/* Phương thức thanh toán */}
+        {/* Thanh toán */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>💳 Phương thức thanh toán</Text>
           <View style={{ flexDirection: "row", gap: 12, flexWrap: 'wrap' }}>
             <Pressable
-              style={[
-                styles.methodButton,
-                paymentMethod === "cash" && styles.methodActive,
-              ]}
+              style={[styles.methodButton, paymentMethod === "cash" && styles.methodActive]}
               onPress={() => setPaymentMethod("cash")}
             >
-              <Text
-                style={
-                  paymentMethod === "cash"
-                    ? styles.methodActiveText
-                    : styles.methodText
-                }
-              >
+              <Text style={paymentMethod === "cash" ? styles.methodActiveText : styles.methodText}>
                 💵 Tiền mặt
               </Text>
             </Pressable>
             <Pressable
-              style={[
-                styles.methodButton,
-                paymentMethod === "qr" && styles.methodActive,
-              ]}
+              style={[styles.methodButton, paymentMethod === "qr" && styles.methodActive]}
               onPress={() => setPaymentMethod("qr")}
             >
-              <Text
-                style={
-                  paymentMethod === "qr"
-                    ? styles.methodActiveText
-                    : styles.methodText
-                }
-              >
+              <Text style={paymentMethod === "qr" ? styles.methodActiveText : styles.methodText}>
                 📱 QR Code
               </Text>
             </Pressable>
             <Pressable
-              style={[
-                styles.methodButton,
-                paymentMethod === "card" && styles.methodActive,
-              ]}
+              style={[styles.methodButton, paymentMethod === "card" && styles.methodActive]}
               onPress={() => setPaymentMethod("card")}
             >
-              <Text
-                style={
-                  paymentMethod === "card"
-                    ? styles.methodActiveText
-                    : styles.methodText
-                }
-              >
+              <Text style={paymentMethod === "card" ? styles.methodActiveText : styles.methodText}>
                 💳 Thẻ
               </Text>
             </Pressable>
           </View>
-          
-          {paymentMethod === "qr" && (
-            <Pressable
-              style={styles.qrButton}
-              onPress={() => setShowQRScanner(true)}
-            >
-              <Text style={styles.qrButtonText}>📱 Quét QR thanh toán</Text>
-            </Pressable>
-          )}
         </View>
 
         {/* Tài xế */}
@@ -300,7 +241,6 @@ export default function CheckoutScreen() {
         <Pressable
           style={styles.payButton}
           onPress={() => {
-            // Kiểm tra thông tin bắt buộc
             if (!fullName.trim()) {
               Alert.alert('Lỗi đặt hàng', 'Vui lòng nhập họ tên người nhận!');
               return;
@@ -317,23 +257,13 @@ export default function CheckoutScreen() {
               Alert.alert('Lỗi đặt hàng', 'Giỏ hàng trống!');
               return;
             }
-            
-            // Tạo order ID
+
             const orderId = `FF${Date.now()}`;
-            
-            // Lên lịch thông báo đơn hàng
-            scheduleOrderNotification(orderId, deliveryMethod === "fast" ? 30 : 45);
-            
-            // Hiển thị thông báo đặt hàng thành công
+
             Alert.alert(
               "🎉 Đặt hàng thành công!",
-              `Đơn hàng #${orderId} của ${fullName} sẽ được giao bởi tài xế ${assignedDriver.name} đến địa chỉ ${address}.\n\nTổng tiền: ${totalPrice.toLocaleString()} đ\nPhương thức: ${paymentMethod === 'qr' ? 'QR Code' : paymentMethod === 'cash' ? 'Tiền mặt' : 'Thẻ'}`,
-              [
-                {
-                  text: "OK",
-                  onPress: () => router.replace('/')
-                }
-              ]
+              `Đơn hàng #${orderId} của ${fullName} sẽ được giao bởi tài xế ${assignedDriver.name} đến địa chỉ ${address}.\n\nTổng tiền: ${totalPrice.toLocaleString()} đ\nPhương thức: ${paymentMethod}`,
+              [{ text: "OK", onPress: () => router.replace('/') }]
             );
           }}
         >
@@ -342,11 +272,7 @@ export default function CheckoutScreen() {
       </View>
 
       {/* Modal voucher */}
-      <Modal
-        visible={showVoucherModal}
-        transparent
-        animationType="slide"
-      >
+      <Modal visible={showVoucherModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Chọn voucher</Text>
@@ -371,19 +297,6 @@ export default function CheckoutScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* QR Scanner */}
-      <QRScanner
-        visible={showQRScanner}
-        onClose={() => setShowQRScanner(false)}
-        onScanSuccess={(qrData) => {
-          Alert.alert(
-            'QR Code đã được quét!',
-            'Bạn có thể tiếp tục đặt hàng.',
-            [{ text: 'OK' }]
-          );
-        }}
-      />
     </View>
   );
 }
@@ -391,12 +304,7 @@ export default function CheckoutScreen() {
 // ================= STYLE =================
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fafafa" },
-  header: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 16,
-    padding: 16,
-  },
+  header: { fontSize: 22, fontWeight: "bold", marginBottom: 16, padding: 16 },
   section: {
     backgroundColor: "#fff",
     padding: 16,
@@ -412,10 +320,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9f9f9",
     marginBottom: 12,
   },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
+  textArea: { height: 80, textAlignVertical: "top" },
   itemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -425,11 +330,7 @@ const styles = StyleSheet.create({
   },
   itemName: { fontSize: 16 },
   itemPrice: { fontSize: 16, fontWeight: "600", color: "#e53935" },
-  voucherButton: {
-    padding: 12,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 6,
-  },
+  voucherButton: { padding: 12, backgroundColor: "#f0f0f0", borderRadius: 6 },
   methodButton: {
     borderWidth: 1,
     borderColor: "#aaa",
@@ -440,7 +341,6 @@ const styles = StyleSheet.create({
   methodText: { color: "#333" },
   methodActive: { backgroundColor: "#00b14f", borderColor: "#00b14f" },
   methodActiveText: { color: "#fff" },
-
   driverBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -451,7 +351,6 @@ const styles = StyleSheet.create({
   driverImage: { width: 50, height: 50, borderRadius: 25 },
   driverText: { fontSize: 16, fontWeight: "600" },
   driverRating: { color: "#777" },
-
   footer: {
     position: "absolute",
     left: 0,
@@ -470,7 +369,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   payButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.3)",
@@ -490,17 +388,4 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   closeModal: { marginTop: 12, alignItems: "center" },
-  qrButton: {
-    backgroundColor: '#00b14f',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  qrButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
 });

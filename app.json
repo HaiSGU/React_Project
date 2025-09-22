@@ -11,7 +11,6 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Ứng dụng cần truy cập vị trí để hiển thị nhà hàng gần nhất",
         "NSCameraUsageDescription": "Ứng dụng cần truy cập camera để quét QR thanh toán",
         "NSMicrophoneUsageDescription": "Ứng dụng cần truy cập microphone để ghi âm"
       }
@@ -23,14 +22,15 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "RECORD_AUDIO",
         "VIBRATE",
         "RECEIVE_BOOT_COMPLETED",
-        "WAKE_LOCK"
-      ]
+        "WAKE_LOCK",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.nhathaisgu.Foodfastapp"
     },
     "web": {
       "bundler": "metro",
@@ -47,29 +47,16 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ],
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Ứng dụng cần truy cập vị trí để hiển thị nhà hàng gần nhất"
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/icon.png",
-          "color": "#00b14f"
-        }
-      ],
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Ứng dụng cần truy cập camera để quét QR thanh toán"
-        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d341fe3a-fcbd-41fc-93df-340589bea91e"
+      }
     }
   }
 }
