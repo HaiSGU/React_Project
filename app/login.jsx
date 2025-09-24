@@ -1,15 +1,15 @@
 import React, { useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const router = useRouter()
+  const { cart, location, redirect } = useLocalSearchParams();
 
   const handleLogin = async () => {
-    // Kiểm tra input rỗng
     if (!username.trim()) {
       Alert.alert('Lỗi đăng nhập', 'Vui lòng nhập tên đăng nhập!')
       return
@@ -21,37 +21,51 @@ export default function LoginScreen() {
 
     // Demo: kiểm tra tài khoản mẫu
     if (username === 'user' && password === '123456') {
-      // Lưu trạng thái đăng nhập và thông tin người dùng vào AsyncStorage
       await AsyncStorage.setItem('isLoggedIn', 'true')
       await AsyncStorage.setItem('userInfo', JSON.stringify({ 
         username: username, 
         loginTime: new Date().toISOString() 
       }))
       Alert.alert('Đăng nhập thành công!', 'Chào mừng bạn quay trở lại!')
-      router.replace('/')
-    } else {
-      // Kiểm tra tài khoản đã đăng ký
-      try {
-        const userData = await AsyncStorage.getItem('user')
-        if (userData) {
-          const user = JSON.parse(userData)
-          if (user.username === username && user.password === password) {
-            await AsyncStorage.setItem('isLoggedIn', 'true')
-            await AsyncStorage.setItem('userInfo', JSON.stringify({ 
-              username: username, 
-              loginTime: new Date().toISOString(),
-              ...user // Bao gồm tất cả thông tin cá nhân
-            }))
-            Alert.alert('Đăng nhập thành công!', `Chào mừng ${user.fullName || username} quay trở lại!`)
-            router.replace('/')
-            return
-          }
-        }
-      } catch (error) {
-        console.log('Error checking user data:', error)
+      if (redirect === 'checkout') {
+        router.replace({
+          pathname: '/checkout',
+          params: { cart, location }
+        })
+      } else {
+        router.replace('/')
       }
-      Alert.alert('Đăng nhập thất bại', 'Tên đăng nhập hoặc mật khẩu không đúng!\n\nVui lòng kiểm tra lại thông tin hoặc đăng ký tài khoản mới.')
+      return
     }
+
+    // Kiểm tra tài khoản đã đăng ký
+    try {
+      const userData = await AsyncStorage.getItem('user')
+      if (userData) {
+        const user = JSON.parse(userData)
+        if (user.username === username && user.password === password) {
+          await AsyncStorage.setItem('isLoggedIn', 'true')
+          await AsyncStorage.setItem('userInfo', JSON.stringify({ 
+            username: username, 
+            loginTime: new Date().toISOString(),
+            ...user
+          }))
+          Alert.alert('Đăng nhập thành công!', `Chào mừng ${user.fullName || username} quay trở lại!`)
+          if (redirect === 'checkout') {
+            router.replace({
+              pathname: '/checkout',
+              params: { cart, location }
+            })
+          } else {
+            router.replace('/')
+          }
+          return
+        }
+      }
+    } catch (error) {
+      console.log('Error checking user data:', error)
+    }
+    Alert.alert('Đăng nhập thất bại', 'Tên đăng nhập hoặc mật khẩu không đúng!\n\nVui lòng kiểm tra lại thông tin hoặc đăng ký tài khoản mới.')
   }
 
   return (
@@ -75,6 +89,9 @@ export default function LoginScreen() {
       </Pressable>
       <Pressable onPress={() => router.push('/register')}>
         <Text style={styles.link}>Chưa có tài khoản? Đăng ký</Text>
+      </Pressable>
+      <Pressable onPress={() => router.replace('/')}>
+        <Text style={[styles.link, { marginTop: 16 }]}>← Quay về trang chủ</Text>
       </Pressable>
     </View>
   )

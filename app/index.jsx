@@ -1,7 +1,7 @@
 import 'react-native-reanimated';
 import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable, ScrollView } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { Link, useRouter, useFocusEffect } from 'expo-router'
+import { Link, useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { RESTAURANTS } from '@/constants/RestaurantsList'
 import { CATEGORIES } from '@/constants/CategoryList'
@@ -12,6 +12,7 @@ const App = () => {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userInfo, setUserInfo] = useState(null)
+  const params = useLocalSearchParams()
 
   // Lắng nghe khi focus vào trang để cập nhật trạng thái đăng nhập
   useFocusEffect(
@@ -28,6 +29,33 @@ const App = () => {
       loadLoginStatus()
     }, [])
   )
+
+  useEffect(() => {
+    AsyncStorage.getItem('isLoggedIn').then(val => {
+      setIsLoggedIn(val === 'true')
+    })
+  }, [])
+
+  // Xử lý đăng xuất
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('isLoggedIn')
+    await AsyncStorage.removeItem('userInfo')
+    setIsLoggedIn(false)
+    setUserInfo(null)
+    router.replace('/')
+  }
+
+  // Chuyển hướng đến trang đăng nhập
+  const handleLogin = () => {
+    router.push('/login')
+  }
+
+  // Nếu vừa đăng nhập từ login, chỉ ở lại trang chủ
+  useEffect(() => {
+    if (params?.redirect === 'home') {
+      // Không làm gì, ở lại trang chủ
+    }
+  }, [params])
 
   const renderRestaurant = ({ item }) => (
     <View style={style.restaurantCard}>
@@ -58,20 +86,6 @@ const App = () => {
       </Pressable>
     </Link>
   )
-
-  // Xử lý đăng xuất
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('isLoggedIn')
-    await AsyncStorage.removeItem('userInfo')
-    setIsLoggedIn(false)
-    setUserInfo(null)
-    router.replace('/login')
-  }
-
-  // Chuyển hướng đến trang đăng nhập
-  const handleLogin = () => {
-    router.push('/login')
-  }
 
   return (
     <View style={style.container}>
@@ -158,6 +172,14 @@ const App = () => {
               <Text style={style.buttonText}>Contact Us</Text>
             </Pressable>
           </Link>
+
+          {isLoggedIn && (
+            <Link href="/account" style={{ marginHorizontal: 'auto' }} asChild>
+              <Pressable style={style.button}>
+                <Text style={style.buttonText}>Tài khoản</Text>
+              </Pressable>
+            </Link>
+          )}
         </ScrollView>
       </ImageBackground>
     </View>

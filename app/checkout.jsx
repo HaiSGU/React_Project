@@ -44,7 +44,7 @@ export default function CheckoutScreen() {
     console.log("Invalid cart param:", e);
   }
 
-  // parse location (có thể từ map-select hoặc query lat/lng)
+  // Parse location từ params
   let parsedLocation = null;
   try {
     if (location) {
@@ -52,11 +52,12 @@ export default function CheckoutScreen() {
     } else if (lat && lng) {
       const pLat = parseFloat(lat);
       const pLng = parseFloat(lng);
-      if (!isNaN(pLat) && !isNaN(pLng)) parsedLocation = { latitude: pLat, longitude: pLng };
+      if (!isNaN(pLat) && !isNaN(pLng)) {
+        parsedLocation = { latitude: pLat, longitude: pLng };
+      }
     }
   } catch (e) {
     parsedLocation = null;
-    console.log("Error parsing location param:", e);
   }
 
   // State
@@ -69,6 +70,9 @@ export default function CheckoutScreen() {
   const [assignedDriver, setAssignedDriver] = useState(null);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showCardModal, setShowCardModal] = useState(false);
+  const [qrImage, setQrImage] = useState(null);
 
   const [weather, setWeather] = useState(null);
   const [shipPrice, setShipPrice] = useState(20000);
@@ -330,6 +334,17 @@ export default function CheckoutScreen() {
     </>
   );
 
+  useEffect(() => {
+    AsyncStorage.getItem('isLoggedIn').then(val => {
+      if (val !== 'true') {
+        router.replace({
+          pathname: '/login',
+          params: { cart: JSON.stringify(parsedCart), location: JSON.stringify(parsedLocation) }
+        })
+      }
+    })
+  }, [])
+
   return (
     <View style={{ flex: 1 }}>
       <FlatList
@@ -355,13 +370,34 @@ export default function CheckoutScreen() {
         </Text>
         <Pressable
           style={{ backgroundColor: "green", padding: 12, borderRadius: 6 }}
-          onPress={() => {
+          onPress={async () => {
             if (!fullName.trim()) return Alert.alert("Lỗi", "Vui lòng nhập họ tên");
             if (!phone.trim()) return Alert.alert("Lỗi", "Vui lòng nhập số điện thoại");
             if (!address.trim()) return Alert.alert("Lỗi", "Vui lòng nhập địa chỉ");
             if (parsedCart.length === 0) return Alert.alert("Lỗi", "Giỏ hàng trống");
 
+            // Tạo đơn hàng mới
             const orderId = `FF${Date.now()}`;
+            const newOrder = {
+              id: orderId,
+              restaurantName: parsedCart[0]?.restaurantName || "Nhà hàng",
+              items: parsedCart,
+              totalPrice,
+              status: "Đang giao",
+              address,
+              createdAt: new Date().toISOString(),
+            };
+
+            // Lưu vào shippingOrders
+            try {
+              const shippingOrders = await AsyncStorage.getItem('shippingOrders');
+              const orders = shippingOrders ? JSON.parse(shippingOrders) : [];
+              orders.push(newOrder);
+              await AsyncStorage.setItem('shippingOrders', JSON.stringify(orders));
+            } catch (e) {
+              console.log("Lưu đơn hàng lỗi:", e);
+            }
+
             Alert.alert(
               "🎉 Đặt hàng thành công!",
               `Đơn hàng #${orderId} sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
@@ -393,6 +429,85 @@ export default function CheckoutScreen() {
             <TouchableOpacity onPress={() => setShowVoucherModal(false)} style={{ padding: 10 }}>
               <Text>Đóng</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal QR Code */}
+      <Modal visible={showQRModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Quét mã QR để thanh toán</Text>
+            {/* Demo QR code, bạn có thể dùng hình ảnh QR code mẫu */}
+            <Image
+              source={qrImage}
+              style={{ width: 180, height: 180, alignSelf: "center", marginBottom: 16 }}
+            />
+            <Text style={{ textAlign: "center", marginBottom: 12 }}>
+              Vui lòng dùng app ngân hàng hoặc ví điện tử để quét mã và thanh toán.
+            </Text>
+            <Pressable
+              style={styles.payButton}
+              onPress={() => {
+                setShowQRModal(false);
+                Alert.alert(
+                  "🎉 Đặt hàng thành công!",
+                  `Đơn hàng sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
+                  [{ text: "OK", onPress: () => router.replace("/") }]
+                );
+              }}
+            >
+              <Text style={styles.payButtonText}>Xác nhận đã thanh toán</Text>
+            </Pressable>
+            <Pressable style={styles.closeModal} onPress={() => setShowQRModal(false)}>
+              <Text style={{ color: "#00b14f" }}>Đóng</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Thẻ */}
+      <Modal visible={showCardModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Thanh toán bằng thẻ</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Số thẻ"
+              keyboardType="number-pad"
+              maxLength={16}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Tên chủ thẻ"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Ngày hết hạn (MM/YY)"
+              maxLength={5}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="CVV"
+              keyboardType="number-pad"
+              maxLength={3}
+            />
+            <Pressable
+              style={styles.payButton}
+              onPress={() => {
+                setShowCardModal(false);
+                Alert.alert(
+                  "🎉 Đặt hàng thành công!",
+                  `Đơn hàng sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
+                  [{ text: "OK", onPress: () => router.replace("/") }]
+                );
+              }}
+            >
+              <Text style={styles.payButtonText}>Thanh toán</Text>
+            </Pressable>
+            <Pressable style={styles.closeModal} onPress={() => setShowCardModal(false)}>
+              <Text style={{ color: "#00b14f" }}>Đóng</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -494,4 +609,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   closeModal: { marginTop: 12, alignItems: "center" },
+  confirmBtn: {
+    backgroundColor: "green",
+    padding: 12,
+    borderRadius: 6,
+    alignItems: "center",
+    margin: 20,
+  },
 });
+
+const QR_IMAGES = [
+  require("../assets/images/QRCode/QR1.jpg"),
+  require("../assets/images/QRCode/QR2.jpg"),
+
+];
