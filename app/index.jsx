@@ -1,3 +1,4 @@
+import 'react-native-reanimated';
 import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable, ScrollView } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { Link, useRouter, useFocusEffect } from 'expo-router'

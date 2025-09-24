@@ -12,8 +12,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Ứng dụng cần truy cập camera để quét QR thanh toán",
-        "NSMicrophoneUsageDescription": "Ứng dụng cần truy cập microphone để ghi âm"
-      }
+        "NSMicrophoneUsageDescription": "Ứng dụng cần truy cập microphone để ghi âm",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "Y"
     },
     "android": {
       "adaptiveIcon": {
