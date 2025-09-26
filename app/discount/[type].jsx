@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   menuBtn: {
-    backgroundColor: '#00b14f',
+    backgroundColor: '#3dd9eaff',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,

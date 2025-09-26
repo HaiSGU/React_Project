@@ -66,8 +66,8 @@ export default function ChangePasswordScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 24, color: '#00b14f' },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 24, color: '#3dd9eaff' },
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 16 },
-  saveBtn: { backgroundColor: '#00b14f', borderRadius: 8, padding: 14, alignItems: 'center', marginBottom: 12 },
+  saveBtn: { backgroundColor: '#3dd9eaff', borderRadius: 8, padding: 14, alignItems: 'center', marginBottom: 12 },
   saveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 })

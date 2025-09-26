@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { DRIVERS } from "../constants/DriversList";
+import { DRIVERS } from "@/constants/DriversList";
 
 
 // ====== Reverse geocode bằng OpenStreetMap ======
@@ -239,7 +239,7 @@ export default function CheckoutScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
           <Pressable
             style={{
-              backgroundColor: useDefaultAddress ? "#00b14f" : "#ddd",
+              backgroundColor: useDefaultAddress ? "#3dd9eaff" : "#ddd",
               padding: 8,
               borderRadius: 6,
               marginRight: 8,
@@ -253,7 +253,7 @@ export default function CheckoutScreen() {
           </Pressable>
           <Pressable
             style={{
-              backgroundColor: !useDefaultAddress ? "#00b14f" : "#ddd",
+              backgroundColor: !useDefaultAddress ? "#3dd9eaff" : "#ddd",
               padding: 8,
               borderRadius: 6,
             }}
@@ -369,7 +369,7 @@ export default function CheckoutScreen() {
           Tổng cộng: {totalPrice.toLocaleString()} đ
         </Text>
         <Pressable
-          style={{ backgroundColor: "green", padding: 12, borderRadius: 6 }}
+          style={{ backgroundColor: "#3dd9eaff", padding: 12, borderRadius: 6 }}
           onPress={async () => {
             if (!fullName.trim()) return Alert.alert("Lỗi", "Vui lòng nhập họ tên");
             if (!phone.trim()) return Alert.alert("Lỗi", "Vui lòng nhập số điện thoại");
@@ -460,7 +460,7 @@ export default function CheckoutScreen() {
               <Text style={styles.payButtonText}>Xác nhận đã thanh toán</Text>
             </Pressable>
             <Pressable style={styles.closeModal} onPress={() => setShowQRModal(false)}>
-              <Text style={{ color: "#00b14f" }}>Đóng</Text>
+              <Text style={{ color: "#3dd9eaff" }}>Đóng</Text>
             </Pressable>
           </View>
         </View>
@@ -506,7 +506,7 @@ export default function CheckoutScreen() {
               <Text style={styles.payButtonText}>Thanh toán</Text>
             </Pressable>
             <Pressable style={styles.closeModal} onPress={() => setShowCardModal(false)}>
-              <Text style={{ color: "#00b14f" }}>Đóng</Text>
+              <Text style={{ color: "#3dd9eaff" }}>Đóng</Text>
             </Pressable>
           </View>
         </View>
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   methodText: { color: "#333" },
-  methodActive: { backgroundColor: "#00b14f", borderColor: "#00b14f" },
+  methodActive: { backgroundColor: "#3dd9eaff", borderColor: "#3dd9eaff" },
   methodActiveText: { color: "#fff" },
   driverBox: {
     flexDirection: "row",
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
   },
   totalText: { fontSize: 18, fontWeight: "bold" },
   payButton: {
-    backgroundColor: "#00b14f",
+    backgroundColor: "#3dd9eaff",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -621,5 +621,4 @@ const styles = StyleSheet.create({
 const QR_IMAGES = [
   require("../assets/images/QRCode/QR1.jpg"),
   require("../assets/images/QRCode/QR2.jpg"),
-
 ];

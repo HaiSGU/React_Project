@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9f9f9",
   },
   searchBtn: {
-    backgroundColor: "#00b14f",
+    backgroundColor: "#3dd9eaff",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   confirmBtn: {
     marginTop: 10,
-    backgroundColor: "#00b14f",
+    backgroundColor: "#3dd9eaff",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",

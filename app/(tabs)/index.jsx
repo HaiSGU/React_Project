@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { RESTAURANTS } from '@/constants/RestaurantsList'
 import { CATEGORIES } from '@/constants/CategoryList'
 import { DISCOUNTS } from '@/constants/DiscountList'
-import ShipperImg from "../assets/images/shipperimage.jpeg"
+import ShipperImg from "@/assets/images/shipperimage.jpeg"
 
 const App = () => {
   const router = useRouter()
@@ -96,7 +96,7 @@ const App = () => {
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: '#00b14f'
+        backgroundColor: '#3dd9eaff'
       }}>
         {/* Greeting (hiện khi login) */}
         {isLoggedIn ? (
@@ -167,19 +167,9 @@ const App = () => {
             />
           </View>
 
-          <Link href="/contact" style={{ marginHorizontal: 'auto' }} asChild>
-            <Pressable style={style.button}>
-              <Text style={style.buttonText}>Contact Us</Text>
-            </Pressable>
-          </Link>
+          
 
-          {isLoggedIn && (
-            <Link href="/account" style={{ marginHorizontal: 'auto' }} asChild>
-              <Pressable style={style.button}>
-                <Text style={style.buttonText}>Tài khoản</Text>
-              </Pressable>
-            </Link>
-          )}
+          
         </ScrollView>
       </ImageBackground>
     </View>
@@ -244,7 +234,7 @@ const style = StyleSheet.create({
     marginBottom: 6,
   },
   categoryText: {
-    color: '#00b14f',
+    color: '#3dd9eaff',
     fontWeight: 'bold',
     fontSize: 15,
     textAlign: 'center',
@@ -275,7 +265,7 @@ const style = StyleSheet.create({
     textAlign: 'center',
   },
   restaurantRating: {
-    color: '#00b14f',
+    color: '#3dd9eaff',
     fontSize: 13,
     marginTop: 2,
     marginBottom: 8,
@@ -312,7 +302,7 @@ const style = StyleSheet.create({
     minWidth: 90,
   },
   discountText: {
-    color: '#00b14f',
+    color: '#3dd9eaff',
     fontWeight: 'bold',
     fontSize: 15,
     textAlign: 'center',

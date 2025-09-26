@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     marginLeft: 16,
-    color: '#00b14f'
+    color: '#3dd9eaff'
   },
   restaurantCard: {
   flexDirection: 'row',

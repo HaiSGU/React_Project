@@ -6,16 +6,30 @@ import { useRouter, Link } from 'expo-router'
 export default function AccountScreen() {
   const router = useRouter()
   const [userInfo, setUserInfo] = useState({ username: '', phone: '', address: '' })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    AsyncStorage.getItem('userInfo').then(val => {
+    const checkLogin = async () => {
+      const isLoggedIn = await AsyncStorage.getItem('isLoggedIn')
+      if (!isLoggedIn) {
+        router.replace('/login')   // chưa đăng nhập thì chuyển sang login
+        return
+      }
+
+      const val = await AsyncStorage.getItem('userInfo')
       if (val) setUserInfo(JSON.parse(val))
-    })
+      setLoading(false)
+    }
+    checkLogin()
   }, [])
 
   const handleSave = async () => {
     await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo))
     alert('Đã lưu thông tin!')
+  }
+
+  if (loading) {
+    return <View style={styles.container}><Text>Đang tải...</Text></View>
   }
 
   return (
@@ -45,20 +59,15 @@ export default function AccountScreen() {
       </Pressable>
 
       <View style={{ marginTop: 32 }}>
-        <Link href="/cart" asChild>
-          <Pressable style={styles.menuBtn}>
-            <Text style={styles.menuText}>Giỏ hàng</Text>
-          </Pressable>
-        </Link>
         <Link href="/change-password" asChild>
           <Pressable style={styles.menuBtn}>
             <Text style={styles.menuText}>Đổi mật khẩu</Text>
           </Pressable>
         </Link>
-        <Pressable style={styles.menuBtn} onPress={() => {
-          AsyncStorage.removeItem('isLoggedIn')
-          AsyncStorage.removeItem('userInfo')
-          router.replace('/')
+        <Pressable style={styles.menuBtn} onPress={async () => {
+          await AsyncStorage.removeItem('isLoggedIn')
+          await AsyncStorage.removeItem('userInfo')
+          router.replace('/login')   // đăng xuất xong đưa về login
         }}>
           <Text style={styles.menuText}>Đăng xuất</Text>
         </Pressable>
@@ -69,9 +78,9 @@ export default function AccountScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 24, color: '#00b14f' },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 24, color: '#3dd9eaff' },
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 16 },
-  saveBtn: { backgroundColor: '#00b14f', borderRadius: 8, padding: 14, alignItems: 'center', marginBottom: 12 },
+  saveBtn: { backgroundColor: '#3dd9eaff', borderRadius: 8, padding: 14, alignItems: 'center', marginBottom: 12 },
   saveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   menuBtn: { backgroundColor: '#eee', borderRadius: 8, padding: 14, alignItems: 'center', marginBottom: 12 },
   menuText: { color: '#222', fontWeight: 'bold', fontSize: 16 },

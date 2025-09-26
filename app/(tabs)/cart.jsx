@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   tabActive: {
-    backgroundColor: '#00b14f',
+    backgroundColor: '#3dd9eaff',
   },
   tabText: {
     color: '#222',
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   confirmBtn: {
     marginTop: 12,
-    backgroundColor: '#00b14f',
+    backgroundColor: '#3dd9eaff',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',

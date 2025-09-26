@@ -179,7 +179,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { padding: 24, paddingBottom: 40 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 24, color: '#00b14f', textAlign: 'center' },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 24, color: '#3dd9eaff', textAlign: 'center' },
   sectionTitle: { 
     fontSize: 18, 
     fontWeight: 'bold', 
@@ -216,8 +216,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9'
   },
   genderButtonSelected: {
-    backgroundColor: '#00b14f',
-    borderColor: '#00b14f'
+    backgroundColor: '#3dd9eaff',
+    borderColor: '#3dd9eaff'
   },
   genderText: {
     color: '#666',
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   button: { 
-    backgroundColor: '#00b14f', 
+    backgroundColor: '#3dd9eaff', 
     borderRadius: 8, 
     padding: 14, 
     alignItems: 'center', 
@@ -236,5 +236,5 @@ const styles = StyleSheet.create({
     marginTop: 10
   },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  link: { color: '#00b14f', textAlign: 'center', marginTop: 8 }
+  link: { color: '#3dd9eaff', textAlign: 'center', marginTop: 8 }
 })

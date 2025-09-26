@@ -1,8 +1,8 @@
 import { Appearance, StyleSheet, View, Text, Image, ScrollView, Platform, SafeAreaView, Pressable, FlatList } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { MENU_ITEMS } from '@/constants/MenuItems'
-import { Link, useLocalSearchParams, useRouter } from 'expo-router'
-import React, { useState, useMemo } from "react";
+import { Link, useLocalSearchParams, useRouter, useNavigation } from 'expo-router'
+import React, { useState, useMemo, useEffect } from "react";
 
 export default function MenuScreen() {
     const colorScheme = Appearance.getColorScheme()
@@ -11,6 +11,7 @@ export default function MenuScreen() {
     const Container = Platform.OS === 'web' ? ScrollView : SafeAreaView;
     const [quantities, setQuantities] = useState({});
     const router = useRouter();
+    const navigation = useNavigation();
 
     // Lấy id nhà hàng từ URL
     const { id } = useLocalSearchParams();
@@ -18,11 +19,24 @@ export default function MenuScreen() {
 
     // Lọc menu theo nhà hàng
     const menuForRestaurant = MENU_ITEMS.filter(item => {
-    if (Array.isArray(item.restaurantId)) {
-    return item.restaurantId.includes(restaurantId);
-    }
-    return item.restaurantId === restaurantId;
+        if (Array.isArray(item.restaurantId)) {
+            return item.restaurantId.includes(restaurantId);
+        }
+        return item.restaurantId === restaurantId;
     });
+
+    // Đặt  tiêu đề header 
+    useEffect(() => {
+        if (menuForRestaurant.length > 0) {
+            navigation.setOptions({
+                title: `Menu`
+            });
+        } else {
+            navigation.setOptions({
+                title: "Menu"
+            });
+        }
+    }, [menuForRestaurant, navigation]);
 
     const increaseQty = (id) => {
         setQuantities(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
@@ -48,14 +62,14 @@ export default function MenuScreen() {
 
     // Gom dữ liệu giỏ hàng
     const cartItems = useMemo(() => {
-    return menuForRestaurant
-    .filter(item => (quantities[item.id] || 0) > 0)
-    .map(item => ({
-      id: item.id,
-      title: item.title,
-      price: item.price,
-      quantity: quantities[item.id] || 0,
-    }));
+        return menuForRestaurant
+            .filter(item => (quantities[item.id] || 0) > 0)
+            .map(item => ({
+                id: item.id,
+                title: item.title,
+                price: item.price,
+                quantity: quantities[item.id] || 0,
+            }));
     }, [quantities, menuForRestaurant]);
 
 
@@ -108,18 +122,18 @@ export default function MenuScreen() {
             {/* Thanh tổng tiền */}
             {totalPrice > 0 && (
                 <Pressable
-                   style={style.checkoutBar}
-                   onPress={() =>
-                   router.push({
-                   pathname: "/checkout",
-                   params: { cart: JSON.stringify(cartItems) },
-                   })
-                   }
+                    style={style.checkoutBar}
+                    onPress={() =>
+                        router.push({
+                            pathname: "/checkout",
+                            params: { cart: JSON.stringify(cartItems) },
+                        })
+                    }
                 >
-                <Text style={style.checkoutText}>
-                    Tổng cộng: {totalPrice.toLocaleString()} đ
-                </Text>
-                <Text style={style.checkoutAction}>Thanh toán ➜</Text>
+                    <Text style={style.checkoutText}>
+                        Tổng cộng: {totalPrice.toLocaleString()} đ
+                    </Text>
+                    <Text style={style.checkoutAction}>Thanh toán ➜</Text>
                 </Pressable>
             )}
         </View>
@@ -233,7 +247,7 @@ function createStyles(theme, colorScheme) {
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: '#00b14f',
+            backgroundColor: '#3dd9eaff',
             paddingVertical: 14,
             paddingHorizontal: 20,
             flexDirection: 'row',
