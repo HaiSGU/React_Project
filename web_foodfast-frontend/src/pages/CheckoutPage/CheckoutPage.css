@@ -1,0 +1,26 @@
+.checkout-page { padding: 20px; font-family: Arial, sans-serif; }
+.checkout-header { display: flex; gap: 10px; font-weight: bold; margin-bottom: 15px; }
+.back-btn { cursor: pointer; }
+.checkout-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+
+.receiver-info h3 { margin-bottom: 6px; }
+.address-buttons { display: flex; gap: 10px; margin: 10px 0; }
+.btn-main { background: #00cfe8; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.btn-grey { background: #ddd; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+
+.order-items { margin: 15px 0; }
+.order-line { display: flex; justify-content: space-between; margin: 5px 0; }
+
+.voucher input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+
+.shipping-info { margin: 15px 0; font-size: 14px; color: #555; }
+
+.checkout-total { font-size: 18px; margin-top: 10px; margin-bottom: 15px; }
+
+.order-btn {
+  width: 100%; padding: 14px;
+  background: #00cfe8; border: none; border-radius: 8px;
+  color: white; font-size: 16px; font-weight: bold;
+  cursor: pointer;
+}
+.order-btn:hover { opacity: 0.9; }
