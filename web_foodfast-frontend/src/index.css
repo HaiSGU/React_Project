@@ -9,3 +9,4 @@ body {
   font-family: Arial, sans-serif;
   background: #f9f9f9;
 }
+@import "leaflet/dist/leaflet.css";

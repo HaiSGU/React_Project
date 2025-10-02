@@ -1,0 +1,25 @@
+{
+  "users": [
+    { "id": 1, "username": "dat1", "password": "123456", "fullname": "Nguyen Thanh Dat", "phone": "0365986732", "address": "btan" }
+  ],
+
+  "categories": [
+    { "id": 1, "name": "Đồ ăn nhanh", "image": "https://cdn-icons-png.flaticon.com/512/3075/3075977.png" },
+    { "id": 2, "name": "Cà phê - Trà - Sinh tố", "image": "https://cdn-icons-png.flaticon.com/512/415/415682.png" }
+  ],
+
+  "restaurants": [
+    { "id": 1, "name": "Jollibee", "rating": 4.7, "categoryId": 1, "image": "https://upload.wikimedia.org/wikipedia/en/0/02/Jollibee_logo.svg" },
+    { "id": 2, "name": "KFC", "rating": 4.5, "categoryId": 1, "image": "https://1000logos.net/wp-content/uploads/2017/03/KFC_logo.png" },
+    { "id": 3, "name": "Texas Chicken", "rating": 4.5, "categoryId": 1, "image": "https://1000logos.net/wp-content/uploads/2021/07/Texas-Chicken-Logo.png" },
+    { "id": 4, "name": "Lotteria", "rating": 4.3, "categoryId": 1, "image": "https://upload.wikimedia.org/wikipedia/commons/4/40/Lotteria_logo.png" }
+  ],
+
+  "menus": [
+    { "id": 1, "restaurantId": 1, "name": "Hamburger", "price": 50000, "rating": 4.5, "sold": 100, "image": "https://cdn-icons-png.flaticon.com/512/3075/3075977.png" },
+    { "id": 2, "restaurantId": 1, "name": "Chips", "price": 30000, "rating": 4.5, "sold": 100, "image": "https://cdn-icons-png.flaticon.com/512/1046/1046784.png" },
+    { "id": 3, "restaurantId": 1, "name": "Coca Cola", "price": 20000, "rating": 4.5, "sold": 100, "image": "https://cdn-icons-png.flaticon.com/512/3664/3664543.png" }
+  ],
+
+  "orders": []
+}

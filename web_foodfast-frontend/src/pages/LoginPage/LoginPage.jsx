@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./LoginPage.css";
+import { login } from "../../api/api";  // 👈 gọi API thật
 
 export default function LoginPage({ onLogin }) {
   const [username, setUsername] = useState("");
