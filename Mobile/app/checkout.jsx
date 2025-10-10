@@ -15,6 +15,10 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DRIVERS } from "@/constants/DriversList";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import SectionCard from '../components/SectionCard';
+import OrderSummary from '../components/OrderSummary';
+import colors from '../styles/colors';
 
 
 // ====== Reverse geocode bằng OpenStreetMap ======
@@ -226,55 +230,68 @@ export default function CheckoutScreen() {
       <View style={{ padding: 10, backgroundColor: "#f2f2f2", borderRadius: 8 }}>
         <Text style={{ fontWeight: "bold" }}>👤 Thông tin người nhận</Text>
         <TextInput
+          style={styles.input}
           placeholder="Họ và tên *"
           value={fullName}
           onChangeText={setFullName}
         />
         <TextInput
+          style={styles.input}
           placeholder="Số điện thoại *"
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
         />
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+      </View>
+      <View style={{ padding: 10, backgroundColor: "#f2f2f2", borderRadius: 8, marginTop: 8 }}>
+        <Text style={{ fontWeight: "bold" }}>🏠 Địa chỉ giao hàng</Text>
+        <View style={{ flexDirection: "row", marginBottom: 12, gap: 8 }}>
           <Pressable
             style={{
-              backgroundColor: useDefaultAddress ? "#3dd9eaff" : "#ddd",
-              padding: 8,
+              flex: 1,
+              backgroundColor: useDefaultAddress ? colors.primary : "#ddd",
+              padding: 10,
               borderRadius: 6,
-              marginRight: 8,
+              alignItems: 'center'
             }}
             onPress={() => {
               setUseDefaultAddress(true);
               setAddress(defaultAddress);
             }}
           >
-            <Text style={{ color: useDefaultAddress ? "#fff" : "#333" }}>Dùng địa chỉ mặc định</Text>
+            <Text style={{ color: useDefaultAddress ? colors.textWhite : "#333", fontWeight: '600' }}>
+              Địa chỉ mặc định
+            </Text>
           </Pressable>
           <Pressable
             style={{
-              backgroundColor: !useDefaultAddress ? "#3dd9eaff" : "#ddd",
-              padding: 8,
+              flex: 1,
+              backgroundColor: !useDefaultAddress ? colors.primary : "#ddd",
+              padding: 10,
               borderRadius: 6,
+              alignItems: 'center'
             }}
-            onPress={() =>
+            onPress={() => {
+              setUseDefaultAddress(false);
               router.replace({
                 pathname: "/map-select",
                 params: { cart: JSON.stringify(parsedCart) },
-              })
-            }
+              });
+            }}
           >
-            <Text style={{ color: !useDefaultAddress ? "#fff" : "#333" }}>Chọn trên bản đồ</Text>
+            <Text style={{ color: !useDefaultAddress ? colors.textWhite : "#333", fontWeight: '600' }}>
+              Chọn trên bản đồ
+            </Text>
           </Pressable>
         </View>
         <TextInput
+          style={[styles.input, { height: 80 }]}
           placeholder="Địa chỉ giao hàng *"
           value={address}
           onChangeText={setAddress}
           multiline
           numberOfLines={3}
         />
-        
       </View>
     </>
   );
@@ -345,93 +362,249 @@ export default function CheckoutScreen() {
     })
   }, [])
 
+  // Sticky footer
+  const footerDisabled = !fullName || !phone || !address || parsedCart.length === 0;
+
+  const handlePlaceOrder = async () => {
+    if (!fullName.trim()) return Alert.alert("Lỗi", "Vui lòng nhập họ tên");
+    if (!phone.trim()) return Alert.alert("Lỗi", "Vui lòng nhập số điện thoại");
+    if (!address.trim()) return Alert.alert("Lỗi", "Vui lòng nhập địa chỉ");
+    if (parsedCart.length === 0) return Alert.alert("Lỗi", "Giỏ hàng trống");
+
+    // Tạo đơn hàng mới
+    const orderId = `FF${Date.now()}`;
+    const newOrder = {
+      id: orderId,
+      restaurantName: parsedCart[0]?.restaurantName || "Nhà hàng",
+      items: parsedCart,
+      totalPrice,
+      status: "Đang giao",
+      address,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Lưu vào shippingOrders
+    try {
+      const shippingOrders = await AsyncStorage.getItem('shippingOrders');
+      const orders = shippingOrders ? JSON.parse(shippingOrders) : [];
+      orders.push(newOrder);
+      await AsyncStorage.setItem('shippingOrders', JSON.stringify(orders));
+    } catch (e) {
+      console.log("Lưu đơn hàng lỗi:", e);
+    }
+
+    Alert.alert(
+      "🎉 Đặt hàng thành công!",
+      `Đơn hàng #${orderId} sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
+      [{ text: "OK", onPress: () => router.replace("/") }]
+    );
+  };
+
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <FlatList
         data={parsedCart}
         keyExtractor={(item, idx) => (item.id ? `${item.id}` : `${idx}`)}
-        renderItem={renderCartItem}
-        ListHeaderComponent={<ListHeader />}
-        ListFooterComponent={<ListFooter />}
-        ListEmptyComponent={<Text style={{ padding: 16 }}>Giỏ hàng trống</Text>}
-        contentContainerStyle={{ paddingBottom: 180 }}
+        renderItem={() => null}
+        ListHeaderComponent={
+          <>
+            <SectionCard title="👤 Thông tin người nhận">
+              <TextInput
+                style={styles.input}
+                placeholder="Họ và tên *"
+                value={fullName}
+                onChangeText={setFullName}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Số điện thoại *"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+              />
+            </SectionCard>
+
+            <SectionCard title="🏠 Địa chỉ giao hàng">
+              <View style={{ flexDirection: "row", marginBottom: 12, gap: 8 }}>
+                <Pressable
+                  style={{
+                    flex: 1,
+                    backgroundColor: useDefaultAddress ? colors.primary : "#ddd",
+                    padding: 10,
+                    borderRadius: 6,
+                    alignItems: 'center'
+                  }}
+                  onPress={() => {
+                    setUseDefaultAddress(true);
+                    setAddress(defaultAddress);
+                  }}
+                >
+                  <Text style={{ color: useDefaultAddress ? colors.textWhite : "#333", fontWeight: '600' }}>
+                    Địa chỉ mặc định
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={{
+                    flex: 1,
+                    backgroundColor: !useDefaultAddress ? colors.primary : "#ddd",
+                    padding: 10,
+                    borderRadius: 6,
+                    alignItems: 'center'
+                  }}
+                  onPress={() => {
+                    setUseDefaultAddress(false);
+                    router.replace({
+                      pathname: "/map-select",
+                      params: { cart: JSON.stringify(parsedCart) },
+                    });
+                  }}
+                >
+                  <Text style={{ color: !useDefaultAddress ? colors.textWhite : "#333", fontWeight: '600' }}>
+                    Chọn trên bản đồ
+                  </Text>
+                </Pressable>
+              </View>
+              <TextInput
+                style={[styles.input, { height: 80 }]}
+                placeholder="Địa chỉ giao hàng *"
+                value={address}
+                onChangeText={setAddress}
+                multiline
+                numberOfLines={3}
+              />
+            </SectionCard>
+
+            <OrderSummary
+              items={parsedCart}
+              subtotal={subtotal}
+              shippingFee={shippingFee}
+              discount={itemDiscount + shippingDiscount}
+            />
+
+            <SectionCard title="🚚 Hình thức giao hàng">
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {[
+                  { key: 'fast', label: 'Nhanh (25k)' },
+                  { key: 'standard', label: 'Tiêu chuẩn (15k)' },
+                  { key: 'economy', label: 'Tiết kiệm (10k)' },
+                  { key: 'express', label: 'Siêu tốc (40k)' }
+                ].map(method => (
+                  <Pressable
+                    key={method.key}
+                    style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 12,
+                      borderRadius: 6,
+                      backgroundColor: deliveryMethod === method.key ? colors.primary : '#f0f0f0'
+                    }}
+                    onPress={() => setDeliveryMethod(method.key)}
+                  >
+                    <Text style={{ color: deliveryMethod === method.key ? colors.textWhite : colors.text, fontWeight: '600' }}>
+                      {method.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </SectionCard>
+
+            <SectionCard title="🎟️ Voucher">
+              <Pressable
+                style={{ padding: 12, backgroundColor: '#f0f0f0', borderRadius: 6, alignItems: 'center' }}
+                onPress={() => setShowVoucherModal(true)}
+              >
+                <Text style={{ fontWeight: '600' }}>
+                  {voucher ? `${voucher.label}` : "Chọn voucher"}
+                </Text>
+              </Pressable>
+            </SectionCard>
+
+            <SectionCard title="💳 Phương thức thanh toán">
+              <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
+                {[
+                  { key: 'cash', label: '💵 Tiền mặt' },
+                  { key: 'qr', label: '📱 QR Code' },
+                  { key: 'card', label: '💳 Thẻ' }
+                ].map(method => (
+                  <Pressable
+                    key={method.key}
+                    style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 12,
+                      borderRadius: 6,
+                      backgroundColor: paymentMethod === method.key ? colors.primary : '#f0f0f0'
+                    }}
+                    onPress={() => setPaymentMethod(method.key)}
+                  >
+                    <Text style={{ color: paymentMethod === method.key ? colors.textWhite : colors.text, fontWeight: '600' }}>
+                      {method.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </SectionCard>
+
+            {assignedDriver && (
+              <SectionCard title="🧑‍✈️ Tài xế">
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Image source={assignedDriver.image} style={{ width: 50, height: 50, borderRadius: 25 }} />
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={{ fontWeight: '600' }}>
+                      {assignedDriver.name} ({assignedDriver.vehicle})
+                    </Text>
+                    <Text style={{ color: '#666' }}>⭐ {assignedDriver.rating}</Text>
+                  </View>
+                </View>
+              </SectionCard>
+            )}
+
+            {/* Modal Voucher */}
+            <Modal visible={showVoucherModal} transparent animationType="slide">
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalBox}>
+                  <Text style={styles.modalTitle}>Chọn voucher</Text>
+                  {vouchers.map((v) => (
+                    <Pressable
+                      key={v.code}
+                      style={styles.voucherItem}
+                      onPress={() => {
+                        setVoucher(v);
+                        setShowVoucherModal(false);
+                      }}
+                    >
+                      <Text style={{ fontWeight: '600' }}>{v.label}</Text>
+                      <Text style={{ color: '#666' }}>{v.code}</Text>
+                    </Pressable>
+                  ))}
+                  <Pressable style={styles.closeModal} onPress={() => setShowVoucherModal(false)}>
+                    <Text style={{ color: colors.primary }}>Đóng</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+          </>
+        }
+        contentContainerStyle={{ padding: 16, paddingBottom: 160 }}
       />
 
-      <View style={{ padding: 20 }}>
-        <Text>Địa chỉ: {address || "Chưa chọn"}</Text>
-        <Text>Thời tiết: {weather?.weather?.[0]?.description || "Chưa có dữ liệu"}</Text>
-        <Text>Giá ship: {shipPrice} VND</Text>
-        <Text>Thời gian dự kiến: {estimatedTime} phút</Text>
-      </View>
-
-      <View style={{ padding: 20, borderTopWidth: 1, borderColor: "#ddd" }}>
-        <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
-          Tổng cộng: {totalPrice.toLocaleString()} đ
-        </Text>
+      {/* Sticky footer */}
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: colors.card, borderTopWidth: 1, borderColor: colors.border, padding: 12 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text style={{ color: colors.subText }}>Tổng cộng</Text>
+          <Text style={{ fontWeight: '900', fontSize: 18, color: colors.primary }}>
+            {totalPrice.toLocaleString()} đ
+          </Text>
+        </View>
         <Pressable
-          style={{ backgroundColor: "#3dd9eaff", padding: 12, borderRadius: 6 }}
-          onPress={async () => {
-            if (!fullName.trim()) return Alert.alert("Lỗi", "Vui lòng nhập họ tên");
-            if (!phone.trim()) return Alert.alert("Lỗi", "Vui lòng nhập số điện thoại");
-            if (!address.trim()) return Alert.alert("Lỗi", "Vui lòng nhập địa chỉ");
-            if (parsedCart.length === 0) return Alert.alert("Lỗi", "Giỏ hàng trống");
-
-            // Tạo đơn hàng mới
-            const orderId = `FF${Date.now()}`;
-            const newOrder = {
-              id: orderId,
-              restaurantName: parsedCart[0]?.restaurantName || "Nhà hàng",
-              items: parsedCart,
-              totalPrice,
-              status: "Đang giao",
-              address,
-              createdAt: new Date().toISOString(),
-            };
-
-            // Lưu vào shippingOrders
-            try {
-              const shippingOrders = await AsyncStorage.getItem('shippingOrders');
-              const orders = shippingOrders ? JSON.parse(shippingOrders) : [];
-              orders.push(newOrder);
-              await AsyncStorage.setItem('shippingOrders', JSON.stringify(orders));
-            } catch (e) {
-              console.log("Lưu đơn hàng lỗi:", e);
-            }
-
-            Alert.alert(
-              "🎉 Đặt hàng thành công!",
-              `Đơn hàng #${orderId} sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
-              [{ text: "OK", onPress: () => router.replace("/") }]
-            );
+          disabled={footerDisabled}
+          style={{
+            backgroundColor: footerDisabled ? colors.disabled : colors.primary,
+            padding: 14, borderRadius: 10, alignItems: 'center'
           }}
+          onPress={handlePlaceOrder}
         >
-          <Text style={{ color: "white", textAlign: "center" }}>Đặt hàng</Text>
+          <Text style={{ color: '#fff', fontWeight: '700' }}>Đặt hàng</Text>
         </Pressable>
       </View>
-
-      {/* Modal voucher */}
-      <Modal visible={showVoucherModal} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center" }}>
-          <View style={{ backgroundColor: "white", margin: 20, padding: 20, borderRadius: 8 }}>
-            <Text style={{ fontWeight: "bold" }}>Chọn voucher</Text>
-            {vouchers.map((v) => (
-              <TouchableOpacity
-                key={v.code}
-                style={{ padding: 10 }}
-                onPress={() => {
-                  setVoucher(v);
-                  setShowVoucherModal(false);
-                }}
-              >
-                <Text>{v.label}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity onPress={() => setShowVoucherModal(false)} style={{ padding: 10 }}>
-              <Text>Đóng</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {/* Modal QR Code */}
       <Modal visible={showQRModal} transparent animationType="slide">
@@ -460,7 +633,7 @@ export default function CheckoutScreen() {
               <Text style={styles.payButtonText}>Xác nhận đã thanh toán</Text>
             </Pressable>
             <Pressable style={styles.closeModal} onPress={() => setShowQRModal(false)}>
-              <Text style={{ color: "#3dd9eaff" }}>Đóng</Text>
+              <Text style={{ color: colors.primary }}>Đóng</Text>
             </Pressable>
           </View>
         </View>
@@ -506,12 +679,12 @@ export default function CheckoutScreen() {
               <Text style={styles.payButtonText}>Thanh toán</Text>
             </Pressable>
             <Pressable style={styles.closeModal} onPress={() => setShowCardModal(false)}>
-              <Text style={{ color: "#3dd9eaff" }}>Đóng</Text>
+              <Text style={{ color: colors.primary }}>Đóng</Text>
             </Pressable>
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 

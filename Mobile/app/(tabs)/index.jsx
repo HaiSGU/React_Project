@@ -7,6 +7,7 @@ import { RESTAURANTS } from '@/constants/RestaurantsList'
 import { CATEGORIES } from '@/constants/CategoryList'
 import { DISCOUNTS } from '@/constants/DiscountList'
 import ShipperImg from "@/assets/images/shipperimage.jpeg"
+import colors from '@/styles/colors'
 
 const App = () => {
   const router = useRouter()
@@ -63,8 +64,8 @@ const App = () => {
       <Text style={style.restaurantName}>{item.name}</Text>
       <Text style={style.restaurantRating}>⭐ {item.rating}</Text>
       <Link href={`/menu/${item.id}`} asChild>
-        <Pressable style={style.button}>
-          <Text style={style.buttonText}>Menu</Text>
+        <Pressable style={style.menuButton}>
+          <Text style={style.menuButtonText}>Menu</Text>
         </Pressable>
       </Link>
     </View>
@@ -90,35 +91,13 @@ const App = () => {
   return (
     <View style={style.container}>
       {/* Thanh chào + đăng nhập/đăng xuất */}
-      <View style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        backgroundColor: '#3dd9eaff'
-      }}>
-        {/* Greeting (hiện khi login) */}
-        {isLoggedIn ? (
-          <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
-            👋 Xin chào {userInfo?.username || 'bạn'}, hôm nay ăn gì nè?
-          </Text>
-        ) : (
-          <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
-            Chào mừng bạn đến với FoodFast
-          </Text>
-        )}
-
-        {/* Button login/logout */}
-        {isLoggedIn ? (
-          <Pressable onPress={handleLogout} style={[style.button, { width: 90, backgroundColor: '#e53935' }]}>
-            <Text style={style.buttonText}>Đăng xuất</Text>
-          </Pressable>
-        ) : (
-          <Pressable onPress={handleLogin} style={[style.button, { width: 90, backgroundColor: '#222' }]}>
-            <Text style={style.buttonText}>Đăng nhập</Text>
-          </Pressable>
-        )}
+      <View style={style.headerBar}>
+        <Text style={style.headerText}>
+          {isLoggedIn ? `👋 Xin chào ${userInfo?.username || 'bạn'}, hôm nay ăn gì nè?` : 'Chào mừng bạn đến với FoodFast'}
+        </Text>
+        <Pressable onPress={isLoggedIn ? handleLogout : handleLogin} style={[style.button, isLoggedIn ? style.logoutBtn : style.loginBtn]}>
+          <Text style={style.buttonText}>{isLoggedIn ? 'Đăng xuất' : 'Đăng nhập'}</Text>
+        </Pressable>
       </View>
 
       {/* Nội dung chính */}
@@ -154,9 +133,7 @@ const App = () => {
 
           {/* Nhà hàng nổi bật */}
           <View style={{ marginBottom: 40 }}>
-            <View style={style.sectionHeader}>
-              <Text style={style.sectionTitle}>⭐ Nhà hàng nổi bật</Text>
-            </View>
+            <Text style={style.sectionTitle}>⭐ Nhà hàng nổi bật</Text>
             <FlatList
               data={RESTAURANTS.filter(r => r.isFeatured)}
               renderItem={renderRestaurant}
@@ -166,10 +143,6 @@ const App = () => {
               contentContainerStyle={{ paddingHorizontal: 16 }}
             />
           </View>
-
-          
-
-          
         </ScrollView>
       </ImageBackground>
     </View>
@@ -179,17 +152,17 @@ const App = () => {
 export default App
 
 const style = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'column',
+  container: { flex: 1 },
+  headerBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors.primary,
   },
-  image: {
-    width: '100%',
-    height: '100%',
-    flex: 1,
-    resizeMode: 'cover',
-    justifyContent: 'center',
-  },
+  headerText: { fontSize: 16, fontWeight: '600', color: colors.textWhite, flex: 1 },
+  image: { width: '100%', height: '100%', flex: 1 },
   title: {
     color: 'white',
     fontSize: 42,
@@ -210,35 +183,19 @@ const style = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 6,
   },
-  categorySection: {
-    marginBottom: 24,
-  },
+  categorySection: { marginBottom: 24 },
   categoryButton: {
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     marginRight: 16,
     paddingVertical: 12,
     paddingHorizontal: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
     elevation: 2,
     minWidth: 90,
   },
-  categoryIcon: {
-    width: 32,
-    height: 32,
-    marginBottom: 6,
-  },
-  categoryText: {
-    color: '#3dd9eaff',
-    fontWeight: 'bold',
-    fontSize: 15,
-    textAlign: 'center',
-  },
+  categoryIcon: { width: 32, height: 32, marginBottom: 6 },
+  categoryText: { color: colors.primary, fontWeight: 'bold', fontSize: 15 },
   restaurantCard: {
     width: 140,
     marginRight: 16,
@@ -246,72 +203,40 @@ const style = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     padding: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
     elevation: 2,
   },
-  restaurantImage: {
-    width: 90,
-    height: 70,
-    borderRadius: 10,
-    marginBottom: 6,
-  },
-  restaurantName: {
-    fontWeight: 'bold',
-    fontSize: 15,
-    color: '#222',
-    textAlign: 'center',
-  },
-  restaurantRating: {
-    color: '#3dd9eaff',
-    fontSize: 13,
-    marginTop: 2,
-    marginBottom: 8,
-  },
+  restaurantImage: { width: 90, height: 70, borderRadius: 10, marginBottom: 6 },
+  restaurantName: { fontWeight: 'bold', fontSize: 15, color: colors.text },
+  restaurantRating: { color: colors.primary, fontSize: 13, marginTop: 2, marginBottom: 8 },
   button: {
     height: 40,
     width: 90,
     borderRadius: 14,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.75)',
     padding: 6,
-    marginTop: 6,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 15,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    padding: 2,
-  },
+  loginBtn: { backgroundColor: '#222' },
+  logoutBtn: { backgroundColor: colors.danger },
+  buttonText: { color: 'white', fontSize: 15, textAlign: 'center', fontWeight: 'bold' },
   discountButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     marginRight: 16,
     paddingVertical: 12,
     paddingHorizontal: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
     elevation: 2,
     minWidth: 90,
   },
-  discountText: {
-    color: '#3dd9eaff',
-    fontWeight: 'bold',
-    fontSize: 15,
-    textAlign: 'center',
+  discountText: { color: colors.primary, fontWeight: 'bold', fontSize: 15 },
+  menuButton: {
+    backgroundColor: colors.primary, // Màu xanh dương
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 14,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginLeft: 16,
-    marginBottom: 10,
+  menuButtonText: {
+    color: colors.textWhite,
+    fontSize: 15,
+    fontWeight: 'bold',
   },
 })
