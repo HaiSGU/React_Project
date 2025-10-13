@@ -1,8 +1,9 @@
 import { View, Text, FlatList, Image, StyleSheet, Pressable } from 'react-native'
 import { useLocalSearchParams, Link } from 'expo-router'
-import { RESTAURANTS } from '@/constants/RestaurantsList'
-import { CATEGORIES } from '@/constants/CategoryList'
-import colors from '@/styles/colors'
+
+import { RESTAURANTS } from '@shared/constants/RestaurantsList'
+import { CATEGORIES } from '@shared/constants/CategoryList'
+import colors from '@shared/theme/colors'
 
 export default function CategoryScreen() {
   const { key } = useLocalSearchParams()

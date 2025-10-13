@@ -3,6 +3,8 @@ import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-nativ
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+import { login } from '@shared/services/authService'
+
 export default function LoginScreen() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')

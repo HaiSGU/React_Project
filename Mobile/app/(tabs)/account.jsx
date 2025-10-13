@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native'
+import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter, Link } from 'expo-router'
+
+import { isLoggedIn, getCurrentUser, updateUserInfo, logout } from '@shared/services/authService'
 
 export default function AccountScreen() {
   const router = useRouter()
@@ -10,22 +12,38 @@ export default function AccountScreen() {
 
   useEffect(() => {
     const checkLogin = async () => {
-      const isLoggedIn = await AsyncStorage.getItem('isLoggedIn')
-      if (!isLoggedIn) {
-        router.replace('/login')   // chưa đăng nhập thì chuyển sang login
+      // Dùng shared service
+      const loggedIn = await isLoggedIn(AsyncStorage)
+      if (!loggedIn) {
+        router.replace('/login')
         return
       }
 
-      const val = await AsyncStorage.getItem('userInfo')
-      if (val) setUserInfo(JSON.parse(val))
+      const user = await getCurrentUser(AsyncStorage)
+      if (user) setUserInfo(user)
       setLoading(false)
     }
     checkLogin()
   }, [])
 
   const handleSave = async () => {
-    await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo))
-    alert('Đã lưu thông tin!')
+    try {
+      // Dùng shared service
+      await updateUserInfo({
+        username: userInfo.username,
+        phone: userInfo.phone,
+        address: userInfo.address,
+      }, AsyncStorage)
+      Alert.alert('Thành công', 'Đã lưu thông tin!')
+    } catch (error) {
+      Alert.alert('Lỗi', error.message)
+    }
+  }
+
+  const handleLogout = async () => {
+    // Dùng shared service
+    await logout(AsyncStorage)
+    router.replace('/login')
   }
 
   if (loading) {
@@ -64,11 +82,7 @@ export default function AccountScreen() {
             <Text style={styles.menuText}>Đổi mật khẩu</Text>
           </Pressable>
         </Link>
-        <Pressable style={styles.menuBtn} onPress={async () => {
-          await AsyncStorage.removeItem('isLoggedIn')
-          await AsyncStorage.removeItem('userInfo')
-          router.replace('/login')   // đăng xuất xong đưa về login
-        }}>
+        <Pressable style={styles.menuBtn} onPress={handleLogout}>
           <Text style={styles.menuText}>Đăng xuất</Text>
         </Pressable>
       </View>

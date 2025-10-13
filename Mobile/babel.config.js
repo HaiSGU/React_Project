@@ -6,15 +6,14 @@ module.exports = function (api) {
       [
         'module-resolver',
         {
+          root: ['./'],
           alias: {
-            '@assets': './assets',
-            '@components': './components',
-            '@constants': './constants',
-            '@app': './app',
+            '@': './',
+            '@shared': '../shared',
           },
         },
       ],
-      'react-native-worklets/plugin',
+      'react-native-reanimated/plugin',
     ],
   };
 };

@@ -1,7 +1,9 @@
 import { View, Text, FlatList, Image, StyleSheet, Pressable } from 'react-native'
 import { useLocalSearchParams, Link } from 'expo-router'
-import { DISCOUNTS } from '@/constants/DiscountList'
-import { RESTAURANTS } from '@/constants/RestaurantsList'
+
+import { DISCOUNTS } from '@shared/constants/DiscountList'
+import { RESTAURANTS } from '@shared/constants/RestaurantsList'
+import colors from '@shared/theme/colors'
 
 export default function DiscountDetail() {
   const { type } = useLocalSearchParams()

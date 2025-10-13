@@ -14,11 +14,13 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { DRIVERS } from "@/constants/DriversList";
+import { DRIVERS } from "@shared/constants/DriversList";
+import { isLoggedIn, getCurrentUser } from '@shared/services/authService';
+import { addShippingOrder } from '@shared/services/orderService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SectionCard from '../components/SectionCard';
 import OrderSummary from '../components/OrderSummary';
-import colors from '../styles/colors';
+import colors from '@shared/theme/colors';
 
 
 // ====== Reverse geocode bằng OpenStreetMap ======
@@ -140,9 +142,23 @@ export default function CheckoutScreen() {
   useEffect(() => {
     const loadUserInfo = async () => {
       try {
-        const userInfoValue = await AsyncStorage.getItem("userInfo");
-        if (userInfoValue) {
-          const user = JSON.parse(userInfoValue);
+        // ✅ DÙNG SHARED SERVICE
+        const loggedIn = await isLoggedIn(AsyncStorage);
+        if (!loggedIn) {
+          router.replace({
+            pathname: '/login',
+            params: { 
+              cart: JSON.stringify(parsedCart), 
+              location: JSON.stringify(parsedLocation),
+              redirect: 'checkout'
+            }
+          });
+          return;
+        }
+
+        // ✅ DÙNG SHARED SERVICE
+        const user = await getCurrentUser(AsyncStorage);
+        if (user) {
           setUserInfo(user);
           setAddress(user.address || "");
           setPhone(user.phone || "");
@@ -351,17 +367,6 @@ export default function CheckoutScreen() {
     </>
   );
 
-  useEffect(() => {
-    AsyncStorage.getItem('isLoggedIn').then(val => {
-      if (val !== 'true') {
-        router.replace({
-          pathname: '/login',
-          params: { cart: JSON.stringify(parsedCart), location: JSON.stringify(parsedLocation) }
-        })
-      }
-    })
-  }, [])
-
   // Sticky footer
   const footerDisabled = !fullName || !phone || !address || parsedCart.length === 0;
 
@@ -371,33 +376,33 @@ export default function CheckoutScreen() {
     if (!address.trim()) return Alert.alert("Lỗi", "Vui lòng nhập địa chỉ");
     if (parsedCart.length === 0) return Alert.alert("Lỗi", "Giỏ hàng trống");
 
-    // Tạo đơn hàng mới
-    const orderId = `FF${Date.now()}`;
+    // ✅ Tạo đơn hàng mới
     const newOrder = {
-      id: orderId,
       restaurantName: parsedCart[0]?.restaurantName || "Nhà hàng",
       items: parsedCart,
       totalPrice,
-      status: "Đang giao",
       address,
-      createdAt: new Date().toISOString(),
+      fullName,
+      phone,
+      deliveryMethod,
+      paymentMethod,
+      voucher: voucher?.code,
+      driver: assignedDriver?.name,
     };
 
-    // Lưu vào shippingOrders
     try {
-      const shippingOrders = await AsyncStorage.getItem('shippingOrders');
-      const orders = shippingOrders ? JSON.parse(shippingOrders) : [];
-      orders.push(newOrder);
-      await AsyncStorage.setItem('shippingOrders', JSON.stringify(orders));
-    } catch (e) {
-      console.log("Lưu đơn hàng lỗi:", e);
+      // ✅ DÙNG SHARED SERVICE
+      const createdOrder = await addShippingOrder(newOrder, AsyncStorage);
+      
+      Alert.alert(
+        "🎉 Đặt hàng thành công!",
+        `Đơn hàng #${createdOrder.id} sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
+        [{ text: "OK", onPress: () => router.replace("/") }]
+      );
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể tạo đơn hàng. Vui lòng thử lại.");
+      console.error("Create order error:", error);
     }
-
-    Alert.alert(
-      "🎉 Đặt hàng thành công!",
-      `Đơn hàng #${orderId} sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
-      [{ text: "OK", onPress: () => router.replace("/") }]
-    );
   };
 
   return (

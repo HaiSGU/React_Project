@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, TextInput, Alert } from "react-nativ
 import MapView, { Marker, PROVIDER_DEFAULT, UrlTile } from "react-native-maps";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Location from "expo-location";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function MapSelectScreen() {
   const router = useRouter();

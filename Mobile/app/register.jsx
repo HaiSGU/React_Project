@@ -3,6 +3,8 @@ import { View, Text, TextInput, Pressable, StyleSheet, Alert, ScrollView } from 
 import { useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+import { register } from '@shared/services/authService'
+
 export default function RegisterScreen() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')

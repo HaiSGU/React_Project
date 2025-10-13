@@ -3,60 +3,47 @@ import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable, Sc
 import React, { useState, useEffect } from 'react'
 import { Link, useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { RESTAURANTS } from '@/constants/RestaurantsList'
-import { CATEGORIES } from '@/constants/CategoryList'
-import { DISCOUNTS } from '@/constants/DiscountList'
-import ShipperImg from "@/assets/images/shipperimage.jpeg"
-import colors from '@/styles/colors'
+
+import { RESTAURANTS } from '@shared/constants/RestaurantsList'
+import { CATEGORIES } from '@shared/constants/CategoryList'
+import { DISCOUNTS } from '@shared/constants/DiscountList'
+import { isLoggedIn, getCurrentUser, logout } from '@shared/services/authService'
+import ShipperImg from "@shared/assets/images/shipperimage.jpeg"
+import colors from '@shared/theme/colors'
 
 const App = () => {
   const router = useRouter()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(false)
   const [userInfo, setUserInfo] = useState(null)
   const params = useLocalSearchParams()
 
-  // Lắng nghe khi focus vào trang để cập nhật trạng thái đăng nhập
   useFocusEffect(
     React.useCallback(() => {
       const loadLoginStatus = async () => {
-        const isLoggedInValue = await AsyncStorage.getItem('isLoggedIn')
-        const userInfoValue = await AsyncStorage.getItem('userInfo')
-
-        setIsLoggedIn(isLoggedInValue === 'true')
-        if (userInfoValue) {
-          setUserInfo(JSON.parse(userInfoValue))
+        // ✅ Dùng shared service
+        const loggedInStatus = await isLoggedIn(AsyncStorage)
+        setLoggedIn(loggedInStatus)
+        
+        if (loggedInStatus) {
+          const user = await getCurrentUser(AsyncStorage)
+          setUserInfo(user)
         }
       }
       loadLoginStatus()
     }, [])
   )
 
-  useEffect(() => {
-    AsyncStorage.getItem('isLoggedIn').then(val => {
-      setIsLoggedIn(val === 'true')
-    })
-  }, [])
-
-  // Xử lý đăng xuất
   const handleLogout = async () => {
-    await AsyncStorage.removeItem('isLoggedIn')
-    await AsyncStorage.removeItem('userInfo')
-    setIsLoggedIn(false)
+    // ✅ Dùng shared service
+    await logout(AsyncStorage)
+    setLoggedIn(false)
     setUserInfo(null)
     router.replace('/')
   }
 
-  // Chuyển hướng đến trang đăng nhập
   const handleLogin = () => {
     router.push('/login')
   }
-
-  // Nếu vừa đăng nhập từ login, chỉ ở lại trang chủ
-  useEffect(() => {
-    if (params?.redirect === 'home') {
-      // Không làm gì, ở lại trang chủ
-    }
-  }, [params])
 
   const renderRestaurant = ({ item }) => (
     <View style={style.restaurantCard}>
@@ -93,10 +80,10 @@ const App = () => {
       {/* Thanh chào + đăng nhập/đăng xuất */}
       <View style={style.headerBar}>
         <Text style={style.headerText}>
-          {isLoggedIn ? `👋 Xin chào ${userInfo?.username || 'bạn'}, hôm nay ăn gì nè?` : 'Chào mừng bạn đến với FoodFast'}
+          {loggedIn ? `👋 Xin chào ${userInfo?.username || 'bạn'}, hôm nay ăn gì nè?` : 'Chào mừng bạn đến với FoodFast'}
         </Text>
-        <Pressable onPress={isLoggedIn ? handleLogout : handleLogin} style={[style.button, isLoggedIn ? style.logoutBtn : style.loginBtn]}>
-          <Text style={style.buttonText}>{isLoggedIn ? 'Đăng xuất' : 'Đăng nhập'}</Text>
+        <Pressable onPress={loggedIn ? handleLogout : handleLogin} style={[style.button, loggedIn ? style.logoutBtn : style.loginBtn]}>
+          <Text style={style.buttonText}>{loggedIn ? 'Đăng xuất' : 'Đăng nhập'}</Text>
         </Pressable>
       </View>
 
@@ -229,7 +216,7 @@ const style = StyleSheet.create({
   },
   discountText: { color: colors.primary, fontWeight: 'bold', fontSize: 15 },
   menuButton: {
-    backgroundColor: colors.primary, // Màu xanh dương
+    backgroundColor: colors.primary,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 14,

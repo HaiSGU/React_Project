@@ -1,10 +1,11 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { Appearance } from 'react-native';
-import { Colors } from "@/constants/Colors";
+import { Colors } from "../constants/Colors";
 
 export default function RootLayout() {
   const colorScheme = Appearance.getColorScheme()
@@ -20,7 +21,8 @@ export default function RootLayout() {
   }
 
   return (
-
+    <SafeAreaProvider>
+      <StatusBar style="auto" />
       <Stack screenOptions={{headerStyle: {backgroundColor:theme.headerBackground}, 
       headerTintColor: theme.text, headerShadowVisible: false}}>
         <Stack.Screen name="index" options={{ headerShown: false, title: 'Home' }} /> 
@@ -34,6 +36,6 @@ export default function RootLayout() {
         <Stack.Screen name= "contact" options={{title: "Contact Us"}}/> */}
         <Stack.Screen name="+not-found" />
       </Stack>
-   
+    </SafeAreaProvider>
   );
 }

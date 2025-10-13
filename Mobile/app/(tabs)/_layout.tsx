@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
+import { Colors } from '../../constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import colors from '@/styles/colors';
 

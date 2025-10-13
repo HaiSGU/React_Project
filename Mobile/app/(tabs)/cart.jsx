@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+import { getShippingOrders, getDeliveredOrders, confirmDelivery } from '@shared/services/orderService'
+
 export default function CartScreen() {
   const [activeTab, setActiveTab] = useState('shipping')
   const [shippingOrders, setShippingOrders] = useState([])
@@ -9,26 +11,20 @@ export default function CartScreen() {
 
   useEffect(() => {
     const loadOrders = async () => {
-      const shipping = await AsyncStorage.getItem('shippingOrders')
-      const delivered = await AsyncStorage.getItem('deliveredOrders')
-      setShippingOrders(shipping ? JSON.parse(shipping) : [])
-      setDeliveredOrders(delivered ? JSON.parse(delivered) : [])
+      // Dùng shared service
+      const shipping = await getShippingOrders(AsyncStorage)
+      const delivered = await getDeliveredOrders(AsyncStorage)
+      setShippingOrders(shipping)
+      setDeliveredOrders(delivered)
     }
     loadOrders()
   }, [])
 
-  // Xác nhận đã nhận hàng
   const handleConfirmDelivered = async (order) => {
-    // Xóa khỏi shippingOrders
-    const newShipping = shippingOrders.filter(o => o.id !== order.id)
-    setShippingOrders(newShipping)
-    await AsyncStorage.setItem('shippingOrders', JSON.stringify(newShipping))
-
-    // Thêm vào deliveredOrders
-    const newOrder = { ...order, status: "Đã giao", deliveredAt: new Date().toISOString() }
-    const newDelivered = [...deliveredOrders, newOrder]
-    setDeliveredOrders(newDelivered)
-    await AsyncStorage.setItem('deliveredOrders', JSON.stringify(newDelivered))
+    // Dùng shared service
+    const result = await confirmDelivery(order, AsyncStorage)
+    setShippingOrders(result.shipping)
+    setDeliveredOrders(result.delivered)
   }
 
   const renderOrder = ({ item }) => (

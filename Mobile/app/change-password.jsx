@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
+import { changePassword } from '@shared/services/authService'
 
 export default function ChangePasswordScreen() {
   const router = useRouter()
