@@ -1,802 +1,744 @@
 // app/checkout.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
-  FlatList,
-  Pressable,
   TextInput,
-  Modal,
-  TouchableOpacity,
-  Image,
-  Alert,
+  Pressable,
+  FlatList,
   StyleSheet,
-} from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { DRIVERS } from "@shared/constants/DriversList";
-import { isLoggedIn, getCurrentUser } from '@shared/services/authService';
-import { addShippingOrder } from '@shared/services/orderService';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import SectionCard from '../components/SectionCard';
-import OrderSummary from '../components/OrderSummary';
-import colors from '@shared/theme/colors';
+  Alert,
+  Modal,
+  Image,
+} from 'react-native'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as Location from 'expo-location'
 
+//Import từ shared
+import { useCheckout } from '@shared/hooks/useCheckout'
+import { DISCOUNTS } from '@shared/constants/DiscountList'
+import { DRIVERS } from '@shared/constants/DriversList'
+import { getCurrentUser } from '@shared/services/authService' // ✅ THÊM
+import { fetchWeather, getAddressFromCoords } from '@shared/services/weatherService'
+import { adjustShippingForWeather, canApplyDiscount } from '@shared/utils/checkoutHelpers'
+import { buildOrderObject } from '@shared/utils/orderBuilder'
+import { saveOrder } from '@shared/services/orderService'
+import colors from '@shared/theme/colors'
 
-// ====== Reverse geocode bằng OpenStreetMap ======
-const getAddressFromCoords = async (lat, lng) => {
-  try {
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data && data.display_name) return data.display_name;
-    return `Lat: ${lat}, Lng: ${lng}`;
-  } catch (error) {
-    console.error("Error fetching address:", error);
-    return `Lat: ${lat}, Lng: ${lng}`;
-  }
-};
+const DELIVERY_METHODS = [
+  { key: 'fast', label: 'Nhanh', fee: 25000, time: '30 phút' },
+  { key: 'standard', label: 'Tiêu chuẩn', fee: 15000, time: '45 phút' },
+  { key: 'economy', label: 'Tiết kiệm', fee: 10000, time: '60 phút' },
+]
+
+const PAYMENT_METHODS = [
+  { key: 'cash', label: 'Tiền mặt', icon: '💵' },
+  { key: 'qr', label: 'QR Code', icon: '📱' },
+  { key: 'card', label: 'Thẻ', icon: '💳' },
+]
 
 export default function CheckoutScreen() {
-  const router = useRouter();
-  const { cart, lat, lng, location } = useLocalSearchParams();
+  const router = useRouter()
+  const { cart: cartStr } = useLocalSearchParams()
+  const cart = cartStr ? JSON.parse(cartStr) : []
 
-  // parse cart
-  let parsedCart = [];
-  try {
-    parsedCart = cart ? JSON.parse(cart) : [];
-  } catch (e) {
-    parsedCart = [];
-    console.log("Invalid cart param:", e);
-  }
+  // Sử dụng custom hook từ shared
+  const {
+    fullName,
+    setFullName,
+    phone,
+    setPhone,
+    address,
+    setAddress,
+    deliveryMethod,
+    setDeliveryMethod,
+    discount,
+    setDiscount,
+    paymentMethod,
+    setPaymentMethod,
+    error,
+    subtotal,
+    shippingFee,
+    itemDiscount,
+    shippingDiscount,
+    totalPrice,
+    validate,
+  } = useCheckout(cart)
 
-  // Parse location từ params
-  let parsedLocation = null;
-  try {
-    if (location) {
-      parsedLocation = typeof location === "string" ? JSON.parse(location) : location;
-    } else if (lat && lng) {
-      const pLat = parseFloat(lat);
-      const pLng = parseFloat(lng);
-      if (!isNaN(pLat) && !isNaN(pLng)) {
-        parsedLocation = { latitude: pLat, longitude: pLng };
-      }
-    }
-  } catch (e) {
-    parsedLocation = null;
-  }
+  // State cho UI
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false)
+  const [showVoucherModal, setShowVoucherModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showMapModal, setShowMapModal] = useState(false)
+  const [weather, setWeather] = useState(null)
+  const [userLocation, setUserLocation] = useState(null)
+  const [mapRegion, setMapRegion] = useState(null) // ✅ THÊM
 
-  // State
-  const [userInfo, setUserInfo] = useState(null);
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [voucher, setVoucher] = useState(null);
-  const [deliveryMethod, setDeliveryMethod] = useState("fast");
-  const [assignedDriver, setAssignedDriver] = useState(null);
-  const [showVoucherModal, setShowVoucherModal] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [showQRModal, setShowQRModal] = useState(false);
-  const [showCardModal, setShowCardModal] = useState(false);
-  const [qrImage, setQrImage] = useState(null);
+  //  Random tài xế
+  const [selectedDriver] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * DRIVERS.length)
+    return DRIVERS[randomIndex]
+  })
 
-  const [weather, setWeather] = useState(null);
-  const [shipPrice, setShipPrice] = useState(20000);
-  const [shipTime, setShipTime] = useState(30);
-
-  const [useDefaultAddress, setUseDefaultAddress] = useState(true);
-  const defaultAddress = userInfo?.address || "Quận 7, TP.HCM";
-
-  const WEATHER_API_KEY = "eecff4fe13943fb4eaa7bd78e1bae552";
-
-  // Lấy dữ liệu thời tiết
-  useEffect(() => {
-    let isMounted = true;
-    let curLat = null,
-      curLng = null;
-
-    try {
-      if (location) {
-        const loc = typeof location === "string" ? JSON.parse(location) : location;
-        curLat = loc?.latitude;
-        curLng = loc?.longitude;
-      }
-    } catch {}
-    if ((!curLat || !curLng) && lat && lng) {
-      const pLat = parseFloat(lat);
-      const pLng = parseFloat(lng);
-      if (!isNaN(pLat) && !isNaN(pLng)) {
-        curLat = pLat;
-        curLng = pLng;
-      }
-    }
-
-    if (!curLat || !curLng) return;
-
-    const fetchWeather = async () => {
-      try {
-        const res = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${curLat}&lon=${curLng}&appid=${WEATHER_API_KEY}&units=metric&lang=vi`
-        );
-        const data = await res.json();
-        if (!isMounted) return;
-        setWeather(data);
-
-        const condition = data?.weather?.[0]?.main?.toLowerCase() || "";
-        if (condition.includes("rain") || condition.includes("storm")) {
-          setShipPrice((prev) => prev + 10000);
-          setShipTime((prev) => prev + 15);
-        }
-      } catch (err) {
-        console.log("Fetch weather error:", err);
-      }
-    };
-
-    fetchWeather();
-    return () => {
-      isMounted = false;
-    };
-  }, [location, lat, lng]);
-
-  // Load user info
+  //  LOAD THÔNG TIN USER KHI MOUNT
   useEffect(() => {
     const loadUserInfo = async () => {
       try {
-        // ✅ DÙNG SHARED SERVICE
-        const loggedIn = await isLoggedIn(AsyncStorage);
-        if (!loggedIn) {
-          router.replace({
-            pathname: '/login',
-            params: { 
-              cart: JSON.stringify(parsedCart), 
-              location: JSON.stringify(parsedLocation),
-              redirect: 'checkout'
-            }
-          });
-          return;
-        }
-
-        // ✅ DÙNG SHARED SERVICE
-        const user = await getCurrentUser(AsyncStorage);
+        const user = await getCurrentUser(AsyncStorage)
         if (user) {
-          setUserInfo(user);
-          setAddress(user.address || "");
-          setPhone(user.phone || "");
-          setFullName(user.fullName || user.username || "");
+          setFullName(user.fullName || user.username || '')
+          setPhone(user.phone || '')
         }
       } catch (error) {
-        console.log("Error loading user info:", error);
+        console.log('Error loading user:', error)
       }
-    };
-    loadUserInfo();
+    }
 
-    // Nếu chưa có driver trong AsyncStorage thì chọn ngẫu nhiên
-    AsyncStorage.getItem("assignedDriver").then(driver => {
-      if (driver) setAssignedDriver(JSON.parse(driver));
-      else {
-        const randomDriver = DRIVERS[Math.floor(Math.random() * DRIVERS.length)];
-        setAssignedDriver(randomDriver);
-        AsyncStorage.setItem("assignedDriver", JSON.stringify(randomDriver));
-      }
-    });
-  }, []);
+    loadUserInfo()
+  }, [])
 
-  // Nếu chọn location mới từ map-select → reverse geocode
+  // Lấy địa chỉ từ GPS
   useEffect(() => {
-    if (!parsedLocation) return;
-    const { latitude, longitude } = parsedLocation;
-    if (!latitude || !longitude) return;
-
-    let active = true;
-    (async () => {
-      try {
-        const addr = await getAddressFromCoords(latitude, longitude);
-        if (active && addr) setAddress(addr);
-      } catch (e) {
-        console.log("Reverse geocode error:", e);
+    const getLocation = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync()
+      if (status !== 'granted') {
+        Alert.alert('Lỗi', 'Cần cấp quyền truy cập vị trí!')
+        return
       }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [location, lat, lng]);
 
-  // Voucher list
-  const vouchers = [
-    { code: "SALE10", label: "Giảm 10%", type: "percent", value: 0.1 },
-    { code: "SHIPFREE", label: "Miễn phí ship", type: "shipping" },
-    { code: "OFF20K", label: "Giảm 20.000đ", type: "fixed", value: 20000 },
-  ];
+      const location = await Location.getCurrentPositionAsync({})
+      const { latitude, longitude } = location.coords
 
-  // Tính giá
-  const subtotal = parsedCart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  let shippingFee = 0;
-  let estimatedTime = 30; // Đổi tên biến này để không trùng với state shipTime
+      setUserLocation({ latitude, longitude })
+      
+      //  Set initial map region
+      setMapRegion({
+        latitude,
+        longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      })
 
-  if (deliveryMethod === "fast") {
-    shippingFee = 25000; estimatedTime = 30;
-  } else if (deliveryMethod === "standard") {
-    shippingFee = 15000; estimatedTime = 45;
-  } else if (deliveryMethod === "economy") {
-    shippingFee = 10000; estimatedTime = 60;
-  } else if (deliveryMethod === "express") {
-    shippingFee = 40000; estimatedTime = 20;
+      // Sử dụng shared service
+      const result = await getAddressFromCoords(latitude, longitude)
+      if (result.success) {
+        setAddress(result.address)
+      }
+
+      // Lấy thời tiết
+      const weatherResult = await fetchWeather(latitude, longitude)
+      if (weatherResult.success) {
+        setWeather(weatherResult.data)
+      }
+    }
+
+    getLocation()
+  }, [])
+
+  // Điều chỉnh phí ship theo thời tiết
+  const adjustedShipping = adjustShippingForWeather(shippingFee, weather?.condition)
+  const finalShippingFee = adjustedShipping.fee
+  const finalTotalPrice = totalPrice - shippingFee + finalShippingFee
+
+  // Lọc discounts khả dụng cho nhà hàng hiện tại
+  const restaurantId = cart[0]?.restaurantId
+  const availableDiscounts = DISCOUNTS.filter(d => canApplyDiscount(d, restaurantId))
+
+  // Xử lý chọn địa điểm trên bản đồ
+  const handleMapPress = (e) => {
+    const { latitude, longitude } = e.nativeEvent.coordinate
+    setMapRegion({ ...mapRegion, latitude, longitude })
+    
+    // Lấy địa chỉ từ tọa độ mới
+    getAddressFromCoords(latitude, longitude).then(result => {
+      if (result.success) {
+        setAddress(result.address)
+      }
+    })
   }
-  let itemDiscount = 0,
-    shippingDiscount = 0;
-  if (voucher) {
-    if (voucher.type === "percent") itemDiscount = subtotal * voucher.value;
-    else if (voucher.type === "fixed") itemDiscount = Math.min(voucher.value, subtotal);
-    else if (voucher.type === "shipping") shippingDiscount = shippingFee;
-  }
-  const totalPrice = subtotal - itemDiscount + shippingFee - shippingDiscount;
 
-  // Render cart
-  const renderCartItem = ({ item }) => (
-    <View style={{ flexDirection: "row", justifyContent: "space-between", padding: 8 }}>
-      <Text>{item.title} x{item.quantity}</Text>
-      <Text>{(item.price * item.quantity).toLocaleString()} đ</Text>
-    </View>
-  );
-
-  // Header
-  const ListHeader = () => (
-    <>
-      <Text style={{ fontSize: 20, fontWeight: "bold", padding: 10 }}>Thanh toán</Text>
-      <View style={{ padding: 10, backgroundColor: "#f2f2f2", borderRadius: 8 }}>
-        <Text style={{ fontWeight: "bold" }}>👤 Thông tin người nhận</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Họ và tên *"
-          value={fullName}
-          onChangeText={setFullName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Số điện thoại *"
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-        />
-      </View>
-      <View style={{ padding: 10, backgroundColor: "#f2f2f2", borderRadius: 8, marginTop: 8 }}>
-        <Text style={{ fontWeight: "bold" }}>🏠 Địa chỉ giao hàng</Text>
-        <View style={{ flexDirection: "row", marginBottom: 12, gap: 8 }}>
-          <Pressable
-            style={{
-              flex: 1,
-              backgroundColor: useDefaultAddress ? colors.primary : "#ddd",
-              padding: 10,
-              borderRadius: 6,
-              alignItems: 'center'
-            }}
-            onPress={() => {
-              setUseDefaultAddress(true);
-              setAddress(defaultAddress);
-            }}
-          >
-            <Text style={{ color: useDefaultAddress ? colors.textWhite : "#333", fontWeight: '600' }}>
-              Địa chỉ mặc định
-            </Text>
-          </Pressable>
-          <Pressable
-            style={{
-              flex: 1,
-              backgroundColor: !useDefaultAddress ? colors.primary : "#ddd",
-              padding: 10,
-              borderRadius: 6,
-              alignItems: 'center'
-            }}
-            onPress={() => {
-              setUseDefaultAddress(false);
-              router.replace({
-                pathname: "/map-select",
-                params: { cart: JSON.stringify(parsedCart) },
-              });
-            }}
-          >
-            <Text style={{ color: !useDefaultAddress ? colors.textWhite : "#333", fontWeight: '600' }}>
-              Chọn trên bản đồ
-            </Text>
-          </Pressable>
-        </View>
-        <TextInput
-          style={[styles.input, { height: 80 }]}
-          placeholder="Địa chỉ giao hàng *"
-          value={address}
-          onChangeText={setAddress}
-          multiline
-          numberOfLines={3}
-        />
-      </View>
-    </>
-  );
-
-  // Footer
-  const ListFooter = () => (
-    <>
-      <View style={{ padding: 10 }}>
-        <Text style={{ fontWeight: "bold" }}>🎟 Voucher</Text>
-        <Pressable style={{ marginTop: 8, padding: 10, backgroundColor: "#ddd", borderRadius: 6 }} onPress={() => setShowVoucherModal(true)}>
-          <Text>{voucher ? `${voucher.label}` : "Chọn voucher"}</Text>
-        </Pressable>
-      </View>
-      <View style={{ padding: 10 }}>
-        <Text style={{ fontWeight: "bold" }}>🚚 Hình thức giao hàng</Text>
-        <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
-          <Pressable onPress={() => setDeliveryMethod("fast")}>
-            <Text style={{ color: deliveryMethod === "fast" ? "blue" : "black" }}>Nhanh (25k)</Text>
-          </Pressable>
-          <Pressable onPress={() => setDeliveryMethod("standard")}>
-            <Text style={{ color: deliveryMethod === "standard" ? "blue" : "black" }}>Tiêu chuẩn (15k)</Text>
-          </Pressable>
-          <Pressable onPress={() => setDeliveryMethod("economy")}>
-            <Text style={{ color: deliveryMethod === "economy" ? "blue" : "black" }}>Tiết kiệm (10k)</Text>
-          </Pressable>
-          <Pressable onPress={() => setDeliveryMethod("express")}>
-            <Text style={{ color: deliveryMethod === "express" ? "blue" : "black" }}>Siêu tốc (40k)</Text>
-          </Pressable>
-        </View>
-      </View>
-      <View style={{ padding: 10 }}>
-        <Text style={{ fontWeight: "bold" }}>💳 Phương thức thanh toán</Text>
-        <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
-          {["cash", "qr", "card"].map((m) => (
-            <Pressable key={m} onPress={() => setPaymentMethod(m)}>
-              <Text style={{ color: paymentMethod === m ? "blue" : "black" }}>
-                {m === "cash" ? "💵 Tiền mặt" : m === "qr" ? "📱 QR Code" : "💳 Thẻ"}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-      {assignedDriver && (
-        <View style={{ padding: 10 }}>
-          <Text style={{ fontWeight: "bold" }}>🧑‍✈️ Tài xế</Text>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Image source={assignedDriver.image} style={{ width: 50, height: 50, borderRadius: 25 }} />
-            <View style={{ marginLeft: 12 }}>
-              <Text>
-                {assignedDriver.name} ({assignedDriver.vehicle})
-              </Text>
-              <Text>⭐ {assignedDriver.rating}</Text>
-            </View>
-          </View>
-        </View>
-      )}
-    </>
-  );
-
-  // Sticky footer
-  const footerDisabled = !fullName || !phone || !address || parsedCart.length === 0;
-
+  // Xử lý đặt hàng
   const handlePlaceOrder = async () => {
-    if (!fullName.trim()) return Alert.alert("Lỗi", "Vui lòng nhập họ tên");
-    if (!phone.trim()) return Alert.alert("Lỗi", "Vui lòng nhập số điện thoại");
-    if (!address.trim()) return Alert.alert("Lỗi", "Vui lòng nhập địa chỉ");
-    if (parsedCart.length === 0) return Alert.alert("Lỗi", "Giỏ hàng trống");
+    if (!validate()) {
+      Alert.alert('Lỗi', error)
+      return
+    }
 
-    // ✅ Tạo đơn hàng mới
-    const newOrder = {
-      restaurantName: parsedCart[0]?.restaurantName || "Nhà hàng",
-      items: parsedCart,
-      totalPrice,
-      address,
+    //  Build order object
+    const order = buildOrderObject({
+      cart,
       fullName,
       phone,
+      address,
       deliveryMethod,
       paymentMethod,
-      voucher: voucher?.code,
-      driver: assignedDriver?.name,
-    };
+      discount,
+      driver: selectedDriver,
+      totalPrice: finalTotalPrice,
+    })
 
-    try {
-      // ✅ DÙNG SHARED SERVICE
-      const createdOrder = await addShippingOrder(newOrder, AsyncStorage);
-      
-      Alert.alert(
-        "🎉 Đặt hàng thành công!",
-        `Đơn hàng #${createdOrder.id} sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
-        [{ text: "OK", onPress: () => router.replace("/") }]
-      );
-    } catch (error) {
-      Alert.alert("Lỗi", "Không thể tạo đơn hàng. Vui lòng thử lại.");
-      console.error("Create order error:", error);
+    //  Lưu order
+    const result = await saveOrder(AsyncStorage, order)
+    
+    if (result.success) {
+      Alert.alert('Thành công', 'Đặt hàng thành công!', [
+        { text: 'OK', onPress: () => router.replace('/(tabs)') }
+      ])
+    } else {
+      Alert.alert('Lỗi', result.error)
     }
-  };
+  }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={styles.container}>
       <FlatList
-        data={parsedCart}
-        keyExtractor={(item, idx) => (item.id ? `${item.id}` : `${idx}`)}
-        renderItem={() => null}
+        data={cart}
+        keyExtractor={item => item.id.toString()}
         ListHeaderComponent={
           <>
-            <SectionCard title="👤 Thông tin người nhận">
-              <TextInput
-                style={styles.input}
-                placeholder="Họ và tên *"
-                value={fullName}
-                onChangeText={setFullName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Số điện thoại *"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-              />
-            </SectionCard>
+            <Text style={styles.title}>Thông tin đặt hàng</Text>
 
-            <SectionCard title="🏠 Địa chỉ giao hàng">
-              <View style={{ flexDirection: "row", marginBottom: 12, gap: 8 }}>
-                <Pressable
-                  style={{
-                    flex: 1,
-                    backgroundColor: useDefaultAddress ? colors.primary : "#ddd",
-                    padding: 10,
-                    borderRadius: 6,
-                    alignItems: 'center'
-                  }}
-                  onPress={() => {
-                    setUseDefaultAddress(true);
-                    setAddress(defaultAddress);
-                  }}
-                >
-                  <Text style={{ color: useDefaultAddress ? colors.textWhite : "#333", fontWeight: '600' }}>
-                    Địa chỉ mặc định
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={{
-                    flex: 1,
-                    backgroundColor: !useDefaultAddress ? colors.primary : "#ddd",
-                    padding: 10,
-                    borderRadius: 6,
-                    alignItems: 'center'
-                  }}
-                  onPress={() => {
-                    setUseDefaultAddress(false);
-                    router.replace({
-                      pathname: "/map-select",
-                      params: { cart: JSON.stringify(parsedCart) },
-                    });
-                  }}
-                >
-                  <Text style={{ color: !useDefaultAddress ? colors.textWhite : "#333", fontWeight: '600' }}>
-                    Chọn trên bản đồ
-                  </Text>
-                </Pressable>
-              </View>
+            {/*  Thông tin khách hàng - MẶC ĐỊNH */}
+            <TextInput
+              style={styles.input}
+              placeholder="Họ và tên"
+              value={fullName}
+              onChangeText={setFullName}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Số điện thoại"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+            />
+            
+            {/*  Địa chỉ với nút bản đồ */}
+            <View style={styles.addressRow}>
               <TextInput
-                style={[styles.input, { height: 80 }]}
-                placeholder="Địa chỉ giao hàng *"
+                style={[styles.input, { flex: 1, marginRight: 8, marginHorizontal: 0 }]}
+                placeholder="Địa chỉ giao hàng"
                 value={address}
                 onChangeText={setAddress}
                 multiline
-                numberOfLines={3}
               />
-            </SectionCard>
-
-            <OrderSummary
-              items={parsedCart}
-              subtotal={subtotal}
-              shippingFee={shippingFee}
-              discount={itemDiscount + shippingDiscount}
-            />
-
-            <SectionCard title="🚚 Hình thức giao hàng">
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {[
-                  { key: 'fast', label: 'Nhanh (25k)' },
-                  { key: 'standard', label: 'Tiêu chuẩn (15k)' },
-                  { key: 'economy', label: 'Tiết kiệm (10k)' },
-                  { key: 'express', label: 'Siêu tốc (40k)' }
-                ].map(method => (
-                  <Pressable
-                    key={method.key}
-                    style={{
-                      paddingVertical: 8,
-                      paddingHorizontal: 12,
-                      borderRadius: 6,
-                      backgroundColor: deliveryMethod === method.key ? colors.primary : '#f0f0f0'
-                    }}
-                    onPress={() => setDeliveryMethod(method.key)}
-                  >
-                    <Text style={{ color: deliveryMethod === method.key ? colors.textWhite : colors.text, fontWeight: '600' }}>
-                      {method.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </SectionCard>
-
-            <SectionCard title="🎟️ Voucher">
               <Pressable
-                style={{ padding: 12, backgroundColor: '#f0f0f0', borderRadius: 6, alignItems: 'center' }}
-                onPress={() => setShowVoucherModal(true)}
+                style={styles.mapBtn}
+                onPress={() => setShowMapModal(true)}
               >
-                <Text style={{ fontWeight: '600' }}>
-                  {voucher ? `${voucher.label}` : "Chọn voucher"}
-                </Text>
+                <Text style={styles.mapBtnText}>🗺️</Text>
               </Pressable>
-            </SectionCard>
+            </View>
 
-            <SectionCard title="💳 Phương thức thanh toán">
-              <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
-                {[
-                  { key: 'cash', label: '💵 Tiền mặt' },
-                  { key: 'qr', label: '📱 QR Code' },
-                  { key: 'card', label: '💳 Thẻ' }
-                ].map(method => (
-                  <Pressable
-                    key={method.key}
-                    style={{
-                      paddingVertical: 8,
-                      paddingHorizontal: 12,
-                      borderRadius: 6,
-                      backgroundColor: paymentMethod === method.key ? colors.primary : '#f0f0f0'
-                    }}
-                    onPress={() => setPaymentMethod(method.key)}
-                  >
-                    <Text style={{ color: paymentMethod === method.key ? colors.textWhite : colors.text, fontWeight: '600' }}>
-                      {method.label}
-                    </Text>
-                  </Pressable>
-                ))}
+            {/* Chọn phương thức giao hàng */}
+            <Pressable
+              style={styles.selectBtn}
+              onPress={() => setShowDeliveryModal(true)}
+            >
+              <Text>
+                Giao hàng: {DELIVERY_METHODS.find(m => m.key === deliveryMethod)?.label}
+              </Text>
+              <Text style={styles.fee}>
+                {finalShippingFee.toLocaleString()}đ
+              </Text>
+            </Pressable>
+
+            {/*  Chọn voucher */}
+            <Pressable
+              style={styles.selectBtn}
+              onPress={() => setShowVoucherModal(true)}
+            >
+              <Text>
+                Mã giảm giá: {discount?.label || 'Chọn mã'}
+              </Text>
+              {discount && (
+                <Text style={styles.discountLabel}>✓</Text>
+              )}
+            </Pressable>
+
+            {/* Chọn thanh toán */}
+            <Pressable
+              style={styles.selectBtn}
+              onPress={() => setShowPaymentModal(true)}
+            >
+              <Text>
+                Thanh toán: {PAYMENT_METHODS.find(m => m.key === paymentMethod)?.label}
+              </Text>
+            </Pressable>
+
+            {/* Hiển thị tài xế đã random */}
+            <View style={styles.driverBox}>
+              <Image 
+                source={selectedDriver.image} 
+                style={styles.driverAvatar}
+              />
+              <View style={styles.driverInfo}>
+                <Text style={styles.driverName}>{selectedDriver.name}</Text>
+                <Text style={styles.driverDetail}>
+                  {selectedDriver.vehicle} • ⭐ {selectedDriver.rating}
+                </Text>
               </View>
-            </SectionCard>
+            </View>
 
-            {assignedDriver && (
-              <SectionCard title="🧑‍✈️ Tài xế">
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Image source={assignedDriver.image} style={{ width: 50, height: 50, borderRadius: 25 }} />
-                  <View style={{ marginLeft: 12 }}>
-                    <Text style={{ fontWeight: '600' }}>
-                      {assignedDriver.name} ({assignedDriver.vehicle})
-                    </Text>
-                    <Text style={{ color: '#666' }}>⭐ {assignedDriver.rating}</Text>
-                  </View>
-                </View>
-              </SectionCard>
+            {/* Thời tiết */}
+            {weather && (
+              <View style={styles.weatherBox}>
+                <Text>🌤️ {weather.description} • 🌡️ {weather.temp}°C</Text>
+                {adjustedShipping.reason && (
+                  <Text style={styles.weatherWarning}>
+                    ⚠️ {adjustedShipping.reason} (+{adjustedShipping.extraTime} phút)
+                  </Text>
+                )}
+              </View>
             )}
 
-            {/* Modal Voucher */}
-            <Modal visible={showVoucherModal} transparent animationType="slide">
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalBox}>
-                  <Text style={styles.modalTitle}>Chọn voucher</Text>
-                  {vouchers.map((v) => (
-                    <Pressable
-                      key={v.code}
-                      style={styles.voucherItem}
-                      onPress={() => {
-                        setVoucher(v);
-                        setShowVoucherModal(false);
-                      }}
-                    >
-                      <Text style={{ fontWeight: '600' }}>{v.label}</Text>
-                      <Text style={{ color: '#666' }}>{v.code}</Text>
-                    </Pressable>
-                  ))}
-                  <Pressable style={styles.closeModal} onPress={() => setShowVoucherModal(false)}>
-                    <Text style={{ color: colors.primary }}>Đóng</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </Modal>
+            <Text style={styles.sectionTitle}>Món đã chọn:</Text>
           </>
         }
-        contentContainerStyle={{ padding: 16, paddingBottom: 160 }}
+        renderItem={({ item }) => (
+          <View style={styles.itemRow}>
+            <Text>{item.title} x{item.quantity}</Text>
+            <Text>{(item.price * item.quantity).toLocaleString()}đ</Text>
+          </View>
+        )}
+        ListFooterComponent={
+          <>
+            {/* Tổng tiền */}
+            <View style={styles.summary}>
+              <View style={styles.row}>
+                <Text>Tạm tính:</Text>
+                <Text>{subtotal.toLocaleString()}đ</Text>
+              </View>
+              
+              {itemDiscount > 0 && (
+                <View style={styles.row}>
+                  <Text>Giảm giá món ({discount?.label}):</Text>
+                  <Text style={styles.discountText}>
+                    -{itemDiscount.toLocaleString()}đ
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.row}>
+                <Text>Phí ship:</Text>
+                <Text>{finalShippingFee.toLocaleString()}đ</Text>
+              </View>
+
+              {shippingDiscount > 0 && (
+                <View style={styles.row}>
+                  <Text>Miễn phí ship ({discount?.label}):</Text>
+                  <Text style={styles.discountText}>
+                    -{shippingDiscount.toLocaleString()}đ
+                  </Text>
+                </View>
+              )}
+
+              <View style={[styles.row, styles.total]}>
+                <Text style={styles.totalText}>Tổng cộng:</Text>
+                <Text style={styles.totalText}>
+                  {finalTotalPrice.toLocaleString()}đ
+                </Text>
+              </View>
+            </View>
+
+            <Pressable style={styles.orderBtn} onPress={handlePlaceOrder}>
+              <Text style={styles.orderBtnText}>Đặt hàng</Text>
+            </Pressable>
+          </>
+        }
       />
 
-      {/* Sticky footer */}
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: colors.card, borderTopWidth: 1, borderColor: colors.border, padding: 12 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-          <Text style={{ color: colors.subText }}>Tổng cộng</Text>
-          <Text style={{ fontWeight: '900', fontSize: 18, color: colors.primary }}>
-            {totalPrice.toLocaleString()} đ
-          </Text>
-        </View>
-        <Pressable
-          disabled={footerDisabled}
-          style={{
-            backgroundColor: footerDisabled ? colors.disabled : colors.primary,
-            padding: 14, borderRadius: 10, alignItems: 'center'
-          }}
-          onPress={handlePlaceOrder}
-        >
-          <Text style={{ color: '#fff', fontWeight: '700' }}>Đặt hàng</Text>
-        </Pressable>
-      </View>
-
-      {/* Modal QR Code */}
-      <Modal visible={showQRModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Quét mã QR để thanh toán</Text>
-            {/* Demo QR code, bạn có thể dùng hình ảnh QR code mẫu */}
-            <Image
-              source={qrImage}
-              style={{ width: 180, height: 180, alignSelf: "center", marginBottom: 16 }}
-            />
-            <Text style={{ textAlign: "center", marginBottom: 12 }}>
-              Vui lòng dùng app ngân hàng hoặc ví điện tử để quét mã và thanh toán.
-            </Text>
+      {/* Modal chọn delivery method */}
+      <Modal visible={showDeliveryModal} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chọn phương thức giao hàng</Text>
+            {DELIVERY_METHODS.map(method => (
+              <Pressable
+                key={method.key}
+                style={[
+                  styles.modalItem,
+                  deliveryMethod === method.key && styles.modalItemSelected
+                ]}
+                onPress={() => {
+                  setDeliveryMethod(method.key)
+                  setShowDeliveryModal(false)
+                }}
+              >
+                <View>
+                  <Text style={styles.modalItemText}>{method.label}</Text>
+                  <Text style={styles.modalItemSubtext}>
+                    Dự kiến: {method.time}
+                  </Text>
+                </View>
+                <Text style={styles.modalItemPrice}>
+                  {method.fee.toLocaleString()}đ
+                </Text>
+              </Pressable>
+            ))}
             <Pressable
-              style={styles.payButton}
-              onPress={() => {
-                setShowQRModal(false);
-                Alert.alert(
-                  "🎉 Đặt hàng thành công!",
-                  `Đơn hàng sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
-                  [{ text: "OK", onPress: () => router.replace("/") }]
-                );
-              }}
+              style={styles.modalClose}
+              onPress={() => setShowDeliveryModal(false)}
             >
-              <Text style={styles.payButtonText}>Xác nhận đã thanh toán</Text>
-            </Pressable>
-            <Pressable style={styles.closeModal} onPress={() => setShowQRModal(false)}>
-              <Text style={{ color: colors.primary }}>Đóng</Text>
+              <Text>Đóng</Text>
             </Pressable>
           </View>
         </View>
       </Modal>
 
-      {/* Modal Thẻ */}
-      <Modal visible={showCardModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Thanh toán bằng thẻ</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Số thẻ"
-              keyboardType="number-pad"
-              maxLength={16}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Tên chủ thẻ"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Ngày hết hạn (MM/YY)"
-              maxLength={5}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="CVV"
-              keyboardType="number-pad"
-              maxLength={3}
-            />
+      {/* ✅ Modal chọn voucher */}
+      <Modal visible={showVoucherModal} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chọn mã giảm giá</Text>
+            
+            {availableDiscounts.length === 0 ? (
+              <Text style={styles.emptyText}>
+                Không có mã giảm giá khả dụng cho nhà hàng này
+              </Text>
+            ) : (
+              availableDiscounts.map(d => (
+                <Pressable
+                  key={d.type}
+                  style={[
+                    styles.modalItem,
+                    discount?.type === d.type && styles.modalItemSelected
+                  ]}
+                  onPress={() => {
+                    setDiscount(d)
+                    setShowVoucherModal(false)
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{d.label}</Text>
+                  {discount?.type === d.type && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </Pressable>
+              ))
+            )}
+
+            {/* ✅ Nút xóa voucher */}
+            {discount && (
+              <Pressable
+                style={[styles.modalItem, { backgroundColor: '#ffebee' }]}
+                onPress={() => {
+                  setDiscount(null)
+                  setShowVoucherModal(false)
+                }}
+              >
+                <Text style={{ color: colors.danger }}>Bỏ chọn mã</Text>
+              </Pressable>
+            )}
+
             <Pressable
-              style={styles.payButton}
-              onPress={() => {
-                setShowCardModal(false);
-                Alert.alert(
-                  "🎉 Đặt hàng thành công!",
-                  `Đơn hàng sẽ giao đến ${address}.\nTổng tiền: ${totalPrice.toLocaleString()} đ`,
-                  [{ text: "OK", onPress: () => router.replace("/") }]
-                );
-              }}
+              style={styles.modalClose}
+              onPress={() => setShowVoucherModal(false)}
             >
-              <Text style={styles.payButtonText}>Thanh toán</Text>
-            </Pressable>
-            <Pressable style={styles.closeModal} onPress={() => setShowCardModal(false)}>
-              <Text style={{ color: colors.primary }}>Đóng</Text>
+              <Text>Đóng</Text>
             </Pressable>
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
-  );
+
+      {/* Modal chọn payment */}
+      <Modal visible={showPaymentModal} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chọn phương thức thanh toán</Text>
+            {PAYMENT_METHODS.map(method => (
+              <Pressable
+                key={method.key}
+                style={[
+                  styles.modalItem,
+                  paymentMethod === method.key && styles.modalItemSelected
+                ]}
+                onPress={() => {
+                  setPaymentMethod(method.key)
+                  setShowPaymentModal(false)
+                }}
+              >
+                <Text style={styles.modalItemText}>
+                  {method.icon} {method.label}
+                </Text>
+                {paymentMethod === method.key && (
+                  <Text style={styles.checkmark}>✓</Text>
+                )}
+              </Pressable>
+            ))}
+            <Pressable
+              style={styles.modalClose}
+              onPress={() => setShowPaymentModal(false)}
+            >
+              <Text>Đóng</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ✅ Modal bản đồ - BỎ TEXT THÔNG BÁO */}
+      <Modal visible={showMapModal} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { height: '80%' }]}>
+            <Text style={styles.modalTitle}>Chọn vị trí giao hàng</Text>
+            
+            {userLocation ? (
+              <View style={styles.mapPlaceholder}>
+                <Text style={styles.mapIcon}>🗺️</Text>
+                <Text style={styles.coordText}>
+                  Vị trí hiện tại:{'\n'}
+                  {userLocation.latitude.toFixed(6)}, {userLocation.longitude.toFixed(6)}
+                </Text>
+                <Text style={styles.addressPreview}>
+                  📍 {address}
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.emptyText}>Đang tải vị trí...</Text>
+            )}
+
+            <Pressable
+              style={[styles.modalClose, { backgroundColor: colors.primary }]}
+              onPress={() => setShowMapModal(false)}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Xác nhận địa chỉ</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  )
 }
 
-
-// ========== STYLE (giữ gần giống của bạn) ==========
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fafafa" },
-  header: { fontSize: 22, fontWeight: "bold", marginBottom: 16, padding: 16 },
-  section: {
-    backgroundColor: "#fff",
-    padding: 16,
+  container: { flex: 1, backgroundColor: '#fff' },
+  title: { 
+    fontSize: 22, 
+    fontWeight: 'bold', 
+    margin: 16, 
+    color: colors.primary 
+  },
+  input: { 
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    borderRadius: 8, 
+    padding: 12, 
+    marginHorizontal: 16, 
+    marginBottom: 12 
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginHorizontal: 16,
     marginBottom: 12,
+  },
+  mapBtn: {
+    width: 48,
+    height: 48,
+    backgroundColor: colors.primary,
     borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: 8 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 10,
-    borderRadius: 6,
-    backgroundColor: "#f9f9f9",
-    marginBottom: 12,
+  mapBtnText: {
+    fontSize: 24,
   },
-  textArea: { height: 80, textAlignVertical: "top" },
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomColor: "#eee",
-    borderBottomWidth: 1,
-    paddingHorizontal: 16,
-    backgroundColor: "#fff",
+  selectBtn: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    padding: 12, 
+    marginHorizontal: 16, 
+    marginBottom: 12, 
+    backgroundColor: '#f5f5f5', 
+    borderRadius: 8 
   },
-  itemName: { fontSize: 16 },
-  itemPrice: { fontSize: 16, fontWeight: "600", color: "#e53935" },
-  voucherButton: { padding: 12, backgroundColor: "#f0f0f0", borderRadius: 6, alignItems: "center" },
-  methodButton: {
-    borderWidth: 1,
-    borderColor: "#aaa",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+  fee: { 
+    fontWeight: 'bold', 
+    color: colors.primary 
   },
-  methodText: { color: "#333" },
-  methodActive: { backgroundColor: "#3dd9eaff", borderColor: "#3dd9eaff" },
-  methodActiveText: { color: "#fff" },
+  discountLabel: {
+    color: colors.primary,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
   driverBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f9f9f9",
-    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f8ff',
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
-  driverImage: { width: 50, height: 50, borderRadius: 25 },
-  driverText: { fontSize: 16, fontWeight: "600" },
-  driverRating: { color: "#777" },
-  footer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "#fff",
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#ddd",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  driverAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
   },
-  totalText: { fontSize: 18, fontWeight: "bold" },
-  payButton: {
-    backgroundColor: "#3dd9eaff",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  payButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-  modalOverlay: {
+  driverInfo: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
   },
-  modalBox: {
-    backgroundColor: "#fff",
-    padding: 20,
+  driverName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  driverDetail: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  weatherBox: { 
+    backgroundColor: '#e3f2fd', 
+    padding: 12, 
+    marginHorizontal: 16, 
+    marginBottom: 12, 
+    borderRadius: 8 
+  },
+  weatherWarning: { 
+    color: colors.danger, 
+    marginTop: 4 
+  },
+  sectionTitle: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    margin: 16 
+  },
+  itemRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 16, 
+    paddingVertical: 8 
+  },
+  summary: { 
+    backgroundColor: '#f9f9f9', 
+    padding: 16, 
+    margin: 16, 
+    borderRadius: 8 
+  },
+  row: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginBottom: 8 
+  },
+  discountText: { 
+    color: colors.danger,
+    fontWeight: 'bold',
+  },
+  total: { 
+    borderTopWidth: 1, 
+    borderColor: '#ddd', 
+    paddingTop: 8, 
+    marginTop: 8 
+  },
+  totalText: { 
+    fontSize: 18, 
+    fontWeight: 'bold' 
+  },
+  orderBtn: { 
+    backgroundColor: colors.primary, 
+    padding: 16, 
+    margin: 16, 
+    borderRadius: 8, 
+    alignItems: 'center' 
+  },
+  orderBtnText: { 
+    color: '#fff', 
+    fontSize: 18, 
+    fontWeight: 'bold' 
+  },
+  modalContainer: { 
+    flex: 1, 
+    justifyContent: 'flex-end', 
+    backgroundColor: 'rgba(0,0,0,0.5)' 
+  },
+  modalContent: { 
+    backgroundColor: '#fff', 
+    borderTopLeftRadius: 16, 
+    borderTopRightRadius: 16, 
+    padding: 16,
+    maxHeight: '70%',
+  },
+  modalTitle: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 16,
+    color: colors.text,
+  },
+  modalItem: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    padding: 12, 
+    backgroundColor: '#f5f5f5', 
+    borderRadius: 8, 
+    marginBottom: 8 
+  },
+  modalItemSelected: {
+    backgroundColor: '#e3f2fd',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  modalItemText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  modalItemSubtext: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  modalItemPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  checkmark: {
+    color: colors.primary,
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  modalClose: { 
+    padding: 12, 
+    alignItems: 'center', 
+    marginTop: 8,
+    backgroundColor: '#f5f5f5',
     borderRadius: 8,
-    width: "80%",
   },
-  modalTitle: { fontSize: 18, fontWeight: "600", marginBottom: 12 },
-  voucherItem: {
-    padding: 12,
-    borderBottomColor: "#ddd",
-    borderBottomWidth: 1,
+  emptyText: {
+    textAlign: 'center',
+    color: '#999',
+    padding: 20,
   },
-  closeModal: { marginTop: 12, alignItems: "center" },
-  confirmBtn: {
-    backgroundColor: "green",
-    padding: 12,
-    borderRadius: 6,
-    alignItems: "center",
-    margin: 20,
+  mapPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    marginBottom: 12,
+    padding: 20,
   },
-});
-
-const QR_IMAGES = [
-  require("../assets/images/QRCode/QR1.jpg"),
-  require("../assets/images/QRCode/QR2.jpg"),
-];
+  mapIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  coordText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  addressPreview: {
+    marginTop: 16,
+    fontSize: 14,
+    color: colors.text,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    lineHeight: 20,
+  },
+})

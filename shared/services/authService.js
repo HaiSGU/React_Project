@@ -151,3 +151,27 @@ export const register = async (userData, storage) => {
   
   return newUser;
 };
+
+/**
+ * ✅ Đổi mật khẩu - Web & Mobile dùng chung
+ */
+export const changePassword = async (storage, oldPassword, newPassword) => {
+  try {
+    const user = await getCurrentUser(storage);
+    
+    if (!user) {
+      return { success: false, error: 'Người dùng không tồn tại!' };
+    }
+    
+    if (oldPassword !== user.password) {
+      return { success: false, error: 'Mật khẩu cũ không đúng!' };
+    }
+    
+    const updatedUser = { ...user, password: newPassword };
+    await storage.setItem('user', JSON.stringify(updatedUser));
+    
+    return { success: true, user: updatedUser };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
