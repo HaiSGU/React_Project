@@ -3,22 +3,29 @@ import { useLocalSearchParams, Link } from 'expo-router'
 
 import { DISCOUNTS } from '@shared/constants/DiscountList'
 import { RESTAURANTS } from '@shared/constants/RestaurantsList'
+import { getDiscountByType, filterRestaurantsByDiscount } from '@shared/utils/restaurantHelpers'
 import colors from '@shared/theme/colors'
 
 export default function DiscountDetail() {
   const { type } = useLocalSearchParams()
-  const discount = DISCOUNTS.find(d => d.type === type)
+  
+  // ✅ Dùng helper function từ shared
+  const discount = getDiscountByType(DISCOUNTS, type)
 
   if (!discount) {
-    return <Text>Không tìm thấy mã giảm giá</Text>
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Không tìm thấy mã giảm giá</Text>
+      </View>
+    )
   }
 
-  // Lọc nhà hàng áp dụng discount này
-  const appliedRestaurants = RESTAURANTS.filter(r => discount.restaurants.includes(r.id))
+  // ✅ Dùng helper function từ shared
+  const appliedRestaurants = filterRestaurantsByDiscount(RESTAURANTS, discount.restaurants)
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>
+    <View style={styles.container}>
+      <Text style={styles.title}>
         {discount.label} áp dụng cho:
       </Text>
 
@@ -28,11 +35,10 @@ export default function DiscountDetail() {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Image source={item.image} style={styles.image} />
-            <View style={{ flex: 1, alignItems: 'center' }}>
+            <View style={styles.infoContainer}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.rating}>⭐ {item.rating}</Text>
 
-              {/* Nút Menu dẫn sang menu/[id].jsx */}
               <Link href={`/menu/${item.id}`} asChild>
                 <Pressable style={styles.menuBtn}>
                   <Text style={styles.menuText}>Menu</Text>
@@ -47,6 +53,23 @@ export default function DiscountDetail() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#f8f8f8',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: colors.primary,
+  },
+  errorText: {
+    fontSize: 16,
+    color: colors.danger,
+    textAlign: 'center',
+    marginTop: 20,
+  },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -65,6 +88,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 12,
   },
+  infoContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
   name: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -75,7 +102,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   menuBtn: {
-    backgroundColor: '#3dd9eaff',
+    backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,

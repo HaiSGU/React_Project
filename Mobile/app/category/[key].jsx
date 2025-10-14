@@ -3,17 +3,15 @@ import { useLocalSearchParams, Link } from 'expo-router'
 
 import { RESTAURANTS } from '@shared/constants/RestaurantsList'
 import { CATEGORIES } from '@shared/constants/CategoryList'
+import { filterRestaurantsByCategory, getCategoryLabel } from '@shared/utils/restaurantHelpers'
 import colors from '@shared/theme/colors'
 
 export default function CategoryScreen() {
   const { key } = useLocalSearchParams()
-  const filteredRestaurants = RESTAURANTS.filter(r =>
-    Array.isArray(r.category)
-      ? r.category.includes(key)
-      : r.category === key
-  )
-
-  const categoryLabel = CATEGORIES.find(c => c.key === key)?.label || key
+  
+  // ✅ Dùng helper function từ shared
+  const filteredRestaurants = filterRestaurantsByCategory(RESTAURANTS, key)
+  const categoryLabel = getCategoryLabel(CATEGORIES, key)
 
   const renderRestaurant = ({ item }) => (
     <View style={styles.restaurantCard}>

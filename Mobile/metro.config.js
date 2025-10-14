@@ -1,22 +1,20 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
-const config = getDefaultConfig(__dirname);
+const projectRoot = __dirname;
+const workspaceRoot = path.resolve(projectRoot, '..');
 
-//  Thêm shared folder vào watchFolders
+const config = getDefaultConfig(projectRoot);
+
+// ✅ Watch shared folder
 config.watchFolders = [
-  path.resolve(__dirname, '../shared'),
+  path.resolve(projectRoot, '../shared'),
 ];
 
-// Resolver
+// ✅ Resolver
 config.resolver.sourceExts = [...config.resolver.sourceExts, 'jsx', 'js', 'ts', 'tsx'];
 
-config.resolver.extraNodeModules = {
-  '@shared': path.resolve(__dirname, '../shared'),
-  '@assets': path.resolve(__dirname, '../shared/assets'), // ✅ Trỏ đến shared/assets
-};
-
-// Thêm assetExts để Metro nhận diện file ảnh
+// ✅ Asset extensions
 config.resolver.assetExts = [
   ...config.resolver.assetExts,
   'png',
@@ -26,5 +24,24 @@ config.resolver.assetExts = [
   'webp',
   'svg',
 ];
+
+// ✅ THÊM PROXY - Force shared imports to use Mobile's node_modules
+config.resolver.extraNodeModules = new Proxy(
+  {
+    '@shared': path.resolve(projectRoot, '../shared'),
+    '@assets': path.resolve(projectRoot, '../shared/assets'),
+  },
+  {
+    get: (target, name) => {
+      // Nếu là alias @shared hoặc @assets, return đường dẫn đã định nghĩa
+      if (target[name]) {
+        return target[name];
+      }
+      
+      // Các modules khác (react, react-native, ...) lấy từ Mobile/node_modules
+      return path.join(projectRoot, 'node_modules', name);
+    },
+  }
+);
 
 module.exports = config;
