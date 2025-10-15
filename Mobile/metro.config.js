@@ -6,15 +6,15 @@ const workspaceRoot = path.resolve(projectRoot, '..');
 
 const config = getDefaultConfig(projectRoot);
 
-// ✅ Watch shared folder
+// Watch shared folder
 config.watchFolders = [
   path.resolve(projectRoot, '../shared'),
 ];
 
-// ✅ Resolver
+// Resolver
 config.resolver.sourceExts = [...config.resolver.sourceExts, 'jsx', 'js', 'ts', 'tsx'];
 
-// ✅ Asset extensions
+// Asset extensions
 config.resolver.assetExts = [
   ...config.resolver.assetExts,
   'png',
@@ -25,7 +25,7 @@ config.resolver.assetExts = [
   'svg',
 ];
 
-// ✅ THÊM PROXY - Force shared imports to use Mobile's node_modules
+// THÊM PROXY - Force shared imports to use Mobile's node_modules
 config.resolver.extraNodeModules = new Proxy(
   {
     '@shared': path.resolve(projectRoot, '../shared'),

@@ -15,11 +15,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Location from 'expo-location'
 
-//Import từ shared
+//  Import context
+import { useLocation } from '@shared/context/LocationContext'
 import { useCheckout } from '@shared/hooks/useCheckout'
 import { DISCOUNTS } from '@shared/constants/DiscountList'
 import { DRIVERS } from '@shared/constants/DriversList'
-import { getCurrentUser } from '@shared/services/authService' // ✅ THÊM
+import { getCurrentUser } from '@shared/services/authService'
 import { fetchWeather, getAddressFromCoords } from '@shared/services/weatherService'
 import { adjustShippingForWeather, canApplyDiscount } from '@shared/utils/checkoutHelpers'
 import { buildOrderObject } from '@shared/utils/orderBuilder'
@@ -43,7 +44,9 @@ export default function CheckoutScreen() {
   const { cart: cartStr } = useLocalSearchParams()
   const cart = cartStr ? JSON.parse(cartStr) : []
 
-  // Sử dụng custom hook từ shared
+  // Lấy location từ context
+  const { selectedLocation, setSelectedLocation } = useLocation()
+
   const {
     fullName,
     setFullName,
@@ -66,22 +69,18 @@ export default function CheckoutScreen() {
     validate,
   } = useCheckout(cart)
 
-  // State cho UI
   const [showDeliveryModal, setShowDeliveryModal] = useState(false)
   const [showVoucherModal, setShowVoucherModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [showMapModal, setShowMapModal] = useState(false)
   const [weather, setWeather] = useState(null)
   const [userLocation, setUserLocation] = useState(null)
-  const [mapRegion, setMapRegion] = useState(null) // ✅ THÊM
 
-  //  Random tài xế
   const [selectedDriver] = useState(() => {
     const randomIndex = Math.floor(Math.random() * DRIVERS.length)
     return DRIVERS[randomIndex]
   })
 
-  //  LOAD THÔNG TIN USER KHI MOUNT
+  // LOAD THÔNG TIN USER
   useEffect(() => {
     const loadUserInfo = async () => {
       try {
@@ -94,13 +93,32 @@ export default function CheckoutScreen() {
         console.log('Error loading user:', error)
       }
     }
-
     loadUserInfo()
   }, [])
 
-  // Lấy địa chỉ từ GPS
+  // LẤY VỊ TRÍ HIỆN TẠI (KHI CHƯA CÓ LOCATION TỪ MAP)
   useEffect(() => {
     const getLocation = async () => {
+      // Nếu đã có location từ map, không lấy GPS nữa
+      if (selectedLocation) {
+        setAddress(selectedLocation.address)
+        setUserLocation({
+          latitude: selectedLocation.latitude,
+          longitude: selectedLocation.longitude,
+        })
+        
+        // Fetch weather cho vị trí đã chọn
+        const weatherResult = await fetchWeather(
+          selectedLocation.latitude, 
+          selectedLocation.longitude
+        )
+        if (weatherResult.success) {
+          setWeather(weatherResult.data)
+        }
+        return
+      }
+
+      // Lấy vị trí GPS nếu chưa có
       const { status } = await Location.requestForegroundPermissionsAsync()
       if (status !== 'granted') {
         Alert.alert('Lỗi', 'Cần cấp quyền truy cập vị trí!')
@@ -111,61 +129,46 @@ export default function CheckoutScreen() {
       const { latitude, longitude } = location.coords
 
       setUserLocation({ latitude, longitude })
-      
-      //  Set initial map region
-      setMapRegion({
-        latitude,
-        longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      })
 
-      // Sử dụng shared service
       const result = await getAddressFromCoords(latitude, longitude)
       if (result.success) {
         setAddress(result.address)
       }
 
-      // Lấy thời tiết
       const weatherResult = await fetchWeather(latitude, longitude)
       if (weatherResult.success) {
         setWeather(weatherResult.data)
       }
     }
-
     getLocation()
-  }, [])
+  }, [selectedLocation])
 
-  // Điều chỉnh phí ship theo thời tiết
   const adjustedShipping = adjustShippingForWeather(shippingFee, weather?.condition)
   const finalShippingFee = adjustedShipping.fee
   const finalTotalPrice = totalPrice - shippingFee + finalShippingFee
 
-  // Lọc discounts khả dụng cho nhà hàng hiện tại
   const restaurantId = cart[0]?.restaurantId
   const availableDiscounts = DISCOUNTS.filter(d => canApplyDiscount(d, restaurantId))
 
-  // Xử lý chọn địa điểm trên bản đồ
-  const handleMapPress = (e) => {
-    const { latitude, longitude } = e.nativeEvent.coordinate
-    setMapRegion({ ...mapRegion, latitude, longitude })
-    
-    // Lấy địa chỉ từ tọa độ mới
-    getAddressFromCoords(latitude, longitude).then(result => {
-      if (result.success) {
-        setAddress(result.address)
+  // MỞ TRANG MAP-SELECT
+  const handleOpenMap = () => {
+    router.push({
+      pathname: '/map-select',
+      params: {
+        returnTo: 'checkout',
+        currentAddress: address,
+        currentLat: userLocation?.latitude,
+        currentLng: userLocation?.longitude,
       }
     })
   }
 
-  // Xử lý đặt hàng
   const handlePlaceOrder = async () => {
     if (!validate()) {
       Alert.alert('Lỗi', error)
       return
     }
 
-    //  Build order object
     const order = buildOrderObject({
       cart,
       fullName,
@@ -178,10 +181,12 @@ export default function CheckoutScreen() {
       totalPrice: finalTotalPrice,
     })
 
-    //  Lưu order
     const result = await saveOrder(AsyncStorage, order)
     
     if (result.success) {
+      // Reset location sau khi đặt hàng thành công
+      setSelectedLocation(null)
+      
       Alert.alert('Thành công', 'Đặt hàng thành công!', [
         { text: 'OK', onPress: () => router.replace('/(tabs)') }
       ])
@@ -199,7 +204,6 @@ export default function CheckoutScreen() {
           <>
             <Text style={styles.title}>Thông tin đặt hàng</Text>
 
-            {/*  Thông tin khách hàng - MẶC ĐỊNH */}
             <TextInput
               style={styles.input}
               placeholder="Họ và tên"
@@ -214,7 +218,7 @@ export default function CheckoutScreen() {
               keyboardType="phone-pad"
             />
             
-            {/*  Địa chỉ với nút bản đồ */}
+            {/* ĐỊA CHỈ VỚI NÚT BẢN ĐỒ */}
             <View style={styles.addressRow}>
               <TextInput
                 style={[styles.input, { flex: 1, marginRight: 8, marginHorizontal: 0 }]}
@@ -225,13 +229,24 @@ export default function CheckoutScreen() {
               />
               <Pressable
                 style={styles.mapBtn}
-                onPress={() => setShowMapModal(true)}
+                onPress={handleOpenMap}
               >
                 <Text style={styles.mapBtnText}>🗺️</Text>
               </Pressable>
             </View>
 
-            {/* Chọn phương thức giao hàng */}
+            {/*Hiển thị thông báo nếu đã chọn từ map */}
+            {selectedLocation && (
+              <View style={styles.locationHint}>
+                <Text style={styles.locationHintText}>
+                  📍 Đã chọn vị trí từ bản đồ
+                </Text>
+                <Pressable onPress={() => setSelectedLocation(null)}>
+                  <Text style={styles.resetLocationText}>Đặt lại</Text>
+                </Pressable>
+              </View>
+            )}
+
             <Pressable
               style={styles.selectBtn}
               onPress={() => setShowDeliveryModal(true)}
@@ -244,7 +259,6 @@ export default function CheckoutScreen() {
               </Text>
             </Pressable>
 
-            {/*  Chọn voucher */}
             <Pressable
               style={styles.selectBtn}
               onPress={() => setShowVoucherModal(true)}
@@ -257,7 +271,6 @@ export default function CheckoutScreen() {
               )}
             </Pressable>
 
-            {/* Chọn thanh toán */}
             <Pressable
               style={styles.selectBtn}
               onPress={() => setShowPaymentModal(true)}
@@ -267,7 +280,6 @@ export default function CheckoutScreen() {
               </Text>
             </Pressable>
 
-            {/* Hiển thị tài xế đã random */}
             <View style={styles.driverBox}>
               <Image 
                 source={selectedDriver.image} 
@@ -281,7 +293,6 @@ export default function CheckoutScreen() {
               </View>
             </View>
 
-            {/* Thời tiết */}
             {weather && (
               <View style={styles.weatherBox}>
                 <Text>🌤️ {weather.description} • 🌡️ {weather.temp}°C</Text>
@@ -304,7 +315,6 @@ export default function CheckoutScreen() {
         )}
         ListFooterComponent={
           <>
-            {/* Tổng tiền */}
             <View style={styles.summary}>
               <View style={styles.row}>
                 <Text>Tạm tính:</Text>
@@ -358,6 +368,7 @@ export default function CheckoutScreen() {
               <Pressable
                 key={method.key}
                 style={[
+
                   styles.modalItem,
                   deliveryMethod === method.key && styles.modalItemSelected
                 ]}
@@ -387,7 +398,7 @@ export default function CheckoutScreen() {
         </View>
       </Modal>
 
-      {/* ✅ Modal chọn voucher */}
+      {/* Modal chọn voucher */}
       <Modal visible={showVoucherModal} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -418,7 +429,6 @@ export default function CheckoutScreen() {
               ))
             )}
 
-            {/* ✅ Nút xóa voucher */}
             {discount && (
               <Pressable
                 style={[styles.modalItem, { backgroundColor: '#ffebee' }]}
@@ -475,37 +485,6 @@ export default function CheckoutScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* ✅ Modal bản đồ - BỎ TEXT THÔNG BÁO */}
-      <Modal visible={showMapModal} transparent animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { height: '80%' }]}>
-            <Text style={styles.modalTitle}>Chọn vị trí giao hàng</Text>
-            
-            {userLocation ? (
-              <View style={styles.mapPlaceholder}>
-                <Text style={styles.mapIcon}>🗺️</Text>
-                <Text style={styles.coordText}>
-                  Vị trí hiện tại:{'\n'}
-                  {userLocation.latitude.toFixed(6)}, {userLocation.longitude.toFixed(6)}
-                </Text>
-                <Text style={styles.addressPreview}>
-                  📍 {address}
-                </Text>
-              </View>
-            ) : (
-              <Text style={styles.emptyText}>Đang tải vị trí...</Text>
-            )}
-
-            <Pressable
-              style={[styles.modalClose, { backgroundColor: colors.primary }]}
-              onPress={() => setShowMapModal(false)}
-            >
-              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Xác nhận địa chỉ</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
     </View>
   )
 }
@@ -542,6 +521,25 @@ const styles = StyleSheet.create({
   },
   mapBtnText: {
     fontSize: 24,
+  },
+  locationHint: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#e3f2fd',
+    padding: 10,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 8,
+  },
+  locationHintText: {
+    fontSize: 14,
+    color: colors.primary,
+  },
+  resetLocationText: {
+    fontSize: 14,
+    color: colors.danger,
+    fontWeight: 'bold',
   },
   selectBtn: { 
     flexDirection: 'row', 
@@ -713,32 +711,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#999',
     padding: 20,
-  },
-  mapPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    marginBottom: 12,
-    padding: 20,
-  },
-  mapIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  coordText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-  },
-  addressPreview: {
-    marginTop: 16,
-    fontSize: 14,
-    color: colors.text,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    lineHeight: 20,
   },
 })

@@ -1,6 +1,3 @@
-/**
- * ✅ Phương thức giao hàng - Web & Mobile dùng chung
- */
 export const DELIVERY_METHODS = [
   { 
     key: 'express', 

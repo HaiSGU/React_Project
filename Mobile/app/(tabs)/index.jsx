@@ -20,7 +20,7 @@ const App = () => {
   useFocusEffect(
     React.useCallback(() => {
       const loadLoginStatus = async () => {
-        // ✅ Dùng shared service
+        //  Dùng shared service
         const loggedInStatus = await isLoggedIn(AsyncStorage)
         setLoggedIn(loggedInStatus)
         
@@ -34,7 +34,7 @@ const App = () => {
   )
 
   const handleLogout = async () => {
-    // ✅ Dùng shared service
+    //  Dùng shared service
     await logout(AsyncStorage)
     setLoggedIn(false)
     setUserInfo(null)

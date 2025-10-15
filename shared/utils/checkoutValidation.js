@@ -1,7 +1,3 @@
-/**
- * ✅ Validation functions - Web & Mobile dùng chung
- */
-
 export const validateFullName = (fullName) => {
   if (!fullName || !fullName.trim()) {
     return { valid: false, error: 'Vui lòng nhập họ tên' };

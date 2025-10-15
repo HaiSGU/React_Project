@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 export const useQuantities = (items = []) => {
   const [quantities, setQuantities] = useState({});
 
-  // ✅ useCallback để optimize performance
+  // useCallback để optimize performance
   const increase = useCallback((itemId) => {
     setQuantities(prev => ({ 
       ...prev, 
@@ -27,7 +27,7 @@ export const useQuantities = (items = []) => {
     setQuantities({});
   }, []);
 
-  // ✅ Tính tổng tiền
+  // Tính tổng tiền
   const totalPrice = useMemo(() => {
     return items.reduce((sum, item) => {
       const qty = quantities[item.id] || 0;
@@ -35,7 +35,7 @@ export const useQuantities = (items = []) => {
     }, 0);
   }, [quantities, items]);
 
-  // ✅ Lấy items đã chọn
+  // Lấy items đã chọn
   const cartItems = useMemo(() => {
     return items
       .filter(item => (quantities[item.id] || 0) > 0)
@@ -49,7 +49,7 @@ export const useQuantities = (items = []) => {
       }));
   }, [quantities, items]);
 
-  // ✅ Tổng số lượng items
+  // Tổng số lượng items
   const totalItems = useMemo(() => {
     return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
   }, [quantities]);

@@ -9,7 +9,7 @@ import colors from '@shared/theme/colors'
 export default function DiscountDetail() {
   const { type } = useLocalSearchParams()
   
-  // ✅ Dùng helper function từ shared
+  //  Dùng helper function từ shared
   const discount = getDiscountByType(DISCOUNTS, type)
 
   if (!discount) {
@@ -20,7 +20,7 @@ export default function DiscountDetail() {
     )
   }
 
-  // ✅ Dùng helper function từ shared
+  //  Dùng helper function từ shared
   const appliedRestaurants = filterRestaurantsByDiscount(RESTAURANTS, discount.restaurants)
 
   return (

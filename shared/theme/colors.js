@@ -1,8 +1,3 @@
-/**
- * Color palette for the app
- * Used by both Mobile (React Native) and Web (React)
- */
-
 export default {
   primary: '#3dd9ea',      // Màu chính (xanh dương)
   primaryDark: '#2ab8d0',  // Màu chính đậm

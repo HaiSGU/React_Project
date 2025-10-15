@@ -1,8 +1,4 @@
 /**
- * ✅ Pure functions - Web & Mobile dùng chung
- */
-
-/**
  * Tính phí ship theo phương thức giao hàng
  */
 export const calculateShippingFee = (deliveryMethod) => {
@@ -36,7 +32,7 @@ export const calculateSubtotal = (items) => {
 };
 
 /**
- * ✅ Tính giảm giá từ DISCOUNT (dựa vào DiscountList)
+ * Tính giảm giá từ DISCOUNT (dựa vào DiscountList)
  */
 export const calculateDiscountAmount = (discount, subtotal, shippingFee) => {
   if (!discount) return { itemDiscount: 0, shippingDiscount: 0 };
@@ -82,7 +78,7 @@ export const adjustShippingForWeather = (baseShippingFee, weatherCondition) => {
 };
 
 /**
- * ✅ Kiểm tra discount có áp dụng cho restaurant không
+ * Kiểm tra discount có áp dụng cho restaurant không
  */
 export const canApplyDiscount = (discount, restaurantId) => {
   if (!discount || !discount.restaurants) return false;

@@ -8,7 +8,6 @@ import { useChangePassword } from '@shared/hooks/useChangePassword'
 export default function ChangePasswordScreen() {
   const router = useRouter()
   
-  // ✅ Sử dụng custom hook từ shared
   const {
     oldPassword,
     setOldPassword,
@@ -17,7 +16,6 @@ export default function ChangePasswordScreen() {
     confirmPassword,
     setConfirmPassword,
     error,
-    setError,
     loading,
     setLoading,
     validate,
@@ -26,33 +24,34 @@ export default function ChangePasswordScreen() {
 
   const handleChangePassword = async () => {
     setLoading(true)
-    setError('')
     
     try {
       const user = await getCurrentUser(AsyncStorage)
       
       if (!user) {
         Alert.alert('Lỗi', 'Bạn chưa đăng nhập!')
+        setLoading(false)
         return
       }
       
-      // ✅ Validate sử dụng shared logic
       if (!validate(user.password)) {
         Alert.alert('Lỗi', error)
+        setLoading(false)
         return
       }
       
-      // ✅ Sử dụng shared service
       const result = await changePassword(AsyncStorage, oldPassword, newPassword)
       
       if (result.success) {
-        Alert.alert('Thành công', 'Đổi mật khẩu thành công!')
+        Alert.alert('Thành công', 'Đổi mật khẩu thành công!', [
+          { text: 'OK', onPress: () => router.back() }
+        ])
         reset()
-        router.replace('/account')
       } else {
         Alert.alert('Lỗi', result.error)
       }
     } catch (err) {
+      console.error('Change password error:', err)
       Alert.alert('Lỗi', 'Đã có lỗi xảy ra!')
     } finally {
       setLoading(false)
@@ -63,7 +62,7 @@ export default function ChangePasswordScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Đổi mật khẩu</Text>
       
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
       
       <TextInput
         style={styles.input}
@@ -72,6 +71,7 @@ export default function ChangePasswordScreen() {
         onChangeText={setOldPassword}
         secureTextEntry
         editable={!loading}
+        autoCapitalize="none"
       />
       <TextInput
         style={styles.input}
@@ -80,6 +80,7 @@ export default function ChangePasswordScreen() {
         onChangeText={setNewPassword}
         secureTextEntry
         editable={!loading}
+        autoCapitalize="none"
       />
       <TextInput
         style={styles.input}
@@ -88,6 +89,7 @@ export default function ChangePasswordScreen() {
         onChangeText={setConfirmPassword}
         secureTextEntry
         editable={!loading}
+        autoCapitalize="none"
       />
       
       <Pressable 
@@ -104,25 +106,46 @@ export default function ChangePasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 24, color: '#3dd9eaff' },
-  errorText: { color: '#ff3b30', marginBottom: 12, fontSize: 14 },
+  container: { 
+    flex: 1, 
+    padding: 24, 
+    backgroundColor: '#fff' 
+  },
+  title: { 
+    fontSize: 22, 
+    fontWeight: 'bold', 
+    marginBottom: 24, 
+    color: '#3dd9eaff' 
+  },
+  errorText: { 
+    color: '#ff3b30', 
+    marginBottom: 12, 
+    fontSize: 14,
+    padding: 8,
+    backgroundColor: '#ffebee',
+    borderRadius: 4,
+  },
   input: { 
     borderWidth: 1, 
     borderColor: '#ccc', 
     borderRadius: 8, 
     padding: 12, 
-    marginBottom: 16 
+    marginBottom: 16,
+    fontSize: 16,
   },
   saveBtn: { 
     backgroundColor: '#3dd9eaff', 
     borderRadius: 8, 
     padding: 14, 
     alignItems: 'center', 
-    marginBottom: 12 
+    marginTop: 8,
   },
   saveBtnDisabled: {
     backgroundColor: '#ccc',
   },
-  saveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  saveText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    fontSize: 16 
+  },
 })

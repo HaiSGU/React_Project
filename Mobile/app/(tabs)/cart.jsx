@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { getShippingOrders, getDeliveredOrders, confirmDelivery } from '@shared/services/orderService'
+import { formatPrice, formatOrderStatus, formatPaymentMethod } from '@shared/utils/formatters'
 
 export default function CartScreen() {
   const [activeTab, setActiveTab] = useState('shipping')
@@ -27,22 +28,42 @@ export default function CartScreen() {
     setDeliveredOrders(result.delivered)
   }
 
-  const renderOrder = ({ item }) => (
-    <View style={styles.orderCard}>
-      <Text style={styles.orderTitle}>Mã đơn: {item.id}</Text>
-      <Text>Nhà hàng: {item.restaurantName}</Text>
-      <Text>Tổng tiền: {item.totalPrice.toLocaleString()} đ</Text>
-      <Text>Trạng thái: {item.status}</Text>
-      {activeTab === 'shipping' && (
-        <Pressable
-          style={styles.confirmBtn}
-          onPress={() => handleConfirmDelivered(item)}
-        >
-          <Text style={styles.confirmText}>Đã nhận hàng</Text>
-        </Pressable>
-      )}
-    </View>
-  )
+  const renderOrder = ({ item }) => {
+    const totalValue = item.totalPrice || item.pricing?.total || 0
+
+    return (
+      <View style={styles.orderCard}>
+        <Text style={styles.orderTitle}>Mã đơn: #{item.id}</Text>
+        <Text style={styles.orderText}>
+          Nhà hàng: {item.restaurantName || 'Chưa có tên'}
+        </Text>
+        
+        {/*  DÙNG formatPrice */}
+        <Text style={styles.orderText}>
+          Tổng tiền: {formatPrice(totalValue)}đ
+        </Text>
+        
+        {/*  DÙNG formatOrderStatus */}
+        <Text style={styles.orderText}>
+          Trạng thái: {formatOrderStatus(item.status)}
+        </Text>
+        
+        {/*  DÙNG formatPaymentMethod */}
+        <Text style={styles.orderText}>
+          Thanh toán: {formatPaymentMethod(item.payment?.method)}
+        </Text>
+        
+        {activeTab === 'shipping' && (
+          <Pressable
+            style={styles.confirmBtn}
+            onPress={() => handleConfirmDelivered(item)}
+          >
+            <Text style={styles.confirmText}>Đã nhận hàng</Text>
+          </Pressable>
+        )}
+      </View>
+    )
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff', paddingTop: 40 }}>
@@ -112,6 +133,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
     marginBottom: 6,
+  },
+  orderText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 4,
   },
   confirmBtn: {
     marginTop: 12,

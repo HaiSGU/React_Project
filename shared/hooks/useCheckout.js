@@ -2,20 +2,18 @@ import { useState, useMemo } from 'react';
 import {
   calculateSubtotal,
   calculateShippingFee,
-  calculateDiscountAmount, // ✅ ĐỔI TÊN
+  calculateDiscountAmount, 
   calculateTotalPrice,
 } from '../utils/checkoutHelpers';
 import { validateCheckoutInfo } from '../utils/checkoutValidation';
 
-/**
- * ✅ Pure React Hook - Web & Mobile dùng chung
- */
+
 export const useCheckout = (initialCart = []) => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('fast');
-  const [discount, setDiscount] = useState(null); // ✅ ĐỔI TỪ voucher → discount
+  const [discount, setDiscount] = useState(null); 
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [error, setError] = useState('');
 
@@ -28,7 +26,7 @@ export const useCheckout = (initialCart = []) => {
   );
   
   const { itemDiscount, shippingDiscount } = useMemo(() => 
-    calculateDiscountAmount(discount, subtotal, shippingFee), // ✅ ĐỔI TÊN
+    calculateDiscountAmount(discount, subtotal, shippingFee), 
     [discount, subtotal, shippingFee]
   );
   
@@ -54,7 +52,7 @@ export const useCheckout = (initialCart = []) => {
     setPhone('');
     setAddress('');
     setDeliveryMethod('fast');
-    setDiscount(null); // ✅ ĐỔI
+    setDiscount(null); 
     setPaymentMethod('cash');
     setError('');
   };

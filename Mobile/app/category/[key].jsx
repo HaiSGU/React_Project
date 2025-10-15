@@ -9,7 +9,7 @@ import colors from '@shared/theme/colors'
 export default function CategoryScreen() {
   const { key } = useLocalSearchParams()
   
-  // ✅ Dùng helper function từ shared
+  //  Dùng helper function từ shared
   const filteredRestaurants = filterRestaurantsByCategory(RESTAURANTS, key)
   const categoryLabel = getCategoryLabel(CATEGORIES, key)
 

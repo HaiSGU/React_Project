@@ -1,3 +1,6 @@
+/**
+ * Validate old password
+ */
 export const validateOldPassword = (oldPassword, currentPassword) => {
   if (oldPassword !== currentPassword) {
     return { valid: false, error: 'Mật khẩu cũ không đúng!' };
@@ -5,26 +8,19 @@ export const validateOldPassword = (oldPassword, currentPassword) => {
   return { valid: true };
 };
 
+/**
+ * Validate new password
+ */
 export const validateNewPassword = (newPassword) => {
   if (!newPassword || newPassword.length < 6) {
     return { valid: false, error: 'Mật khẩu mới phải từ 6 ký tự trở lên!' };
   }
-  
-  // Có thể thêm rules phức tạp hơn
-  const hasUpperCase = /[A-Z]/.test(newPassword);
-  const hasLowerCase = /[a-z]/.test(newPassword);
-  const hasNumber = /\d/.test(newPassword);
-  
-  if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-    return { 
-      valid: false, 
-      error: 'Mật khẩu phải có chữ hoa, chữ thường và số!' 
-    };
-  }
-  
   return { valid: true };
 };
 
+/**
+ * Validate password match
+ */
 export const validatePasswordMatch = (newPassword, confirmPassword) => {
   if (newPassword !== confirmPassword) {
     return { valid: false, error: 'Mật khẩu xác nhận không khớp!' };
@@ -32,8 +28,14 @@ export const validatePasswordMatch = (newPassword, confirmPassword) => {
   return { valid: true };
 };
 
-//Combined validation
+/**
+ * Combined validation
+ */
 export const validatePasswordChange = (oldPassword, newPassword, confirmPassword, currentPassword) => {
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    return { valid: false, error: 'Vui lòng điền đầy đủ thông tin!' };
+  }
+  
   const oldCheck = validateOldPassword(oldPassword, currentPassword);
   if (!oldCheck.valid) return oldCheck;
   

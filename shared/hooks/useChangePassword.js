@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { validatePasswordChange } from '../utils/passwordValidation';
 
-/**
- * ✅ Pure React Hook - Web & Mobile dùng chung
- */
 export const useChangePassword = () => {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

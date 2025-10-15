@@ -1,6 +1,3 @@
-/**
- * ✅ Phương thức thanh toán - Web & Mobile dùng chung
- */
 export const PAYMENT_METHODS = [
   { 
     key: 'cash', 

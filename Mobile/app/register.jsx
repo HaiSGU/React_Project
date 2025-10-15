@@ -1,242 +1,288 @@
-import React, { useState } from 'react'
-import { View, Text, TextInput, Pressable, StyleSheet, Alert, ScrollView } from 'react-native'
+import React from 'react'
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  Pressable, 
+  StyleSheet, 
+  Alert, 
+  ScrollView 
+} from 'react-native'
 import { useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-
-import { register } from '@shared/services/authService'
+import { useRegister } from '@shared/hooks/useRegister'
+import { register } from '@shared/services/authService' 
+import colors from '@shared/theme/colors'
 
 export default function RegisterScreen() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [address, setAddress] = useState('')
-  const [gender, setGender] = useState('')
   const router = useRouter()
+  
+  const {
+    username,
+    setUsername,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    fullName,
+    setFullName,
+    phone,
+    setPhone,
+    address,
+    setAddress,
+    gender,
+    setGender,
+    error,
+    loading,
+    setLoading,
+    validate,
+    getFormData,
+  } = useRegister()
 
   const handleRegister = async () => {
-    // Validation đầy đủ
-    if (!username.trim()) {
-      Alert.alert('Lỗi đăng ký', 'Vui lòng nhập tên đăng nhập!')
+    if (!validate()) {
+      Alert.alert('Lỗi', error)
       return
     }
-    if (!password.trim()) {
-      Alert.alert('Lỗi đăng ký', 'Vui lòng nhập mật khẩu!')
-      return
-    }
-    if (!fullName.trim()) {
-      Alert.alert('Lỗi đăng ký', 'Vui lòng nhập họ tên!')
-      return
-    }
-    if (!phone.trim()) {
-      Alert.alert('Lỗi đăng ký', 'Vui lòng nhập số điện thoại!')
-      return
-    }
-    if (!address.trim()) {
-      Alert.alert('Lỗi đăng ký', 'Vui lòng nhập địa chỉ!')
-      return
-    }
-    if (!gender) {
-      Alert.alert('Lỗi đăng ký', 'Vui lòng chọn giới tính!')
-      return
-    }
-    if (password !== confirmPassword) {
-      Alert.alert('Lỗi đăng ký', 'Mật khẩu xác nhận không khớp!')
-      return
-    }
-    if (password.length < 6) {
-      Alert.alert('Lỗi đăng ký', 'Mật khẩu phải có ít nhất 6 ký tự!')
-      return
-    }
-    if (phone.length < 10) {
-      Alert.alert('Lỗi đăng ký', 'Số điện thoại không hợp lệ!')
-      return
-    }
-    
-    // Kiểm tra tài khoản đã tồn tại chưa
+
+    setLoading(true)
+
     try {
-      const existingUser = await AsyncStorage.getItem('user')
-      if (existingUser) {
-        const user = JSON.parse(existingUser)
-        if (user.username === username) {
-          Alert.alert('Lỗi đăng ký', 'Tên đăng nhập đã tồn tại!\nVui lòng chọn tên khác.')
-          return
-        }
-        if (user.phone === phone) {
-          Alert.alert('Lỗi đăng ký', 'Số điện thoại đã được sử dụng!\nVui lòng sử dụng số khác.')
-          return
-        }
+      const result = await register(AsyncStorage, getFormData()) 
+      
+      if (result.success) {
+        Alert.alert('Thành công', 'Đăng ký thành công! Vui lòng đăng nhập.', [
+          { text: 'OK', onPress: () => router.replace('/login') }
+        ])
+      } else {
+        Alert.alert('Lỗi', result.error)
       }
-    } catch (error) {
-      console.log('Error checking existing user:', error)
+    } catch (err) {
+      console.error('Register error:', err)
+      Alert.alert('Lỗi', 'Đã có lỗi xảy ra!')
+    } finally {
+      setLoading(false)
     }
-    
-    // Lưu tài khoản mới với đầy đủ thông tin
-    const userData = {
-      username, 
-      password,
-      fullName,
-      phone,
-      address,
-      gender,
-      registerTime: new Date().toISOString()
-    }
-    
-    await AsyncStorage.setItem('user', JSON.stringify(userData))
-    
-    // Tự động đăng nhập sau khi đăng ký
-    await AsyncStorage.setItem('isLoggedIn', 'true')
-    await AsyncStorage.setItem('userInfo', JSON.stringify({ 
-      username: username, 
-      loginTime: new Date().toISOString(),
-      ...userData // Bao gồm tất cả thông tin cá nhân
-    }))
-    
-    Alert.alert('Đăng ký thành công!', `Chào mừng ${fullName} đến với FoodFast!\nBạn đã được tự động đăng nhập.`)
-    router.replace('/')
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>Đăng ký tài khoản</Text>
-      
-      <Text style={styles.sectionTitle}>Thông tin đăng nhập</Text>
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
       <TextInput
         style={styles.input}
         placeholder="Tên đăng nhập *"
         value={username}
         onChangeText={setUsername}
+        autoCapitalize="none"
+        editable={!loading}
       />
+
       <TextInput
         style={styles.input}
-        placeholder="Mật khẩu (ít nhất 6 ký tự) *"
+        placeholder="Mật khẩu *"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        editable={!loading}
       />
+
       <TextInput
         style={styles.input}
         placeholder="Xác nhận mật khẩu *"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
+        editable={!loading}
       />
-      
-      <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
+
       <TextInput
         style={styles.input}
         placeholder="Họ và tên *"
         value={fullName}
         onChangeText={setFullName}
+        editable={!loading}
       />
+
       <TextInput
         style={styles.input}
         placeholder="Số điện thoại *"
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
+        editable={!loading}
       />
+
       <TextInput
-        style={[styles.input, styles.textArea]}
+        style={styles.input}
         placeholder="Địa chỉ *"
         value={address}
         onChangeText={setAddress}
         multiline
-        numberOfLines={3}
+        editable={!loading}
       />
-      
-      <Text style={styles.sectionTitle}>Giới tính *</Text>
-      <View style={styles.genderContainer}>
-        <Pressable 
-          style={[styles.genderButton, gender === 'Nam' && styles.genderButtonSelected]}
-          onPress={() => setGender('Nam')}
+
+      <Text style={styles.label}>Giới tính *</Text>
+      <View style={styles.genderRow}>
+        <Pressable
+          style={[
+            styles.genderBtn,
+            gender === 'male' && styles.genderBtnSelected
+          ]}
+          onPress={() => setGender('male')}
+          disabled={loading}
         >
-          <Text style={[styles.genderText, gender === 'Nam' && styles.genderTextSelected]}>Nam</Text>
+          <Text style={[
+            styles.genderText,
+            gender === 'male' && styles.genderTextSelected
+          ]}>
+            Nam
+          </Text>
         </Pressable>
-        <Pressable 
-          style={[styles.genderButton, gender === 'Nữ' && styles.genderButtonSelected]}
-          onPress={() => setGender('Nữ')}
+
+        <Pressable
+          style={[
+            styles.genderBtn,
+            gender === 'female' && styles.genderBtnSelected
+          ]}
+          onPress={() => setGender('female')}
+          disabled={loading}
         >
-          <Text style={[styles.genderText, gender === 'Nữ' && styles.genderTextSelected]}>Nữ</Text>
+          <Text style={[
+            styles.genderText,
+            gender === 'female' && styles.genderTextSelected
+          ]}>
+            Nữ
+          </Text>
         </Pressable>
-        <Pressable 
-          style={[styles.genderButton, gender === 'Khác' && styles.genderButtonSelected]}
-          onPress={() => setGender('Khác')}
+
+        <Pressable
+          style={[
+            styles.genderBtn,
+            gender === 'other' && styles.genderBtnSelected
+          ]}
+          onPress={() => setGender('other')}
+          disabled={loading}
         >
-          <Text style={[styles.genderText, gender === 'Khác' && styles.genderTextSelected]}>Khác</Text>
+          <Text style={[
+            styles.genderText,
+            gender === 'other' && styles.genderTextSelected
+          ]}>
+            Khác
+          </Text>
         </Pressable>
       </View>
-      
-      <Pressable style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Đăng ký</Text>
+
+      <Pressable 
+        style={[styles.registerBtn, loading && styles.registerBtnDisabled]} 
+        onPress={handleRegister}
+        disabled={loading}
+      >
+        <Text style={styles.registerText}>
+          {loading ? 'Đang đăng ký...' : 'Đăng ký'}
+        </Text>
       </Pressable>
-      <Pressable onPress={() => router.push('/login')}>
-        <Text style={styles.link}>Đã có tài khoản? Đăng nhập</Text>
-      </Pressable>
+
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Đã có tài khoản?</Text>
+        <Pressable onPress={() => router.back()}>
+          <Text style={styles.loginLink}>Đăng nhập</Text>
+        </Pressable>
+      </View>
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  scrollContent: { padding: 24, paddingBottom: 40 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 24, color: '#3dd9eaff', textAlign: 'center' },
-  sectionTitle: { 
-    fontSize: 18, 
+  container: { 
+    flex: 1, 
+    padding: 24, 
+    backgroundColor: '#fff',
+  },
+  title: { 
+    fontSize: 28, 
     fontWeight: 'bold', 
-    marginTop: 20, 
+    marginBottom: 24, 
+    color: colors.primary,
+    textAlign: 'center',
+  },
+  errorText: { 
+    color: colors.danger, 
     marginBottom: 12, 
-    color: '#333',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 8
+    fontSize: 14,
+    textAlign: 'center',
   },
   input: { 
     borderWidth: 1, 
-    borderColor: '#ccc', 
+    borderColor: '#ddd', 
     borderRadius: 8, 
     padding: 12, 
     marginBottom: 16,
-    backgroundColor: '#f9f9f9'
+    fontSize: 16,
   },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top'
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: colors.text,
   },
-  genderContainer: {
+  genderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20
+    marginBottom: 24,
+    gap: 8,
   },
-  genderButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+  genderBtn: {
+    flex: 1,
+    padding: 12,
     borderWidth: 1,
-    borderColor: '#ccc',
-    backgroundColor: '#f9f9f9'
+    borderColor: '#ddd',
+    borderRadius: 8,
+    alignItems: 'center',
   },
-  genderButtonSelected: {
-    backgroundColor: '#3dd9eaff',
-    borderColor: '#3dd9eaff'
+  genderBtnSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
   },
   genderText: {
+    fontSize: 16,
     color: '#666',
-    fontWeight: '500'
   },
   genderTextSelected: {
     color: '#fff',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
-  button: { 
-    backgroundColor: '#3dd9eaff', 
+  registerBtn: { 
+    backgroundColor: colors.primary, 
     borderRadius: 8, 
     padding: 14, 
     alignItems: 'center', 
     marginBottom: 12,
-    marginTop: 10
   },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  link: { color: '#3dd9eaff', textAlign: 'center', marginTop: 8 }
+  registerBtnDisabled: {
+    backgroundColor: '#ccc',
+  },
+  registerText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    fontSize: 16,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 40,
+  },
+  footerText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  loginLink: {
+    color: colors.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 4,
+  },
 })
