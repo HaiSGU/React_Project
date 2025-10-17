@@ -17,7 +17,7 @@ export default function LoginScreen() {
     setUsername('user')
     setPassword('123456')
   }, [])
-// test merge branch
+// test merge branch test
   
   const validate = () => {
     if (!username.trim()) {
