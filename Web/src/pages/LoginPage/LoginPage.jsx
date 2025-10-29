@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./LoginPage.css";
-import { login } from "../../api/api";  // 👈 gọi API thật
 
 export default function LoginPage({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -11,8 +10,18 @@ export default function LoginPage({ onLogin }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (username && password) {
-      onLogin({ username });
-      navigate("/home"); // chuyển hướng sang Home sau login thành công
+      const userInfo = username.startsWith("rest-")
+        ? { username, role: "restaurant" }
+        : { username, role: "user" };
+      
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      localStorage.setItem('isLoggedIn', 'true');
+      
+      if (userInfo.role === "restaurant") {
+        navigate("/restaurant/dashboard");
+      } else {
+        navigate("/home");
+      }
     } else {
       alert("Vui lòng nhập đầy đủ thông tin!");
     }
