@@ -18,6 +18,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary, // Màu xanh dương khi active
         tabBarInactiveTintColor: colors.textLight, // Màu xám khi inactive
         headerShown: false,
+        headerTitle: 'Home', // Default title cho back navigation
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({

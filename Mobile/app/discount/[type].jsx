@@ -19,6 +19,7 @@ export default function DiscountDetail() {
           options={{
             title: 'Mã giảm giá',
             headerShown: true,
+            headerBackTitle: '',
           }} 
         />
         <View style={styles.container}>
@@ -37,6 +38,7 @@ export default function DiscountDetail() {
         options={{
           title: discount.label,
           headerShown: true,
+          headerBackTitle: '',
         }} 
       />
       <View style={styles.container}>

@@ -34,6 +34,7 @@ export default function CategoryScreen() {
         options={{
           title: categoryLabel || 'Danh mục',
           headerShown: true,
+          headerBackTitle: '',
         }} 
       />
       <View style={{ flex: 1, backgroundColor: '#f8f8f8' }}>

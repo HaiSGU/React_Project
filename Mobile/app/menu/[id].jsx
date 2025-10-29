@@ -31,6 +31,7 @@ export default function MenuScreen() {
         options={{
           title: restaurantName,
           headerShown: true,
+          headerBackTitle: '',
         }} 
       />
       <View style={{ flex: 1 }}>

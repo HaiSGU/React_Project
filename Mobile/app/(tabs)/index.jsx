@@ -1,7 +1,7 @@
 import 'react-native-reanimated';
 import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable, ScrollView } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { Link, useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { Link, useRouter, useFocusEffect, useLocalSearchParams, Stack } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { RESTAURANTS } from '@shared/constants/RestaurantsList'
@@ -90,19 +90,26 @@ const App = () => {
   )
 
   return (
-    <View style={style.container}>
-      {/* Thanh chào + đăng nhập/đăng xuất */}
-      <View style={style.headerBar}>
-        <Text style={style.headerText}>
-          {loggedIn ? `👋 Xin chào ${userInfo?.username || 'bạn'}, hôm nay ăn gì nè?` : 'Chào mừng bạn đến với FoodFast'}
-        </Text>
-        <Pressable onPress={loggedIn ? handleLogout : handleLogin} style={[style.button, loggedIn ? style.logoutBtn : style.loginBtn]}>
-          <Text style={style.buttonText}>{loggedIn ? 'Đăng xuất' : 'Đăng nhập'}</Text>
-        </Pressable>
-      </View>
+    <>
+      <Stack.Screen 
+        options={{
+          title: 'Home',
+          headerShown: false, // Giữ header ẩn vì đã có custom headerBar
+        }} 
+      />
+      <View style={style.container}>
+        {/* Thanh chào + đăng nhập/đăng xuất */}
+        <View style={style.headerBar}>
+          <Text style={style.headerText}>
+            {loggedIn ? `👋 Xin chào ${userInfo?.username || 'bạn'}, hôm nay ăn gì nè?` : 'Chào mừng bạn đến với FoodFast'}
+          </Text>
+          <Pressable onPress={loggedIn ? handleLogout : handleLogin} style={[style.button, loggedIn ? style.logoutBtn : style.loginBtn]}>
+            <Text style={style.buttonText}>{loggedIn ? 'Đăng xuất' : 'Đăng nhập'}</Text>
+          </Pressable>
+        </View>
 
-      {/* Nội dung chính */}
-      <ImageBackground source={ShipperImg} style={style.image}>
+        {/* Nội dung chính */}
+        <ImageBackground source={ShipperImg} style={style.image}>
         <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
           <Text style={style.title}>FoodFast</Text>
 
@@ -179,7 +186,8 @@ const App = () => {
           </View>
         </ScrollView>
       </ImageBackground>
-    </View>
+      </View>
+    </>
   )
 }
 

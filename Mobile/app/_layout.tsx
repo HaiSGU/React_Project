@@ -35,7 +35,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ headerShown: false, title: 'Home' }} /> 
           <Stack.Screen name="menu" options={{ headerShown: false, title: 'Menu', headerTitle: 'FoodFast Menu' }} /> 
           <Stack.Screen name="contact" options={{ headerShown: false, title: 'Contact', headerTitle: 'Contact Us' }} /> 
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
           
           {/* Thêm các màn hình mới */}
           <Stack.Screen name="login" options={{ title: 'Đăng nhập' }} />
