@@ -1,5 +1,5 @@
 import { View, Text, FlatList, Image, StyleSheet, Pressable } from 'react-native'
-import { useLocalSearchParams, Link } from 'expo-router'
+import { useLocalSearchParams, Link, Stack } from 'expo-router'
 
 import { RESTAURANTS } from '@shared/constants/RestaurantsList'
 import { CATEGORIES } from '@shared/constants/CategoryList'
@@ -29,15 +29,22 @@ export default function CategoryScreen() {
   )
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f8f8f8', paddingTop: 40 }}>
-      <Text style={styles.title}>Danh mục: {categoryLabel}</Text>
-      <FlatList
-        data={filteredRestaurants}
-        renderItem={renderRestaurant}
-        keyExtractor={item => item.id.toString()}
-        contentContainerStyle={{ padding: 16 }}
+    <>
+      <Stack.Screen 
+        options={{
+          title: categoryLabel || 'Danh mục',
+          headerShown: true,
+        }} 
       />
-    </View>
+      <View style={{ flex: 1, backgroundColor: '#f8f8f8' }}>
+        <FlatList
+          data={filteredRestaurants}
+          renderItem={renderRestaurant}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={{ padding: 16 }}
+        />
+      </View>
+    </>
   )
 }
 

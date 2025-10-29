@@ -1,7 +1,8 @@
 import { View, Text, FlatList, Image, StyleSheet, Pressable } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
 
 import { MENU_ITEMS } from '@shared/constants/MenuItems'
+import { RESTAURANTS } from '@shared/constants/RestaurantsList'
 import { useQuantities } from '@shared/hooks/useQuantities'
 import { filterMenuByRestaurant } from '@shared/utils/restaurantHelpers'
 import colors from '@shared/theme/colors'
@@ -13,6 +14,10 @@ export default function MenuScreen() {
 
   // ✅ Dùng helper function từ shared
   const menuForRestaurant = filterMenuByRestaurant(MENU_ITEMS, restaurantId)
+  
+  // Lấy tên restaurant để hiển thị header
+  const restaurant = RESTAURANTS.find(r => r.id === restaurantId)
+  const restaurantName = restaurant ? restaurant.name : 'Menu'
 
   // ✅ Dùng custom hook từ shared (Web cũng dùng được!)
   const { quantities, increase, decrease, totalPrice, cartItems } = useQuantities(menuForRestaurant)
@@ -21,17 +26,24 @@ export default function MenuScreen() {
   const footerComp = <Text style={styles.footerText}>End of Menu</Text>
 
   return (
-    <View style={{ flex: 1 }}>
-      <FlatList
-        data={menuForRestaurant}
-        keyExtractor={(item) => item.id.toString()}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}
-        ItemSeparatorComponent={separatorComp}
-        ListFooterComponent={footerComp}
-        ListFooterComponentStyle={styles.footerComp}
-        ListEmptyComponent={<Text>No items</Text>}
-        renderItem={({ item }) => (
+    <>
+      <Stack.Screen 
+        options={{
+          title: restaurantName,
+          headerShown: true,
+        }} 
+      />
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={menuForRestaurant}
+          keyExtractor={(item) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.contentContainer}
+          ItemSeparatorComponent={separatorComp}
+          ListFooterComponent={footerComp}
+          ListFooterComponentStyle={styles.footerComp}
+          ListEmptyComponent={<Text>No items</Text>}
+          renderItem={({ item }) => (
           <View style={styles.card}>
             <Image
               source={item.image}
@@ -92,7 +104,8 @@ export default function MenuScreen() {
           <Text style={styles.checkoutAction}>Thanh toán ➜</Text>
         </Pressable>
       )}
-    </View>
+      </View>
+    </>
   )
 }
 

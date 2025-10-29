@@ -1,5 +1,5 @@
 import { View, Text, FlatList, Image, StyleSheet, Pressable } from 'react-native'
-import { useLocalSearchParams, Link } from 'expo-router'
+import { useLocalSearchParams, Link, Stack } from 'expo-router'
 
 import { DISCOUNTS } from '@shared/constants/DiscountList'
 import { RESTAURANTS } from '@shared/constants/RestaurantsList'
@@ -14,9 +14,17 @@ export default function DiscountDetail() {
 
   if (!discount) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Không tìm thấy mã giảm giá</Text>
-      </View>
+      <>
+        <Stack.Screen 
+          options={{
+            title: 'Mã giảm giá',
+            headerShown: true,
+          }} 
+        />
+        <View style={styles.container}>
+          <Text style={styles.errorText}>Không tìm thấy mã giảm giá</Text>
+        </View>
+      </>
     )
   }
 
@@ -24,15 +32,18 @@ export default function DiscountDetail() {
   const appliedRestaurants = filterRestaurantsByDiscount(RESTAURANTS, discount.restaurants)
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        {discount.label} áp dụng cho:
-      </Text>
-
-      <FlatList
-        data={appliedRestaurants}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({ item }) => (
+    <>
+      <Stack.Screen 
+        options={{
+          title: discount.label,
+          headerShown: true,
+        }} 
+      />
+      <View style={styles.container}>
+        <FlatList
+          data={appliedRestaurants}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({ item }) => (
           <View style={styles.card}>
             <Image source={item.image} style={styles.image} />
             <View style={styles.infoContainer}>
@@ -48,7 +59,8 @@ export default function DiscountDetail() {
           </View>
         )}
       />
-    </View>
+      </View>
+    </>
   )
 }
 
