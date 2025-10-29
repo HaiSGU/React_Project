@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { getShippingOrders, getDeliveredOrders, confirmDelivery } from '@shared/services/orderService'
 import { formatPrice, formatOrderStatus, formatPaymentMethod } from '@shared/utils/formatters'
@@ -66,7 +67,7 @@ export default function CartScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff', paddingTop: 40 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top']}>
       <View style={styles.tabRow}>
         <Pressable
           style={[styles.tabBtn, activeTab === 'shipping' && styles.tabActive]}
@@ -88,7 +89,7 @@ export default function CartScreen() {
         contentContainerStyle={{ padding: 16 }}
         ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 40 }}>Không có đơn hàng</Text>}
       />
-    </View>
+    </SafeAreaView>
   )
 }
 

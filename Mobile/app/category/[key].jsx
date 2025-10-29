@@ -1,5 +1,6 @@
 import { View, Text, FlatList, Image, StyleSheet, Pressable } from 'react-native'
 import { useLocalSearchParams, Link, Stack } from 'expo-router'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { RESTAURANTS } from '@shared/constants/RestaurantsList'
 import { CATEGORIES } from '@shared/constants/CategoryList'
@@ -29,7 +30,7 @@ export default function CategoryScreen() {
   )
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }} edges={['bottom']}>
       <Stack.Screen 
         options={{
           title: categoryLabel || 'Danh mục',
@@ -45,7 +46,7 @@ export default function CategoryScreen() {
           contentContainerStyle={{ padding: 16 }}
         />
       </View>
-    </>
+    </SafeAreaView>
   )
 }
 

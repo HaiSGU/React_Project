@@ -1,5 +1,6 @@
 import { View, Text, FlatList, Image, StyleSheet, Pressable } from 'react-native'
 import { useLocalSearchParams, Link, Stack } from 'expo-router'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { DISCOUNTS } from '@shared/constants/DiscountList'
 import { RESTAURANTS } from '@shared/constants/RestaurantsList'
@@ -14,7 +15,7 @@ export default function DiscountDetail() {
 
   if (!discount) {
     return (
-      <>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
         <Stack.Screen 
           options={{
             title: 'Mã giảm giá',
@@ -25,7 +26,7 @@ export default function DiscountDetail() {
         <View style={styles.container}>
           <Text style={styles.errorText}>Không tìm thấy mã giảm giá</Text>
         </View>
-      </>
+      </SafeAreaView>
     )
   }
 
@@ -33,7 +34,7 @@ export default function DiscountDetail() {
   const appliedRestaurants = filterRestaurantsByDiscount(RESTAURANTS, discount.restaurants)
 
   return (
-    <>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen 
         options={{
           title: discount.label,
@@ -62,7 +63,7 @@ export default function DiscountDetail() {
         )}
       />
       </View>
-    </>
+    </SafeAreaView>
   )
 }
 

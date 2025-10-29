@@ -1,5 +1,6 @@
 import { View, Text, FlatList, Image, StyleSheet, Pressable } from 'react-native'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { MENU_ITEMS } from '@shared/constants/MenuItems'
 import { RESTAURANTS } from '@shared/constants/RestaurantsList'
@@ -26,7 +27,7 @@ export default function MenuScreen() {
   const footerComp = <Text style={styles.footerText}>End of Menu</Text>
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }} edges={['bottom']}>
       <Stack.Screen 
         options={{
           title: restaurantName,
@@ -106,7 +107,7 @@ export default function MenuScreen() {
         </Pressable>
       )}
       </View>
-    </>
+    </SafeAreaView>
   )
 }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter, Link } from 'expo-router'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { isLoggedIn, getCurrentUser, updateUserInfo, logout } from '@shared/services/authService'
 
@@ -47,11 +48,15 @@ export default function AccountScreen() {
   }
 
   if (loading) {
-    return <View style={styles.container}><Text>Đang tải...</Text></View>
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <Text>Đang tải...</Text>
+      </SafeAreaView>
+    )
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.title}>Thông tin cá nhân</Text>
       <TextInput
         style={styles.input}
@@ -86,7 +91,7 @@ export default function AccountScreen() {
           <Text style={styles.menuText}>Đăng xuất</Text>
         </Pressable>
       </View>
-    </View>
+    </SafeAreaView>
   )
 }
 
