@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import LoginPage from "./pages/LoginPage/LoginPage.jsx";
 import HomePage from "./pages/HomePage/HomePage.jsx";
@@ -26,27 +26,25 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={user ? <Navigate to="/home" /> : <Navigate to="/login" />}
-        />
-        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-        <Route path="/home" element={<HomePage user={user} />} />
-        <Route path="/category/:id" element={<CategoryPage />} />
-        <Route path="/menu/:id" element={<MenuPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route
-          path="/account"
-          element={<AccountPage user={user} onLogout={() => setUser(null)} />}
-        />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/map-select" element={<MapSelectPage />} />
-        <Route path="/restaurant/dashboard" element={<RestaurantDashboard />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route
+        path="/"
+        element={user ? <Navigate to="/home" /> : <Navigate to="/login" />}
+      />
+      <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+      <Route path="/home" element={<HomePage user={user} />} />
+      <Route path="/category/:id" element={<CategoryPage />} />
+      <Route path="/menu/:id" element={<MenuPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route
+        path="/account"
+        element={<AccountPage user={user} onLogout={() => setUser(null)} />}
+      />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/map-select" element={<MapSelectPage />} />
+      <Route path="/restaurant/dashboard" element={<RestaurantDashboard />} />
+    </Routes>
   );
 }
 

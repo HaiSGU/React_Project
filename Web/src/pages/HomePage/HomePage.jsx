@@ -1,11 +1,27 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import CategoryCard from "../../components/CategoryCard";
 import DiscountCard from "../../components/DiscountCard";
 import RestaurantCard from "../../components/RestaurantCard";
+import SearchBar from "../../components/SearchBar";
 import FooterNav from "../../components/FooterNav";
+import { RESTAURANTS } from "../../utils/restaurantResolver";
+import { CATEGORIES } from "../../utils/categoryResolver";
+import { DISCOUNTS } from "@shared/constants/DiscountList";
+import { useSearch } from "@shared/hooks/useSearch";
 import "./HomePage.css";
 
 export default function HomePage({ user }) {
+  // Search functionality
+  const { query, setQuery, filteredItems: searchResults, noResults } = useSearch(
+    RESTAURANTS,
+    ['name', 'address', 'category']
+  );
+
+  // Hiển thị kết quả search hoặc featured restaurants
+  const displayRestaurants = query.trim() 
+    ? searchResults 
+    : RESTAURANTS.filter(r => r.isFeatured);
   return (
     <div className="home-page">
       <header className="home-header">Home</header>
@@ -19,54 +35,71 @@ export default function HomePage({ user }) {
         {!user && <button className="login-btn">Đăng nhập</button>}
       </div>
 
-      {/* ============== Categories ============== */}
-      <section className="categories">
-        <h3>Danh mục</h3>
-        <div className="scroll-list">
-          {/* bọc = Link */}
-          <Link to="/category/1">
-            <CategoryCard
-              name="Đồ ăn nhanh"
-              img="https://cdn-icons-png.flaticon.com/512/3075/3075977.png"
-            />
-          </Link>
-          <Link to="/category/2">
-            <CategoryCard
-              name="Cà phê - Trà - Sinh tố"
-              img="https://cdn-icons-png.flaticon.com/512/415/415682.png"
-            />
-          </Link>
-        </div>
-      </section>
+      {/* ============== Search Bar ============== */}
+      <div className="search-container">
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          onClear={() => setQuery('')}
+          placeholder="Tìm nhà hàng, món ăn..."
+        />
+        {query.trim() !== '' && (
+          <div className="search-result-info">
+            {noResults 
+              ? '😔 Không tìm thấy kết quả phù hợp' 
+              : `Tìm thấy ${searchResults.length} nhà hàng`}
+          </div>
+        )}
+      </div>
 
-      {/* ============== Discounts ============== */}
-      <section className="discounts">
-        <h3>Chương trình giảm giá</h3>
-        <div className="scroll-list">
-          <Link to="/discount/freeship"><DiscountCard text="FREESHIP" /></Link>
-          <Link to="/discount/10"><DiscountCard text="GIẢM 10%" /></Link>
-          <Link to="/discount/20"><DiscountCard text="GIẢM 20%" /></Link>
-        </div>
-      </section>
+      {/* Ẩn Categories và Discounts khi đang search */}
+      {!query.trim() && (
+        <>
+          {/* ============== Categories ============== */}
+          <section className="categories">
+            <h3>Danh mục</h3>
+            <div className="scroll-list">
+              {CATEGORIES.filter(c => c.key !== 'all').map(cat => (
+                <Link key={cat.key} to={`/category/${cat.key}`}>
+                  <CategoryCard name={cat.label} img={cat.icon} />
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* ============== Discounts ============== */}
+          <section className="discounts">
+            <h3>Chương trình giảm giá</h3>
+            <div className="scroll-list">
+              {DISCOUNTS.map(discount => (
+                <Link key={discount.type} to={`/discount/${discount.type}`}>
+                  <DiscountCard text={discount.label} />
+                </Link>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
 
       {/* ============== Restaurants ============== */}
       <section className="restaurants">
-        <h3>⭐ Nhà hàng nổi bật</h3>
+        <h3>{query.trim() ? '🔍 Kết quả tìm kiếm' : '⭐ Nhà hàng nổi bật'}</h3>
         <div className="scroll-list">
-          <Link to="/menu/1">
-            <RestaurantCard
-              name="Jollibee"
-              rating="4.7"
-              img="https://upload.wikimedia.org/wikipedia/en/0/02/Jollibee_logo.svg"
-            />
-          </Link>
-          <Link to="/menu/2">
-            <RestaurantCard
-              name="KFC"
-              rating="4.5"
-              img="https://1000logos.net/wp-content/uploads/2017/03/KFC_logo.png"
-            />
-          </Link>
+          {displayRestaurants.length > 0 ? (
+            displayRestaurants.map(restaurant => (
+              <Link key={restaurant.id} to={`/menu/${restaurant.id}`}>
+                <RestaurantCard
+                  name={restaurant.name}
+                  rating={restaurant.rating}
+                  img={restaurant.image}
+                />
+              </Link>
+            ))
+          ) : (
+            <div className="no-results">
+              {noResults ? '😔 Không tìm thấy nhà hàng phù hợp' : 'Chưa có nhà hàng'}
+            </div>
+          )}
         </div>
       </section>
 

@@ -1,10 +1,17 @@
-export const CATEGORIES = [
-  { key: 'fastfood', label: 'Đồ ăn nhanh', icon: require('@/assets/images/category/food.jpg') },
-  { key: 'coffee', label: 'Cà phê - Trà - Sinh tố', icon: require('@/assets/images/category/coffee.jpg') },
-  { key: 'milktea', label: 'Trà sữa', icon: require('@/assets/images/category/milktea.jpg') },
-  { key: 'vegetable', label: 'Món chay', icon: require('@/assets/images/category/vegetable.jpg') },
-  { key: 'rice', label: 'Cơm', icon: require('@/assets/images/category/rice.jpg') },
-  { key: 'noodle', label: 'Mì - Phở - Bún', icon: require('@/assets/images/category/noodle.jpg') },
-  { key: 'asia', label: 'Món Châu Á', icon: require('@/assets/images/category/asia.jpg') },
-  
-];
+// Mobile resolver - Map imageName sang require() cho React Native
+import { CATEGORIES_DATA } from './CategoriesData';
+
+const IMAGE_REQUIRE_MAP = {
+  'food.jpg': require('@/assets/images/category/food.jpg'),
+  'coffee.jpg': require('@/assets/images/category/coffee.jpg'),
+  'milktea.jpg': require('@/assets/images/category/milktea.jpg'),
+  'vegetable.jpg': require('@/assets/images/category/vegetable.jpg'),
+  'rice.jpg': require('@/assets/images/category/rice.jpg'),
+  'noodle.jpg': require('@/assets/images/category/noodle.jpg'),
+  'asia.jpg': require('@/assets/images/category/asia.jpg'),
+};
+
+export const CATEGORIES = CATEGORIES_DATA.map(category => ({
+  ...category,
+  icon: IMAGE_REQUIRE_MAP[category.imageName] || null
+}));

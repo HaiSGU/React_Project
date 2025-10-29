@@ -7,7 +7,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { RESTAURANTS } from '@shared/constants/RestaurantsList'
 import { CATEGORIES } from '@shared/constants/CategoryList'
 import { DISCOUNTS } from '@shared/constants/DiscountList'
+import { MENU_ITEMS } from '@shared/constants/MenuItems'
 import { isLoggedIn, getCurrentUser, logout } from '@shared/services/authService'
+import { useRestaurantSearch } from '@shared/hooks/useSearch'
+import SearchBar from '../../components/SearchBar'
 import ShipperImg from "@shared/assets/images/shipperimage.jpeg"
 import colors from '@shared/theme/colors'
 
@@ -16,6 +19,17 @@ const App = () => {
   const [loggedIn, setLoggedIn] = useState(false)
   const [userInfo, setUserInfo] = useState(null)
   const params = useLocalSearchParams()
+
+  // Search functionality - tìm nhà hàng theo tên, địa chỉ, category VÀ món ăn
+  const { 
+    query, 
+    setQuery, 
+    filteredRestaurants, 
+    noResults 
+  } = useRestaurantSearch(RESTAURANTS, MENU_ITEMS)
+
+  // Hiển thị kết quả search hoặc featured restaurants
+  const displayRestaurants = query.trim() ? filteredRestaurants : RESTAURANTS.filter(r => r.isFeatured)
 
   useFocusEffect(
     React.useCallback(() => {
@@ -92,43 +106,76 @@ const App = () => {
         <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
           <Text style={style.title}>FoodFast</Text>
 
-          {/* Danh mục */}
-          <View style={style.categorySection}>
-            <Text style={style.sectionTitle}>Danh mục</Text>
-            <FlatList
-              data={CATEGORIES.filter(c => c.key !== 'all')}
-              renderItem={renderCategory}
-              keyExtractor={item => item.key}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
-            />
-          </View>
+          {/* Search Bar */}
+          <SearchBar
+            value={query}
+            onChangeText={setQuery}
+            onClear={() => setQuery('')}
+            placeholder="Tìm nhà hàng, món ăn..."
+          />
 
-          {/* Mã giảm giá */}
-          <View style={{ marginBottom: 24 }}>
-            <Text style={style.sectionTitle}>Chương trình giảm giá</Text>
-            <FlatList
-              data={DISCOUNTS}
-              renderItem={renderDiscount}
-              keyExtractor={item => item.type}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16 }}
-            />
-          </View>
+          {/* Hiển thị số kết quả search */}
+          {query.trim() !== '' && (
+            <View style={style.searchResultHeader}>
+              <Text style={style.searchResultText}>
+                {noResults 
+                  ? 'Không tìm thấy kết quả' 
+                  : `Tìm thấy ${filteredRestaurants.length} nhà hàng`}
+              </Text>
+            </View>
+          )}
 
-          {/* Nhà hàng nổi bật */}
+          {/* Danh mục - Ẩn khi đang search */}
+          {!query.trim() && (
+            <View style={style.categorySection}>
+              <Text style={style.sectionTitle}>Danh mục</Text>
+              <FlatList
+                data={CATEGORIES.filter(c => c.key !== 'all')}
+                renderItem={renderCategory}
+                keyExtractor={item => item.key}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
+              />
+            </View>
+          )}
+
+          {/* Mã giảm giá - Ẩn khi đang search */}
+          {!query.trim() && (
+            <View style={{ marginBottom: 24 }}>
+              <Text style={style.sectionTitle}>Chương trình giảm giá</Text>
+              <FlatList
+                data={DISCOUNTS}
+                renderItem={renderDiscount}
+                keyExtractor={item => item.type}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16 }}
+              />
+            </View>
+          )}
+
+          {/* Nhà hàng (kết quả search hoặc featured) */}
           <View style={{ marginBottom: 40 }}>
-            <Text style={style.sectionTitle}>⭐ Nhà hàng nổi bật</Text>
-            <FlatList
-              data={RESTAURANTS.filter(r => r.isFeatured)}
-              renderItem={renderRestaurant}
-              keyExtractor={item => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16 }}
-            />
+            <Text style={style.sectionTitle}>
+              {query.trim() ? '🔍 Kết quả tìm kiếm' : '⭐ Nhà hàng nổi bật'}
+            </Text>
+            {displayRestaurants.length > 0 ? (
+              <FlatList
+                data={displayRestaurants}
+                renderItem={renderRestaurant}
+                keyExtractor={item => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 16 }}
+              />
+            ) : (
+              <View style={style.emptyContainer}>
+                <Text style={style.emptyText}>
+                  {noResults ? '😔 Không tìm thấy nhà hàng phù hợp' : 'Chưa có nhà hàng'}
+                </Text>
+              </View>
+            )}
           </View>
         </ScrollView>
       </ImageBackground>
@@ -225,5 +272,33 @@ const style = StyleSheet.create({
     color: colors.textWhite,
     fontSize: 15,
     fontWeight: 'bold',
+  },
+  searchResultHeader: {
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 8,
+  },
+  searchResultText: {
+    color: colors.textWhite,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyText: {
+    color: colors.textWhite,
+    fontSize: 16,
+    textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
 })

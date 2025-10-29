@@ -76,3 +76,28 @@ section {
   border-top: 1px solid #ddd;
   padding: 10px 0;
 }
+
+/* Search */
+.search-container {
+  padding: 0 15px;
+  margin-top: 10px;
+}
+
+.search-result-info {
+  text-align: center;
+  padding: 8px 16px;
+  margin: 8px 0;
+  background-color: #f0f9ff;
+  border-radius: 8px;
+  color: #1d4ed8;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 16px;
+  width: 100%;
+}
