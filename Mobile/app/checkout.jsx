@@ -27,6 +27,12 @@ import { buildOrderObject } from '@shared/utils/orderBuilder'
 import { saveOrder } from '@shared/services/orderService'
 import colors from '@shared/theme/colors'
 
+// Import QR codes
+const QR_CODES = [
+  require('@shared/assets/images/QRCode/QR1.jpg'),
+  require('@shared/assets/images/QRCode/QR2.jpg'),
+]
+
 const DELIVERY_METHODS = [
   { key: 'fast', label: 'Nhanh', fee: 25000, time: '30 phút' },
   { key: 'standard', label: 'Tiêu chuẩn', fee: 15000, time: '45 phút' },
@@ -75,10 +81,27 @@ export default function CheckoutScreen() {
   const [weather, setWeather] = useState(null)
   const [userLocation, setUserLocation] = useState(null)
 
+  // Card payment states
+  const [cardNumber, setCardNumber] = useState('')
+  const [cardHolder, setCardHolder] = useState('')
+  const [expiryDate, setExpiryDate] = useState('')
+  const [cvv, setCvv] = useState('')
+
+  // QR Code state
+  const [selectedQR, setSelectedQR] = useState(null)
+
   const [selectedDriver] = useState(() => {
     const randomIndex = Math.floor(Math.random() * DRIVERS.length)
     return DRIVERS[randomIndex]
   })
+
+  // Chọn QR ngẫu nhiên khi chọn payment method QR
+  useEffect(() => {
+    if (paymentMethod === 'qr') {
+      const randomIndex = Math.floor(Math.random() * QR_CODES.length)
+      setSelectedQR(QR_CODES[randomIndex])
+    }
+  }, [paymentMethod])
 
   // LOAD THÔNG TIN USER
   useEffect(() => {
@@ -167,6 +190,22 @@ export default function CheckoutScreen() {
     if (!validate()) {
       Alert.alert('Lỗi', error)
       return
+    }
+
+    // Validate card info if payment method is card
+    if (paymentMethod === 'card') {
+      if (!cardNumber || !cardHolder || !expiryDate || !cvv) {
+        Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin thẻ!')
+        return
+      }
+      if (cardNumber.length !== 16) {
+        Alert.alert('Lỗi', 'Số thẻ phải có 16 chữ số!')
+        return
+      }
+      if (cvv.length !== 3) {
+        Alert.alert('Lỗi', 'CVV phải có 3 chữ số!')
+        return
+      }
     }
 
     const order = buildOrderObject({
@@ -280,6 +319,64 @@ export default function CheckoutScreen() {
               </Text>
             </Pressable>
 
+            {/* HIỂN THỊ FORM THẺ KHI CHỌN CARD */}
+            {paymentMethod === 'card' && (
+              <View style={styles.cardFormContainer}>
+                <Text style={styles.cardFormTitle}>Thông tin thẻ</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Số thẻ (16 chữ số)"
+                  value={cardNumber}
+                  onChangeText={(text) => setCardNumber(text.replace(/\D/g, '').slice(0, 16))}
+                  keyboardType="numeric"
+                  maxLength={16}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Tên chủ thẻ"
+                  value={cardHolder}
+                  onChangeText={setCardHolder}
+                  autoCapitalize="characters"
+                />
+                <View style={styles.cardRow}>
+                  <TextInput
+                    style={[styles.input, { flex: 1, marginRight: 8, marginHorizontal: 0 }]}
+                    placeholder="MM/YY"
+                    value={expiryDate}
+                    onChangeText={(text) => {
+                      let formatted = text.replace(/\D/g, '')
+                      if (formatted.length >= 2) {
+                        formatted = formatted.slice(0, 2) + '/' + formatted.slice(2, 4)
+                      }
+                      setExpiryDate(formatted)
+                    }}
+                    keyboardType="numeric"
+                    maxLength={5}
+                  />
+                  <TextInput
+                    style={[styles.input, { flex: 1, marginHorizontal: 0 }]}
+                    placeholder="CVV"
+                    value={cvv}
+                    onChangeText={(text) => setCvv(text.replace(/\D/g, '').slice(0, 3))}
+                    keyboardType="numeric"
+                    maxLength={3}
+                    secureTextEntry
+                  />
+                </View>
+              </View>
+            )}
+
+            {/* HIỂN THỊ QR CODE KHI CHỌN QR */}
+            {paymentMethod === 'qr' && selectedQR && (
+              <View style={styles.qrContainer}>
+                <Text style={styles.qrTitle}>Quét mã QR để thanh toán</Text>
+                <Image source={selectedQR} style={styles.qrImage} />
+                <Text style={styles.qrSubtitle}>
+                  Tổng tiền: {finalTotalPrice.toLocaleString()}đ
+                </Text>
+              </View>
+            )}
+
             <View style={styles.driverBox}>
               <Image 
                 source={selectedDriver.image} 
@@ -368,7 +465,6 @@ export default function CheckoutScreen() {
               <Pressable
                 key={method.key}
                 style={[
-
                   styles.modalItem,
                   deliveryMethod === method.key && styles.modalItemSelected
                 ]}
@@ -559,6 +655,54 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  // Card form styles
+  cardFormContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  cardFormTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: colors.text,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+  },
+  // QR code styles
+  qrContainer: {
+    backgroundColor: '#f9f9f9',
+    padding: 20,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  qrTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: colors.text,
+  },
+  qrImage: {
+    width: 250,
+    height: 250,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  qrSubtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.primary,
   },
   driverBox: {
     flexDirection: 'row',
