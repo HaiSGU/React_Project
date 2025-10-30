@@ -1,8 +1,8 @@
 import { useState } from "react";
 import "./AccountPage.css";
+import FooterNav from "../../components/FooterNav"; // ✅ nhớ import
 
 export default function AccountPage({ user, onLogout, onUpdateUser }) {
-  // khởi tạo dữ liệu mẫu (trong thực tế lấy từ API hoặc localStorage)
   const [formData, setFormData] = useState({
     username: user?.username || "nguyenthanhdat",
     phone: user?.phone || "0365986732",
@@ -56,6 +56,8 @@ export default function AccountPage({ user, onLogout, onUpdateUser }) {
           Đăng xuất
         </button>
       </div>
+
+      <FooterNav /> {/* ✅ nhớ thêm FooterNav ở cuối trang */}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./CartPage.css";
+import FooterNav from "../../components/FooterNav"; // ✅ nhớ import
 
 export default function CartPage() {
   const [activeTab, setActiveTab] = useState("dangGiao");
@@ -53,6 +54,7 @@ export default function CartPage() {
           ))
         )}
       </div>
+      <FooterNav /> 
     </div>
   );
 }

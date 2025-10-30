@@ -1,17 +1,30 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";   // 👈 thêm
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import MenuItem from "../../components/MenuItem";
 import "./MenuPage.css";
 
 export default function MenuPage() {
-  const [items, setItems] = useState([
-    { id: 1, name: "Hamburger", price: 50000, rating: 4.5, sold: 100, img: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png", quantity: 0 },
-    { id: 2, name: "Chips", price: 30000, rating: 4.5, sold: 100, img: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png", quantity: 0 },
-    { id: 3, name: "Coca Cola", price: 20000, rating: 4.5, sold: 100, img: "https://cdn-icons-png.flaticon.com/512/3664/3664543.png", quantity: 0 },
-    { id: 4, name: "Pepsi", price: 20000, rating: 4.5, sold: 100, img: "https://cdn-icons-png.flaticon.com/512/3664/3664549.png", quantity: 0 }
-  ]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { id } = useParams(); // 🧩 Lấy restaurantId từ URL (/menu/:id)
 
-  const navigate = useNavigate(); // 👈 tạo hook
+  // ✅ Lấy dữ liệu món ăn theo nhà hàng
+  useEffect(() => {
+    setLoading(true);
+    fetch(`http://localhost:3000/menus?restaurantId=${id}`)
+      .then(res => res.json())
+      .then(data => {
+        // thêm field quantity mặc định
+        const updated = data.map(item => ({ ...item, quantity: 0 }));
+        setItems(updated);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Lỗi khi tải dữ liệu menu:", err);
+        setLoading(false);
+      });
+  }, [id]);
 
   const updateQuantity = (id, change) => {
     setItems(prev =>
@@ -27,20 +40,27 @@ export default function MenuPage() {
   const totalPrice = selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const handleCheckout = () => {
-    // chuyển sang checkout + truyền dữ liệu
     navigate("/checkout", { state: { orderItems: selectedItems, totalPrice } });
   };
+
+  const handleBack = () => navigate(-1);
+
+  if (loading) return <div className="loading">Đang tải menu...</div>;
 
   return (
     <div className="menu-page">
       <header className="menu-header">
-        <span className="back-btn">←</span>
-        <span>Menu</span>
+        <button className="back-btn" onClick={handleBack}>←</button>
+        <span>Menu nhà hàng #{id}</span>
       </header>
 
       <div className="menu-list">
         {items.map(item => (
-          <MenuItem key={item.id} {...item} updateQuantity={updateQuantity} />
+          <MenuItem
+            key={item.id}
+            {...item}
+            updateQuantity={updateQuantity}
+          />
         ))}
       </div>
 

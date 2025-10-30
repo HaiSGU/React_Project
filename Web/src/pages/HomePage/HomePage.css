@@ -1,49 +1,131 @@
+/* ============================= */
+/* 🎨 Tổng thể trang chủ */
+/* ============================= */
 .home-page {
-  font-family: Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(180deg, #f9fcff 0%, #f2f6ff 100%);
+  background-image: url("@shared/assets/images/shipperimage.jpeg");
+  background-size: cover;
+  background-attachment: fixed;
+  min-height: 100vh;
+  padding-bottom: 70px; /* chừa chỗ cho footer */
+  box-sizing: border-box;
 }
 
+/* ============================= */
+/* 🔖 Header */
+/* ============================= */
 .home-header {
-  background: #fff;
+  background: white;
   padding: 15px;
-  font-weight: bold;
-  font-size: 20px;
+  font-weight: 700;
+  font-size: 22px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  color: #222;
 }
 
+/* ============================= */
+/* 🏷️ Banner */
+/* ============================= */
 .banner {
-  background: #00cfe8;
+  position: relative;
+  background: #00bcd4;
   color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
+  border-radius: 12px;
+  margin: 15px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.banner span {
+  font-size: 18px;
+  font-weight: 500;
 }
 
-.banner .login-btn {
-  background: black;
-  color: white;
+/* Nút đăng nhập/đăng xuất ở góc phải */
+.banner button {
+  position: absolute;
+  top: 10px;
+  right: 14px;
   border: none;
-  padding: 6px 14px;
+  padding: 10px 20px;
   border-radius: 20px;
+  font-weight: 600;
   cursor: pointer;
+  transition: 0.2s;
 }
 
+/* Kiểu nút */
+.banner .login-btn {
+  background: white;
+  color: #00bcd4;
+}
+
+.banner .login-btn:hover {
+  background: #e0f7fa;
+}
+
+.banner .logout-btn {
+  background: #ff6b6b;
+  color: white;
+}
+
+.banner .logout-btn:hover {
+  background: #e85a5a;
+}
+
+
+/* ============================= */
+/* 🧭 Section chung */
+/* ============================= */
 section {
   padding: 15px;
 }
 
+section h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ============================= */
+/* 🧾 Scroll list */
+/* ============================= */
 .scroll-list {
   display: flex;
   gap: 15px;
   overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 8px;
 }
 
+.scroll-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scroll-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+/* ============================= */
+/* 🧩 Card chung */
+/* ============================= */
 .card {
   background: white;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 10px;
   min-width: 120px;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
 }
 
 .card img {
@@ -53,18 +135,57 @@ section {
   margin-bottom: 5px;
 }
 
+/* ============================= */
+/* 🏷️ Discount card */
+/* ============================= */
 .discount-card {
-  color: #00cfe8;
+  color: #00bcd4;
   font-weight: bold;
 }
 
+/* ============================= */
+/* 🍴 Restaurant card */
+/* ============================= */
 .restaurant-card img {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
   margin-bottom: 6px;
 }
 
-/* Footer nav */
+/* ============================= */
+/* 🔎 Search */
+/* ============================= */
+.search-container {
+  padding: 0 15px;
+  margin-top: 10px;
+}
+
+.search-result-info {
+  text-align: center;
+  padding: 8px 16px;
+  margin: 8px 0;
+  background-color: #e3f2fd;
+  border-radius: 8px;
+  color: #1976d2;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ============================= */
+/* 😔 No result */
+/* ============================= */
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-size: 16px;
+  width: 100%;
+}
+
+/* ============================= */
+/* 📱 Footer nav */
+/* ============================= */
 .footer {
   position: fixed;
   bottom: 0;
@@ -75,29 +196,5 @@ section {
   justify-content: space-around;
   border-top: 1px solid #ddd;
   padding: 10px 0;
-}
-
-/* Search */
-.search-container {
-  padding: 0 15px;
-  margin-top: 10px;
-}
-
-.search-result-info {
-  text-align: center;
-  padding: 8px 16px;
-  margin: 8px 0;
-  background-color: #f0f9ff;
-  border-radius: 8px;
-  color: #1d4ed8;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.no-results {
-  text-align: center;
-  padding: 40px 20px;
-  color: #666;
-  font-size: 16px;
-  width: 100%;
+  z-index: 10;
 }

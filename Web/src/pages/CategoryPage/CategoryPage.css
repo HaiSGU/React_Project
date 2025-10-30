@@ -1,67 +1,75 @@
 .category-page {
-  padding: 15px;
-  font-family: Arial, sans-serif;
-}
-
-.cat-header {
-  display: flex;
-  align-items: center;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.back-btn {
-  font-size: 20px;
-  cursor: pointer;
-  margin-right: 8px;
+  padding: 16px;
+  padding-bottom: 80px; /* Tránh bị footer che */
 }
 
 .category-title {
-  font-size: 18px;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
 }
 
-.highlight {
-  color: #00cfe8;
-}
-
-.restaurant-list {
-  margin-top: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.restaurants-list {
+  display: grid;
+  gap: 16px;
 }
 
 .restaurant-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: white;
-  padding: 10px;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  background: white;
+  transition: box-shadow 0.2s;
+}
+
+.restaurant-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .restaurant-logo {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
-  margin-right: 10px;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #f5f5f5;
 }
 
 .restaurant-info {
   flex: 1;
 }
 
+.restaurant-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.restaurant-info p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
 .menu-btn {
-  background: #11c45d;
+  padding: 8px 16px;
+  background-color: #ff6b6b;
   color: white;
   border: none;
-  padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .menu-btn:hover {
-  opacity: 0.9;
+  background-color: #ff5252;
+}
+
+.no-results {
+  text-align: center;
+  color: #999;
+  padding: 40px 0;
 }

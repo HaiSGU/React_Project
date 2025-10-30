@@ -1,24 +1,64 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-// 👇 Sửa lại đúng tên hàm export trong api.js
-import { getRestaurantsByCategory } from "../../api/api";
+import { RESTAURANTS } from "../../utils/restaurantResolver";
+import { CATEGORIES } from "../../utils/categoryResolver";
 import RestaurantItem from "../../components/RestaurantItem";
+import FooterNav from "../../components/FooterNav";
+import "./CategoryPage.css";
 
 export default function CategoryPage() {
   const { id } = useParams();
   const [restaurants, setRestaurants] = useState([]);
 
   useEffect(() => {
-    // 👇 gọi đúng tên hàm
-    getRestaurantsByCategory(id).then(setRestaurants);
+    // Lọc nhà hàng theo category từ RESTAURANTS
+    const filtered = RESTAURANTS.filter(restaurant => {
+      // Xử lý trường hợp category là array hoặc string
+      if (Array.isArray(restaurant.category)) {
+        return restaurant.category.includes(id);
+      }
+      return restaurant.category === id;
+    });
+    
+    console.log("Category ID:", id);
+    console.log("Restaurants filtered:", filtered);
+    setRestaurants(filtered);
   }, [id]);
 
+  // Lấy tên danh mục từ CATEGORIES
+  const getCategoryName = () => {
+    const category = CATEGORIES.find(cat => cat.key === id);
+    return category ? category.label : id;
+  };
+
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Danh mục {id}</h2>
-      {restaurants.map((r) => (
-        <RestaurantItem key={r.id} {...r} />
-      ))}
+    <div className="category-page">
+      <div className="category-header">
+        <h2 className="category-title">{getCategoryName()}</h2>
+        <p className="restaurant-count">
+          {restaurants.length} nhà hàng
+        </p>
+      </div>
+
+      {restaurants.length > 0 ? (
+        <div className="restaurants-list">
+          {restaurants.map((restaurant) => (
+            <RestaurantItem 
+              key={restaurant.id} 
+              id={restaurant.id}
+              img={restaurant.image}
+              name={restaurant.name}
+              rating={restaurant.rating}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="no-results">
+          <p>😔 Không có nhà hàng nào trong danh mục này.</p>
+        </div>
+      )}
+
+      <FooterNav />
     </div>
   );
 }

@@ -1,54 +1,136 @@
+/* ============================= */
+/* 👤 Trang tài khoản */
+/* ============================= */
 .account-page {
-  padding: 15px;
-  font-family: Arial, sans-serif;
-}
-
-.account-header {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
-
-.section-title {
-  color: #00cfe8;
-  margin-bottom: 15px;
-}
-
-.form {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f9fcff 0%, #edf5ff 100%);
+  padding: 40px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 350px;
+  align-items: center;
+  font-family: "Segoe UI", Arial, sans-serif;
+  box-sizing: border-box;
+      background-image: url("@shared/assets/images/shipperimage.jpeg");
+  background-size: cover;
+  background-attachment: fixed;
 }
 
-.form input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+/* ============================= */
+/* 🔖 Header */
+/* ============================= */
+.account-header {
+  font-size: 26px;
+  font-weight: 700;
+  color: #00bcd4;
+  text-align: center;
+  margin-bottom: 25px;
+  letter-spacing: 0.3px;
+  position: relative;
 }
 
-.btn-save {
+.account-header::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
   background: #00cfe8;
+  margin: 10px auto 0;
+  border-radius: 2px;
+}
+
+/* ============================= */
+/* 🧾 Tiêu đề phụ */
+/* ============================= */
+.section-title {
+  font-size: 18px;
+  color: #00bcd4;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+/* ============================= */
+/* 🧩 Form thông tin */
+/* ============================= */
+.form {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 420px;
+  animation: fadeIn 0.4s ease;
+}
+
+/* ============================= */
+/* ✏️ Input */
+/* ============================= */
+.form input {
+  padding: 12px 14px;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+.form input:focus {
+  border-color: #00cfe8;
+  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
+}
+
+/* ============================= */
+/* 💾 Nút chính */
+/* ============================= */
+.btn-save {
+  background: linear-gradient(135deg, #00cfe8, #00bcd4);
   color: white;
   padding: 12px;
   border: none;
-  border-radius: 8px;
-  font-weight: bold;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
+  transition: all 0.25s ease;
 }
 
 .btn-save:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
 }
 
+/* ============================= */
+/* ⚙️ Nút phụ */
+/* ============================= */
 .btn-secondary {
-  background: #eee;
+  background: #f5f5f5;
+  color: #333;
   border: none;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
-  font-weight: bold;
+  transition: all 0.25s ease;
 }
+
 .btn-secondary:hover {
-  opacity: 0.85;
+  background: #e8e8e8;
+  transform: translateY(-1px);
+}
+
+/* ============================= */
+/* ✨ Hiệu ứng load */
+/* ============================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

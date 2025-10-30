@@ -12,80 +12,77 @@
       "id": 2,
       "username": "dat2",
       "password": "123456",
-      "fullname": "Tran Van Nam",
+      "fullname": "Tran Van B",
       "phone": "0987654321",
-      "address": "Quận 10, TP.HCM"
+      "address": "Quận 1, TP.HCM"
     }
   ],
 
-  "categories": [
-    { "id": 1, "name": "Đồ ăn nhanh", "image": "https://cdn-icons-png.flaticon.com/512/3075/3075977.png" },
-    { "id": 2, "name": "Món Á", "image": "https://cdn-icons-png.flaticon.com/512/2965/2965567.png" },
-    { "id": 3, "name": "Cà phê - Bánh ngọt", "image": "https://cdn-icons-png.flaticon.com/512/415/415682.png" },
-    { "id": 4, "name": "Trà sữa", "image": "https://cdn-icons-png.flaticon.com/512/1046/1046784.png" },
-    { "id": 5, "name": "Món Hàn", "image": "https://cdn-icons-png.flaticon.com/512/1699/1699342.png" },
-    { "id": 6, "name": "Món Nhật", "image": "https://cdn-icons-png.flaticon.com/512/1046/1046869.png" },
-    { "id": 7, "name": "Rau củ - Ăn chay", "image": "https://cdn-icons-png.flaticon.com/512/1046/1046786.png" }
-  ],
-
   "restaurants": [
-    { "id": 1, "name": "Jollibee", "rating": 4.7, "categoryId": 1, "address": "123 Nguyễn Trãi, Q.5, TP.HCM", "image": "https://upload.wikimedia.org/wikipedia/en/0/02/Jollibee_logo.svg" },
-    { "id": 2, "name": "KFC", "rating": 4.5, "categoryId": 1, "address": "45 Lê Lợi, Q.1, TP.HCM", "image": "https://1000logos.net/wp-content/uploads/2017/03/KFC_logo.png" },
-    { "id": 3, "name": "Phở 24", "rating": 4.4, "categoryId": 2, "address": "22 Trần Hưng Đạo, Q.1", "image": "https://upload.wikimedia.org/wikipedia/commons/f/f5/Pho24logo.png" },
-    { "id": 4, "name": "Highlands Coffee", "rating": 4.5, "categoryId": 3, "address": "25 Nguyễn Huệ, Q.1", "image": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Highlands_Coffee_logo.svg" },
-    { "id": 5, "name": "Phúc Long", "rating": 4.6, "categoryId": 4, "address": "15 Pasteur, Q.3", "image": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Phuc_Long_logo.png" },
-    { "id": 6, "name": "Gogi House", "rating": 4.7, "categoryId": 5, "address": "123 Nguyễn Đình Chiểu, Q.3", "image": "https://upload.wikimedia.org/wikipedia/commons/5/53/Gogi_House_logo.png" },
-    { "id": 7, "name": "Sushi Hokkaido", "rating": 4.8, "categoryId": 6, "address": "88 Nguyễn Văn Trỗi, Phú Nhuận", "image": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Sushi_logo.png" },
-    { "id": 8, "name": "Nhà hàng Chay Giác Ngộ", "rating": 4.6, "categoryId": 7, "address": "60 Lê Quý Đôn, Q.3", "image": "https://cdn-icons-png.flaticon.com/512/1946/1946429.png" }
+    { "id": 1, "name": "KFC", "address": "Quận 1, TP.HCM", "rating": 4.5, "image": "/images/restaurants/KFC.jpg" },
+    { "id": 2, "name": "Lotteria", "address": "Quận 3, TP.HCM", "rating": 4.4, "image": "/images/restaurants/Lotteria.jpg" },
+    { "id": 3, "name": "McDonald's", "address": "Quận 10, TP.HCM", "rating": 4.6, "image": "/images/restaurants/McDonald.jpg" },
+    { "id": 4, "name": "Highlands Coffee", "address": "Quận 5, TP.HCM", "rating": 4.3, "image": "/images/restaurants/Highlands.jpg" },
+    { "id": 5, "name": "The Coffee House", "address": "Quận 7, TP.HCM", "rating": 4.4, "image": "/images/restaurants/CoffeeHouse.jpg" },
+    { "id": 6, "name": "Starbucks", "address": "Quận Bình Thạnh, TP.HCM", "rating": 4.5, "image": "/images/restaurants/Starbucks.jpg" },
+    { "id": 7, "name": "Pizza Hut", "address": "Thủ Đức, TP.HCM", "rating": 4.2, "image": "/images/restaurants/PizzaHut.jpg" },
+    { "id": 8, "name": "Burger King", "address": "Gò Vấp, TP.HCM", "rating": 4.3, "image": "/images/restaurants/BurgerKing.jpg" },
+    { "id": 9, "name": "Trung Nguyên Legend", "address": "Quận Phú Nhuận, TP.HCM", "rating": 4.4, "image": "/images/restaurants/TrungNguyen.jpg" },
+    { "id": 10, "name": "Phúc Long", "address": "Quận 10, TP.HCM", "rating": 4.5, "image": "/images/restaurants/PhucLong.jpg" }
   ],
 
   "menus": [
-    { "id": 1, "restaurantId": 1, "name": "Hamburger", "price": 50000, "rating": 4.5, "sold": 120, "image": "https://cdn-icons-png.flaticon.com/512/3075/3075977.png" },
-    { "id": 2, "restaurantId": 1, "name": "Khoai tây chiên", "price": 30000, "rating": 4.4, "sold": 90, "image": "https://cdn-icons-png.flaticon.com/512/1046/1046784.png" },
-    { "id": 3, "restaurantId": 1, "name": "Coca Cola", "price": 20000, "rating": 4.2, "sold": 200, "image": "https://cdn-icons-png.flaticon.com/512/3664/3664543.png" },
-    { "id": 4, "restaurantId": 1, "name": "Gà viên chiên", "price": 45000, "rating": 4.3, "sold": 150, "image": "https://cdn-icons-png.flaticon.com/512/857/857681.png" },
-    { "id": 5, "restaurantId": 1, "name": "Mì Ý", "price": 60000, "rating": 4.5, "sold": 100, "image": "https://cdn-icons-png.flaticon.com/512/857/857683.png" },
-    { "id": 6, "restaurantId": 1, "name": "Combo 1 người", "price": 85000, "rating": 4.6, "sold": 120, "image": "https://cdn-icons-png.flaticon.com/512/2921/2921822.png" },
-    { "id": 7, "restaurantId": 1, "name": "Combo 2 người", "price": 150000, "rating": 4.8, "sold": 90, "image": "https://cdn-icons-png.flaticon.com/512/857/857689.png" },
+    { "id": 1, "restaurantId": 1, "name": "Gà rán truyền thống", "price": 70000, "category": "Đồ ăn", "image": "/images/menu/FriedChicken.jpg" },
+    { "id": 2, "restaurantId": 1, "name": "Hamburger", "price": 55000, "category": "Đồ ăn", "image": "/images/menu/Hamburger.jpg" },
+    { "id": 3, "restaurantId": 1, "name": "Khoai tây chiên", "price": 30000, "category": "Đồ ăn nhẹ", "image": "/images/menu/FrenchFries.jpg" },
 
-    { "id": 8, "restaurantId": 3, "name": "Phở bò tái", "price": 55000, "rating": 4.6, "sold": 200, "image": "https://cdn-icons-png.flaticon.com/512/857/857681.png" },
-    { "id": 9, "restaurantId": 3, "name": "Phở gà", "price": 50000, "rating": 4.5, "sold": 180, "image": "https://cdn-icons-png.flaticon.com/512/857/857684.png" },
-    { "id": 10, "restaurantId": 3, "name": "Cơm tấm sườn bì", "price": 60000, "rating": 4.7, "sold": 250, "image": "https://cdn-icons-png.flaticon.com/512/857/857683.png" },
-    { "id": 11, "restaurantId": 3, "name": "Bún bò Huế", "price": 55000, "rating": 4.4, "sold": 150, "image": "https://cdn-icons-png.flaticon.com/512/1046/1046857.png" },
-    { "id": 12, "restaurantId": 3, "name": "Cơm chiên Dương Châu", "price": 65000, "rating": 4.5, "sold": 160, "image": "https://cdn-icons-png.flaticon.com/512/857/857682.png" },
-    { "id": 13, "restaurantId": 3, "name": "Mì xào bò", "price": 60000, "rating": 4.5, "sold": 140, "image": "https://cdn-icons-png.flaticon.com/512/857/857689.png" },
-    { "id": 14, "restaurantId": 3, "name": "Cơm cá kho tộ", "price": 70000, "rating": 4.7, "sold": 130, "image": "https://cdn-icons-png.flaticon.com/512/857/857687.png" },
+    { "id": 4, "restaurantId": 2, "name": "Gà sốt mật ong", "price": 75000, "category": "Đồ ăn", "image": "/images/menu/HoneyChicken.jpg" },
+    { "id": 5, "restaurantId": 2, "name": "Burger phô mai", "price": 60000, "category": "Đồ ăn", "image": "/images/menu/CheeseBurger.jpg" },
 
-    { "id": 15, "restaurantId": 4, "name": "Cà phê sữa đá", "price": 35000, "rating": 4.6, "sold": 300, "image": "https://cdn-icons-png.flaticon.com/512/2935/2935459.png" },
-    { "id": 16, "restaurantId": 4, "name": "Cà phê đen", "price": 30000, "rating": 4.5, "sold": 270, "image": "https://cdn-icons-png.flaticon.com/512/415/415731.png" },
-    { "id": 17, "restaurantId": 4, "name": "Bánh ngọt Pháp", "price": 45000, "rating": 4.7, "sold": 150, "image": "https://cdn-icons-png.flaticon.com/512/4059/4059834.png" },
-    { "id": 18, "restaurantId": 4, "name": "Matcha Latte", "price": 50000, "rating": 4.8, "sold": 200, "image": "https://cdn-icons-png.flaticon.com/512/857/857688.png" },
-    { "id": 19, "restaurantId": 4, "name": "Trà đào", "price": 40000, "rating": 4.6, "sold": 190, "image": "https://cdn-icons-png.flaticon.com/512/1046/1046857.png" },
-    { "id": 20, "restaurantId": 4, "name": "Bánh muffin", "price": 35000, "rating": 4.5, "sold": 130, "image": "https://cdn-icons-png.flaticon.com/512/857/857690.png" },
-    { "id": 21, "restaurantId": 4, "name": "Cappuccino", "price": 50000, "rating": 4.8, "sold": 210, "image": "https://cdn-icons-png.flaticon.com/512/857/857685.png" },
+    { "id": 6, "restaurantId": 3, "name": "Combo Big Mac", "price": 90000, "category": "Combo", "image": "/images/menu/BigMacCombo.jpg" },
+    { "id": 7, "restaurantId": 3, "name": "Khoai tây chiên lớn", "price": 40000, "category": "Đồ ăn nhẹ", "image": "/images/menu/LargeFries.jpg" },
+    { "id": 8, "restaurantId": 3, "name": "Gà viên McNuggets", "price": 65000, "category": "Đồ ăn", "image": "/images/menu/McNuggets.jpg" },
 
-    { "id": 22, "restaurantId": 5, "name": "Trà sữa truyền thống", "price": 40000, "rating": 4.7, "sold": 250, "image": "https://cdn-icons-png.flaticon.com/512/921/921075.png" },
-    { "id": 23, "restaurantId": 5, "name": "Trà đào cam sả", "price": 45000, "rating": 4.8, "sold": 300, "image": "https://cdn-icons-png.flaticon.com/512/1046/1046857.png" },
-    { "id": 24, "restaurantId": 5, "name": "Hồng trà sữa", "price": 42000, "rating": 4.6, "sold": 280, "image": "https://cdn-icons-png.flaticon.com/512/921/921076.png" },
-    { "id": 25, "restaurantId": 5, "name": "Trà xanh sữa", "price": 45000, "rating": 4.7, "sold": 260, "image": "https://cdn-icons-png.flaticon.com/512/857/857688.png" },
-    { "id": 26, "restaurantId": 5, "name": "Matcha Macchiato", "price": 50000, "rating": 4.8, "sold": 300, "image": "https://cdn-icons-png.flaticon.com/512/857/857691.png" },
-    { "id": 27, "restaurantId": 5, "name": "Trà vải", "price": 40000, "rating": 4.5, "sold": 240, "image": "https://cdn-icons-png.flaticon.com/512/1046/1046857.png" },
-    { "id": 28, "restaurantId": 5, "name": "Trà sữa trân châu đen", "price": 42000, "rating": 4.6, "sold": 270, "image": "https://cdn-icons-png.flaticon.com/512/921/921075.png" }
-  ],
+    { "id": 9, "restaurantId": 4, "name": "Cà phê sữa đá", "price": 40000, "category": "Đồ uống", "image": "/images/menu/CoffeeMilk.jpg" },
+    { "id": 10, "restaurantId": 4, "name": "Trà đào cam sả", "price": 45000, "category": "Đồ uống", "image": "/images/menu/PeachTea.jpg" },
 
-  "promotions": [
-    { "id": 1, "title": "FREESHIP toàn quốc", "discount": 0, "type": "freeship" },
-    { "id": 2, "title": "Giảm 10% cho đơn đầu tiên", "discount": 0.1, "type": "percent" },
-    { "id": 3, "title": "Giảm 20% vào cuối tuần", "discount": 0.2, "type": "percent" }
+    { "id": 11, "restaurantId": 5, "name": "Cà phê đen đá", "price": 35000, "category": "Đồ uống", "image": "/images/menu/BlackCoffee.jpg" },
+    { "id": 12, "restaurantId": 5, "name": "Bánh mì chà bông", "price": 30000, "category": "Đồ ăn nhẹ", "image": "/images/menu/BanhMi.jpg" },
+
+    { "id": 13, "restaurantId": 6, "name": "Latte", "price": 60000, "category": "Đồ uống", "image": "/images/menu/Latte.jpg" },
+    { "id": 14, "restaurantId": 6, "name": "Cappuccino", "price": 65000, "category": "Đồ uống", "image": "/images/menu/Cappuccino.jpg" },
+
+    { "id": 15, "restaurantId": 7, "name": "Pizza phô mai", "price": 120000, "category": "Đồ ăn", "image": "/images/menu/CheesePizza.jpg" },
+    { "id": 16, "restaurantId": 7, "name": "Pizza hải sản", "price": 150000, "category": "Đồ ăn", "image": "/images/menu/SeafoodPizza.jpg" },
+
+    { "id": 17, "restaurantId": 8, "name": "Whopper Burger", "price": 95000, "category": "Đồ ăn", "image": "/images/menu/Whopper.jpg" },
+    { "id": 18, "restaurantId": 8, "name": "Coca-Cola", "price": 20000, "category": "Đồ uống", "image": "/images/menu/Coke.jpg" },
+
+    { "id": 19, "restaurantId": 9, "name": "Cà phê Legend Blend", "price": 50000, "category": "Đồ uống", "image": "/images/menu/LegendCoffee.jpg" },
+    { "id": 20, "restaurantId": 9, "name": "Bánh ngọt phô mai", "price": 45000, "category": "Tráng miệng", "image": "/images/menu/CheeseCake.jpg" },
+
+    { "id": 21, "restaurantId": 10, "name": "Trà sữa Phúc Long", "price": 55000, "category": "Đồ uống", "image": "/images/menu/MilkTea.jpg" },
+    { "id": 22, "restaurantId": 10, "name": "Trà ô long", "price": 50000, "category": "Đồ uống", "image": "/images/menu/OlongTea.jpg" }
   ],
 
   "orders": [
-    { "id": 1, "userId": 1, "restaurantId": 1, "total": 120000, "status": "Đã giao", "createdAt": "2025-10-23T15:30:00" }
-  ],
-
-  "orderItems": [
-    { "id": 1, "orderId": 1, "menuId": 1, "quantity": 1, "price": 50000 },
-    { "id": 2, "orderId": 1, "menuId": 2, "quantity": 1, "price": 30000 },
-    { "id": 3, "orderId": 1, "menuId": 3, "quantity": 2, "price": 20000 }
+    {
+      "id": 1,
+      "userId": 1,
+      "restaurantId": 1,
+      "menuId": 1,
+      "quantity": 2,
+      "total": 140000,
+      "date": "2025-10-31T10:00:00"
+    },
+    {
+      "id": 2,
+      "userId": 2,
+      "restaurantId": 3,
+      "menuId": 6,
+      "quantity": 1,
+      "total": 90000,
+      "date": "2025-10-31T11:30:00"
+    }
   ]
 }
