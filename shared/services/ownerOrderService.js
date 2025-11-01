@@ -5,11 +5,25 @@ export const getRestaurantOrders = (restaurantId, storage) => {
   try {
     const allOrders = JSON.parse(storage.getItem('orderHistory') || '[]')
     
-    // Lọc đơn hàng theo restaurantId
-    return allOrders.filter(order => 
-      order.restaurantId === restaurantId || 
-      order.items?.some(item => item.restaurantId === restaurantId)
-    )
+    console.log('🔍 All orders:', allOrders)
+    console.log('🔍 Looking for restaurantId:', restaurantId)
+    
+    // Lọc đơn hàng theo restaurantId (hỗ trợ cả string và number)
+    const filtered = allOrders.filter(order => {
+      // So sánh restaurantId
+      const matchRestaurant = String(order.restaurantId) === String(restaurantId)
+      
+      // Hoặc kiểm tra trong items
+      const matchItems = order.items?.some(item => 
+        String(item.restaurantId) === String(restaurantId)
+      )
+      
+      return matchRestaurant || matchItems
+    })
+    
+    console.log('✅ Filtered orders:', filtered)
+    return filtered
+    
   } catch (error) {
     console.error('Error getting restaurant orders:', error)
     return []
@@ -46,8 +60,12 @@ export const updateOrderStatus = (orderId, newStatus, storage) => {
     const allOrders = JSON.parse(storage.getItem('orderHistory') || '[]')
     
     const updatedOrders = allOrders.map(order => {
-      if (order.id === orderId) {
-        return { ...order, status: newStatus, updatedAt: new Date().toISOString() }
+      if (String(order.id) === String(orderId)) {
+        return { 
+          ...order, 
+          status: newStatus, 
+          updatedAt: new Date().toISOString() 
+        }
       }
       return order
     })
@@ -80,7 +98,6 @@ export const getRestaurantStats = (restaurantId, storage) => {
 
 /**
  * Lấy dữ liệu biểu đồ 7 ngày gần đây
- * ⭐ HÀM MỚI - THÊM VÀO
  */
 export const getChartData = (restaurantId, storage) => {
   const allOrders = getRestaurantOrders(restaurantId, storage)
@@ -96,7 +113,7 @@ export const getChartData = (restaurantId, storage) => {
       return orderDate.toDateString() === date.toDateString()
     })
     
-    const revenue = calculateRevenue(dayOrders) / 1000 // Chia 1000 để hiển thị "k"
+    const revenue = calculateRevenue(dayOrders) / 1000
     
     chartData.push({
       date: dateStr,
@@ -110,7 +127,6 @@ export const getChartData = (restaurantId, storage) => {
 
 /**
  * Lấy đơn hàng theo bộ lọc ngày
- * ⭐ HÀM MỚI - THÊM VÀO
  */
 export const getOrdersByDateFilter = (restaurantId, dateFilter, storage) => {
   const allOrders = getRestaurantOrders(restaurantId, storage)
