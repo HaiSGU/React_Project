@@ -12,6 +12,13 @@ export const RESTAURANTS_DATA = [
     coordinates: {
       latitude: 10.7769,
       longitude: 106.7009
+    },
+    // ✅ THÊM THÔNG TIN OWNER
+    owner: {
+      username: 'jollibee_admin',
+      password: 'jollibee123',
+      email: 'admin@jollibee.com',
+      phone: '0901234567',
     }
   },
   {
@@ -26,6 +33,12 @@ export const RESTAURANTS_DATA = [
     coordinates: {
       latitude: 10.7829,
       longitude: 106.7009
+    },
+    owner: {
+      username: 'kfc_admin',
+      password: 'kfc123',
+      email: 'admin@kfc.com',
+      phone: '0901234568',
     }
   },
   {
@@ -40,6 +53,12 @@ export const RESTAURANTS_DATA = [
     coordinates: {
       latitude: 10.7889,
       longitude: 106.7009
+    },
+    owner: {
+      username: 'texas_admin',
+      password: 'texas123',
+      email: 'admin@texas.com',
+      phone: '0901234569',
     }
   },
   {
@@ -54,6 +73,12 @@ export const RESTAURANTS_DATA = [
     coordinates: {
       latitude: 10.7329,
       longitude: 106.7209
+    },
+    owner: {
+      username: 'phuclong_admin',
+      password: 'phuclong123',
+      email: 'admin@phuclong.com',
+      phone: '0901234570',
     }
   },
   {
@@ -68,6 +93,12 @@ export const RESTAURANTS_DATA = [
     coordinates: {
       latitude: 10.7429,
       longitude: 106.7309
+    },
+    owner: {
+      username: 'highlands_admin',
+      password: 'highlands123',
+      email: 'admin@highlands.com',
+      phone: '0901234571',
     }
   },
   {
@@ -79,6 +110,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.6,
     menu: [],
     isFeatured: false,
+    owner: {
+      username: 'maycha_admin',
+      password: 'maycha123',
+      email: 'admin@maycha.com',
+      phone: '0901234572',
+    }
   },
   {
     id: 7,
@@ -89,6 +126,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.3,
     menu: [],
     isFeatured: true,
+    owner: {
+      username: 'lotteria_admin',
+      password: 'lotteria123',
+      email: 'admin@lotteria.com',
+      phone: '0901234573',
+    }
   },
   {
     id: 8,
@@ -99,6 +142,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.6,
     menu: [],
     isFeatured: false,
+    owner: {
+      username: 'cali_admin',
+      password: 'cali123',
+      email: 'admin@cali.com',
+      phone: '0901234574',
+    }
   },
   {
     id: 20,
@@ -109,6 +158,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.6,
     menu: [],
     isFeatured: true,
+    owner: {
+      username: 'sabichuong_admin',
+      password: 'sabichuong123',
+      email: 'admin@sabichuong.com',
+      phone: '0901234575',
+    }
   },
   {
     id: 9,
@@ -119,6 +174,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.5,
     menu: [],
     isFeatured: true,
+    owner: {
+      username: 'tch_admin',
+      password: 'tch123',
+      email: 'admin@thecoffeehouse.com',
+      phone: '0901234576',
+    }
   },
   {
     id: 10,
@@ -129,6 +190,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.4,
     menu: [],
     isFeatured: false,
+    owner: {
+      username: 'bunbo3a_admin',
+      password: 'bunbo3a123',
+      email: 'admin@bunbo3a.com',
+      phone: '0901234577',
+    }
   },
   {
     id: 11,
@@ -139,6 +206,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.8,
     menu: [],
     isFeatured: true,
+    owner: {
+      username: 'phohoa_admin',
+      password: 'phohoa123',
+      email: 'admin@phohoa.com',
+      phone: '0901234578',
+    }
   },
   {
     id: 12,
@@ -149,6 +222,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.6,
     menu: [],
     isFeatured: false,
+    owner: {
+      username: 'chaybode_admin',
+      password: 'chaybode123',
+      email: 'admin@chaybode.com',
+      phone: '0901234579',
+    }
   },
   {
     id: 13,
@@ -159,6 +238,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.4,
     menu: [],
     isFeatured: false,
+    owner: {
+      username: 'pizzahut_admin',
+      password: 'pizzahut123',
+      email: 'admin@pizzahut.com',
+      phone: '0901234580',
+    }
   },
   {
     id: 14,
@@ -169,6 +254,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.7,
     menu: [],
     isFeatured: false,
+    owner: {
+      username: 'sushikei_admin',
+      password: 'sushikei123',
+      email: 'admin@sushikei.com',
+      phone: '0901234581',
+    }
   },
   {
     id: 15,
@@ -179,6 +270,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.6,
     menu: [],
     isFeatured: true,
+    owner: {
+      username: 'comnieu_admin',
+      password: 'comnieu123',
+      email: 'admin@comnieu.com',
+      phone: '0901234582',
+    }
   },
   {
     id: 16,
@@ -189,6 +286,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.7,
     menu: [],
     isFeatured: true,
+    owner: {
+      username: 'sukiya_admin',
+      password: 'sukiya123',
+      email: 'admin@sukiya.com',
+      phone: '0901234583',
+    }
   },
   {
     id: 17,
@@ -199,6 +302,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.7,
     menu: [],
     isFeatured: true,
+    owner: {
+      username: 'mandala_admin',
+      password: 'mandala123',
+      email: 'admin@mandala.com',
+      phone: '0901234584',
+    }
   },
   {
     id: 18,
@@ -209,6 +318,12 @@ export const RESTAURANTS_DATA = [
     rating: 4.7,
     menu: [],
     isFeatured: true,
+    owner: {
+      username: 'thayba_admin',
+      password: 'thayba123',
+      email: 'admin@thayba.com',
+      phone: '0901234585',
+    }
   },
   {
     id: 19,
@@ -219,5 +334,11 @@ export const RESTAURANTS_DATA = [
     rating: 4.7,
     menu: [],
     isFeatured: true,
+    owner: {
+      username: 'ngogia_admin',
+      password: 'ngogia123',
+      email: 'admin@ngogia.com',
+      phone: '0901234586',
+    }
   },
 ];
