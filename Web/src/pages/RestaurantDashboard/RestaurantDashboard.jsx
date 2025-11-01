@@ -309,32 +309,25 @@ export default function RestaurantDashboard() {
                     <span className="stat-label">Tổng: {stats.totalOrders} đơn</span>
                   </div>
 
+                  {/* DOANH THU HÔM NAY - CHI TIẾT */}
                   <div className="stat-card revenue-card">
                     <div className="stat-icon">💰</div>
                     <h3>Doanh thu hôm nay</h3>
                     <p className="stat-number">{stats.todayRevenue.total.toLocaleString()} đ</p>
                     
-                    {/* ⭐ THÊM PHẦN BREAKDOWN */}
                     <div className="revenue-breakdown">
                       <div className="breakdown-item">
                         <span className="breakdown-label">
                           <span className="icon">🏪</span> Nhà hàng ({stats.todayRevenue.percentages.restaurant}%)
                         </span>
-                        <span className="breakdown-value">{stats.todayRevenue.restaurant.toLocaleString()} đ</span>
-                      </div>
-                      
-                      <div className="breakdown-item">
-                        <span className="breakdown-label">
-                          <span className="icon">🚚</span> Shipper ({stats.todayRevenue.percentages.shipper}%)
-                        </span>
-                        <span className="breakdown-value">{stats.todayRevenue.shipper.toLocaleString()} đ</span>
+                        <span className="breakdown-value restaurant">{stats.todayRevenue.restaurant.toLocaleString()} đ</span>
                       </div>
                       
                       <div className="breakdown-item">
                         <span className="breakdown-label">
                           <span className="icon">📱</span> App ({stats.todayRevenue.percentages.app}%)
                         </span>
-                        <span className="breakdown-value">{stats.todayRevenue.app.toLocaleString()} đ</span>
+                        <span className="breakdown-value app">{stats.todayRevenue.app.toLocaleString()} đ</span>
                       </div>
                     </div>
                     
