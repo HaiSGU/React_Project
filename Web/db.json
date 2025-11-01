@@ -26,43 +26,39 @@
     { "id": 5, "name": "The Coffee House", "address": "Quận 7, TP.HCM", "rating": 4.4, "image": "/images/restaurants/CoffeeHouse.jpg" },
     { "id": 6, "name": "Starbucks", "address": "Quận Bình Thạnh, TP.HCM", "rating": 4.5, "image": "/images/restaurants/Starbucks.jpg" },
     { "id": 7, "name": "Pizza Hut", "address": "Thủ Đức, TP.HCM", "rating": 4.2, "image": "/images/restaurants/PizzaHut.jpg" },
-    { "id": 8, "name": "Burger King", "address": "Gò Vấp, TP.HCM", "rating": 4.3, "image": "/images/restaurants/BurgerKing.jpg" },
-    { "id": 9, "name": "Trung Nguyên Legend", "address": "Quận Phú Nhuận, TP.HCM", "rating": 4.4, "image": "/images/restaurants/TrungNguyen.jpg" },
-    { "id": 10, "name": "Phúc Long", "address": "Quận 10, TP.HCM", "rating": 4.5, "image": "/images/restaurants/PhucLong.jpg" }
+    { "id": 8, "name": "Burger King", "address": "Gò Vấp, TP.HCM", "rating": 4.3, "image": "/images/restaurants/BurgerKing.jpg" }
   ],
 
   "menus": [
-    { "id": 1, "restaurantId": 1, "name": "Gà rán truyền thống", "price": 70000, "category": "Đồ ăn", "image": "/images/menu/FriedChicken.jpg" },
-    { "id": 2, "restaurantId": 1, "name": "Hamburger", "price": 55000, "category": "Đồ ăn", "image": "/images/menu/Hamburger.jpg" },
-    { "id": 3, "restaurantId": 1, "name": "Khoai tây chiên", "price": 30000, "category": "Đồ ăn nhẹ", "image": "/images/menu/FrenchFries.jpg" },
+    { "id": 1, "restaurantId": 1, "name": "Hamburger", "price": 55000, "category": "Đồ ăn", "image": "/images/menu/Hamburger.jpg" },
+    { "id": 2, "restaurantId": 1, "name": "Fried Chicken", "price": 70000, "category": "Đồ ăn", "image": "/images/menu/FriedChicken.jpg" },
+    { "id": 3, "restaurantId": 1, "name": "Khoai tây chiên", "price": 30000, "category": "Đồ ăn nhẹ", "image": "/images/menu/Chips.jpg" },
 
-    { "id": 4, "restaurantId": 2, "name": "Gà sốt mật ong", "price": 75000, "category": "Đồ ăn", "image": "/images/menu/HoneyChicken.jpg" },
-    { "id": 5, "restaurantId": 2, "name": "Burger phô mai", "price": 60000, "category": "Đồ ăn", "image": "/images/menu/CheeseBurger.jpg" },
+    { "id": 4, "restaurantId": 2, "name": "Cheese Burger", "price": 60000, "category": "Đồ ăn", "image": "/images/menu/cheeseburger.jpg" },
+    { "id": 5, "restaurantId": 2, "name": "Chicken Bucket", "price": 150000, "category": "Combo", "image": "/images/menu/chickenbucket.jpg" },
+    { "id": 6, "restaurantId": 2, "name": "Coleslaw Salad", "price": 25000, "category": "Đồ ăn nhẹ", "image": "/images/menu/ColeslawSalad.jpg" },
 
-    { "id": 6, "restaurantId": 3, "name": "Combo Big Mac", "price": 90000, "category": "Combo", "image": "/images/menu/BigMacCombo.jpg" },
-    { "id": 7, "restaurantId": 3, "name": "Khoai tây chiên lớn", "price": 40000, "category": "Đồ ăn nhẹ", "image": "/images/menu/LargeFries.jpg" },
-    { "id": 8, "restaurantId": 3, "name": "Gà viên McNuggets", "price": 65000, "category": "Đồ ăn", "image": "/images/menu/McNuggets.jpg" },
+    { "id": 7, "restaurantId": 3, "name": "Burger Zinger", "price": 65000, "category": "Đồ ăn", "image": "/images/menu/zinger.jpg" },
+    { "id": 8, "restaurantId": 3, "name": "French Fries", "price": 40000, "category": "Đồ ăn nhẹ", "image": "/images/menu/fries.jpg" },
+    { "id": 9, "restaurantId": 3, "name": "Hotdog", "price": 40000, "category": "Đồ ăn", "image": "/images/menu/hotdog.jpg" },
 
-    { "id": 9, "restaurantId": 4, "name": "Cà phê sữa đá", "price": 40000, "category": "Đồ uống", "image": "/images/menu/CoffeeMilk.jpg" },
-    { "id": 10, "restaurantId": 4, "name": "Trà đào cam sả", "price": 45000, "category": "Đồ uống", "image": "/images/menu/PeachTea.jpg" },
+    { "id": 10, "restaurantId": 4, "name": "Cà phê sữa đá", "price": 40000, "category": "Đồ uống", "image": "/images/menu/caphe_suada.jpg" },
+    { "id": 11, "restaurantId": 4, "name": "Trà đào cam sả", "price": 45000, "category": "Đồ uống", "image": "/images/menu/tradao.jpg" },
+    { "id": 12, "restaurantId": 4, "name": "Matcha Latte", "price": 50000, "category": "Đồ uống", "image": "/images/menu/matcha.jpg" },
 
-    { "id": 11, "restaurantId": 5, "name": "Cà phê đen đá", "price": 35000, "category": "Đồ uống", "image": "/images/menu/BlackCoffee.jpg" },
-    { "id": 12, "restaurantId": 5, "name": "Bánh mì chà bông", "price": 30000, "category": "Đồ ăn nhẹ", "image": "/images/menu/BanhMi.jpg" },
+    { "id": 13, "restaurantId": 5, "name": "Latte", "price": 55000, "category": "Đồ uống", "image": "/images/menu/latte.jpg" },
+    { "id": 14, "restaurantId": 5, "name": "Bạc xỉu", "price": 45000, "category": "Đồ uống", "image": "/images/menu/bacxiu.jpg" },
 
-    { "id": 13, "restaurantId": 6, "name": "Latte", "price": 60000, "category": "Đồ uống", "image": "/images/menu/Latte.jpg" },
-    { "id": 14, "restaurantId": 6, "name": "Cappuccino", "price": 65000, "category": "Đồ uống", "image": "/images/menu/Cappuccino.jpg" },
+    { "id": 15, "restaurantId": 6, "name": "Trà sữa trân châu", "price": 55000, "category": "Đồ uống", "image": "/images/menu/trasuachantrau.jpg" },
+    { "id": 16, "restaurantId": 6, "name": "Trà sữa Thái xanh", "price": 60000, "category": "Đồ uống", "image": "/images/menu/thaitea.jpg" },
+    { "id": 17, "restaurantId": 6, "name": "Hồng trà sữa", "price": 50000, "category": "Đồ uống", "image": "/images/menu/hongtra.jpg" },
 
-    { "id": 15, "restaurantId": 7, "name": "Pizza phô mai", "price": 120000, "category": "Đồ ăn", "image": "/images/menu/CheesePizza.jpg" },
-    { "id": 16, "restaurantId": 7, "name": "Pizza hải sản", "price": 150000, "category": "Đồ ăn", "image": "/images/menu/SeafoodPizza.jpg" },
+    { "id": 18, "restaurantId": 7, "name": "Coca Cola", "price": 20000, "category": "Đồ uống", "image": "/images/menu/cocacola.jpg" },
+    { "id": 19, "restaurantId": 7, "name": "Pepsi", "price": 20000, "category": "Đồ uống", "image": "/images/menu/pepsi.jpg" },
+    { "id": 20, "restaurantId": 7, "name": "Kem Sundae", "price": 25000, "category": "Tráng miệng", "image": "/images/menu/sundae.jpg" },
 
-    { "id": 17, "restaurantId": 8, "name": "Whopper Burger", "price": 95000, "category": "Đồ ăn", "image": "/images/menu/Whopper.jpg" },
-    { "id": 18, "restaurantId": 8, "name": "Coca-Cola", "price": 20000, "category": "Đồ uống", "image": "/images/menu/Coke.jpg" },
-
-    { "id": 19, "restaurantId": 9, "name": "Cà phê Legend Blend", "price": 50000, "category": "Đồ uống", "image": "/images/menu/LegendCoffee.jpg" },
-    { "id": 20, "restaurantId": 9, "name": "Bánh ngọt phô mai", "price": 45000, "category": "Tráng miệng", "image": "/images/menu/CheeseCake.jpg" },
-
-    { "id": 21, "restaurantId": 10, "name": "Trà sữa Phúc Long", "price": 55000, "category": "Đồ uống", "image": "/images/menu/MilkTea.jpg" },
-    { "id": 22, "restaurantId": 10, "name": "Trà ô long", "price": 50000, "category": "Đồ uống", "image": "/images/menu/OlongTea.jpg" }
+    { "id": 21, "restaurantId": 8, "name": "Trà Oolong", "price": 45000, "category": "Đồ uống", "image": "/images/menu/oolong.jpg" },
+    { "id": 22, "restaurantId": 8, "name": "Espresso", "price": 50000, "category": "Đồ uống", "image": "/images/menu/espresso.jpg" }
   ],
 
   "orders": [
@@ -70,7 +66,7 @@
       "id": 1,
       "userId": 1,
       "restaurantId": 1,
-      "menuId": 1,
+      "menuId": 2,
       "quantity": 2,
       "total": 140000,
       "date": "2025-10-31T10:00:00"
@@ -79,9 +75,9 @@
       "id": 2,
       "userId": 2,
       "restaurantId": 3,
-      "menuId": 6,
+      "menuId": 7,
       "quantity": 1,
-      "total": 90000,
+      "total": 65000,
       "date": "2025-10-31T11:30:00"
     }
   ]
