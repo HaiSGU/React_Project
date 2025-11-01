@@ -79,17 +79,66 @@ export const updateOrderStatus = (orderId, newStatus, storage) => {
 }
 
 /**
- * Lấy số liệu thống kê
+ * Cấu hình phí hoa hồng
+ */
+const COMMISSION_CONFIG = {
+  app: 0.10,      // App lấy 10%
+  shipper: 0.15,  // Shipper lấy 15%
+  restaurant: 0.75 // Nhà hàng nhận 75%
+}
+
+/**
+ * Tính chi tiết doanh thu
+ */
+export const calculateRevenueBreakdown = (orders) => {
+  const totalRevenue = calculateRevenue(orders)
+  
+  return {
+    total: totalRevenue,
+    app: Math.round(totalRevenue * COMMISSION_CONFIG.app),
+    shipper: Math.round(totalRevenue * COMMISSION_CONFIG.shipper),
+    restaurant: Math.round(totalRevenue * COMMISSION_CONFIG.restaurant),
+    percentages: {
+      app: COMMISSION_CONFIG.app * 100,
+      shipper: COMMISSION_CONFIG.shipper * 100,
+      restaurant: COMMISSION_CONFIG.restaurant * 100,
+    }
+  }
+}
+
+/**
+ * Lấy số liệu thống kê (CẬP NHẬT)
  */
 export const getRestaurantStats = (restaurantId, storage) => {
   const allOrders = getRestaurantOrders(restaurantId, storage)
   const todayOrders = getTodayOrders(restaurantId, storage)
   
+  // Tính doanh thu chi tiết
+  const todayRevenueBreakdown = calculateRevenueBreakdown(todayOrders)
+  const totalRevenueBreakdown = calculateRevenueBreakdown(allOrders)
+  
   return {
     totalOrders: allOrders.length,
     todayOrders: todayOrders.length,
-    todayRevenue: calculateRevenue(todayOrders),
-    totalRevenue: calculateRevenue(allOrders),
+    
+    // ⭐ DOANH THU HÔM NAY CHI TIẾT
+    todayRevenue: {
+      total: todayRevenueBreakdown.total,
+      app: todayRevenueBreakdown.app,
+      shipper: todayRevenueBreakdown.shipper,
+      restaurant: todayRevenueBreakdown.restaurant,
+      percentages: todayRevenueBreakdown.percentages,
+    },
+    
+    // ⭐ TỔNG DOANH THU CHI TIẾT
+    totalRevenue: {
+      total: totalRevenueBreakdown.total,
+      app: totalRevenueBreakdown.app,
+      shipper: totalRevenueBreakdown.shipper,
+      restaurant: totalRevenueBreakdown.restaurant,
+      percentages: totalRevenueBreakdown.percentages,
+    },
+    
     pendingOrders: allOrders.filter(o => o.status === 'pending').length,
     processingOrders: allOrders.filter(o => o.status === 'processing').length,
     deliveredOrders: allOrders.filter(o => o.status === 'delivered').length,
