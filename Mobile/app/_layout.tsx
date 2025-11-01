@@ -15,7 +15,7 @@ export default function RootLayout() {
 
   const theme = colorScheme == 'dark' ? Colors.dark : Colors.light;
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require('@shared/assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   if (!loaded) {

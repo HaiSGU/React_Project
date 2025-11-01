@@ -9,7 +9,13 @@ export const buildOrderObject = (checkoutData) => {
     discount,
     driver,
     totalPrice,
+    restaurantId,  // ⭐ THÊM THAM SỐ
   } = checkoutData;
+
+  // ⭐ LẤY restaurantId TỪ CART NẾU KHÔNG CÓ
+  const finalRestaurantId = restaurantId || cart[0]?.restaurantId;
+
+  console.log('🏗️ Building order with restaurantId:', finalRestaurantId);  // ⭐ DEBUG
 
   // Tính toán
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -36,16 +42,30 @@ export const buildOrderObject = (checkoutData) => {
     shippingDiscount = shippingFee;
   }
 
-  // ĐẢM BẢO totalPrice LÀ NUMBER
   const finalTotal = Number(totalPrice) || (subtotal + shippingFee - itemDiscount - shippingDiscount);
 
-  return {
+  const order = {
+    // ⭐ THÊM ID VÀ TIMESTAMPS
+    id: Date.now(),
+    createdAt: new Date().toISOString(),
+    date: new Date().toISOString(),
+    status: 'pending',
+    
+    // ⭐ THÊM restaurantId Ở ĐẦU
+    restaurantId: finalRestaurantId,
+    restaurantName: cart[0]?.restaurantName,
+    
     // Customer info
     customer: {
       fullName,
       phone,
       address,
     },
+    
+    // ⭐ THÊM FLAT FIELDS CHO COMPATIBILITY
+    customerName: fullName,
+    phone: phone,
+    address: address,
     
     // Items
     items: cart.map(item => ({
@@ -54,7 +74,7 @@ export const buildOrderObject = (checkoutData) => {
       price: Number(item.price) || 0,
       quantity: Number(item.quantity) || 1,
       image: item.image,
-      restaurantId: item.restaurantId,
+      restaurantId: item.restaurantId || finalRestaurantId,
       restaurantName: item.restaurantName,
     })),
     
@@ -76,6 +96,10 @@ export const buildOrderObject = (checkoutData) => {
       status: paymentMethod === 'cash' ? 'pending' : 'paid',
     },
     
+    // ⭐ THÊM FLAT FIELDS
+    paymentMethod: paymentMethod,
+    deliveryMethod: deliveryMethod,
+    
     // Discount
     discount: discount ? {
       type: discount.type,
@@ -85,7 +109,7 @@ export const buildOrderObject = (checkoutData) => {
       totalDiscount: Number(itemDiscount + shippingDiscount),
     } : null,
     
-    // Pricing -  ĐẢM BẢO TẤT CẢ LÀ NUMBER
+    // Pricing
     pricing: {
       subtotal: Number(subtotal),
       shippingFee: Number(shippingFee),
@@ -94,17 +118,20 @@ export const buildOrderObject = (checkoutData) => {
       total: Number(finalTotal),
     },
     
-    //  THÊM totalPrice Ở ROOT LEVEL
+    // ⭐ THÊM FLAT PRICE FIELDS
     totalPrice: Number(finalTotal),
-    
-    // Metadata
-    restaurantId: cart[0]?.restaurantId,
-    restaurantName: cart[0]?.restaurantName,
+    originalPrice: Number(subtotal),
+    shippingFee: Number(shippingFee),
   };
+
+  console.log('✅ Built order:', order);  // ⭐ DEBUG
+  console.log('🏪 Order restaurantId:', order.restaurantId);  // ⭐ DEBUG
+
+  return order;
 };
 
 /**
- *  Format order cho hiển thị
+ * Format order cho hiển thị
  */
 export const formatOrderForDisplay = (order) => {
   const statusLabels = {
@@ -130,10 +157,9 @@ export const formatOrderForDisplay = (order) => {
   return {
     ...order,
     statusLabel: statusLabels[order.status] || order.status,
-    paymentLabel: paymentLabels[order.payment?.method] || order.payment?.method,
-    deliveryLabel: deliveryLabels[order.delivery?.method] || order.delivery?.method,
-    formattedDate: new Date(order.createdAt).toLocaleString('vi-VN'),
-    //  ĐẢM BẢO totalPrice LÀ NUMBER
+    paymentLabel: paymentLabels[order.payment?.method || order.paymentMethod] || 'Chưa rõ',
+    deliveryLabel: deliveryLabels[order.delivery?.method || order.deliveryMethod] || 'Chưa rõ',
+    formattedDate: new Date(order.createdAt || order.date).toLocaleString('vi-VN'),
     totalPrice: Number(order.totalPrice || order.pricing?.total || 0),
   };
 };

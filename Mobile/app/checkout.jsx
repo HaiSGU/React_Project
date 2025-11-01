@@ -208,6 +208,9 @@ export default function CheckoutScreen() {
       }
     }
 
+    // ⭐ THÊM DÒNG NÀY - LẤY restaurantId TỪ CART
+    const restaurantId = cart[0]?.restaurantId
+
     const order = buildOrderObject({
       cart,
       fullName,
@@ -218,12 +221,12 @@ export default function CheckoutScreen() {
       discount,
       driver: selectedDriver,
       totalPrice: finalTotalPrice,
+      restaurantId: restaurantId,  // ⭐ THÊM DÒNG NÀY
     })
 
     const result = await saveOrder(AsyncStorage, order)
     
     if (result.success) {
-      // Reset location sau khi đặt hàng thành công
       setSelectedLocation(null)
       
       Alert.alert('Thành công', 'Đặt hàng thành công!', [

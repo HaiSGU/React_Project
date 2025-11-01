@@ -4,10 +4,19 @@
     "slug": "Foodfastapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/foodfastlogo.jpg",
+    "icon": "../shared/assets/images/restaurant/foodfastlogo.jpg",
     "scheme": "foodfastapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "../shared/assets/images/restaurant/foodfastlogo.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*",
+      "../shared/assets/**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -15,11 +24,11 @@
         "NSMicrophoneUsageDescription": "Ứng dụng cần truy cập microphone để ghi âm",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "Y"
+      "bundleIdentifier": "com.nhathaisgu.Foodfastapp"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "../shared/assets/images/restaurant/foodfastlogo.jpg",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -37,14 +46,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "../shared/assets/images/restaurant/foodfastlogo.jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "../shared/assets/images/restaurant/foodfastlogo.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
