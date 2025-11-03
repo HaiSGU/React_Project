@@ -1,109 +1,145 @@
-import { useState, useEffect } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import { MENU_ITEMS } from "@shared/constants/MenuItems"
-import MenuItem from "../../components/MenuItem"
-import "./MenuPage.css"
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import MenuItem from "../../components/MenuItem";
+import "./MenuPage.css";
+import FooterNav from "../../components/FooterNav";
+import { useSearch } from "@shared/hooks/useSearch";
+import shipperimage from "@shared/assets/images/shipperimage.jpeg";
+
 
 export default function MenuPage() {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
-  const { id } = useParams()
-  const restaurantId = parseInt(id)
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { query, setQuery } = useSearch(); // ✅ hook tìm kiếm
 
   useEffect(() => {
-    setLoading(true)
+    const fetchMenu = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch(`http://localhost:3000/menus?restaurantId=${id}`);
+        if (!res.ok) throw new Error("Không thể tải menu");
 
-    // NGUỒN 1: Món có sẵn từ MENU_ITEMS
-    const staticItems = MENU_ITEMS
-      .filter(item => {
-        if (Array.isArray(item.restaurantId)) {
-          return item.restaurantId.includes(restaurantId)
-        }
-        return item.restaurantId === restaurantId
-      })
-      .map(item => ({
-        id: `static_${item.id}`,
-        name: item.title,
-        description: item.description,
-        price: item.price,
-        img: `/images/menu/${item.image}`, // ← CODE THẲNG, KHÔNG DÙNG HELPER
-        rating: item.rating || 4.5,
-        sold: item.sold || 0,
-        quantity: 0,
-      }))
+        const data = await res.json();
+        const updated = data.map(item => ({
+          ...item,
+          quantity: 0,
+          price: Number(item.price),
+        }));
+        setItems(updated);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) fetchMenu();
+  }, [id]);
 
-    // NGUỒN 2: Món Owner tự thêm từ localStorage
-    const localMenuKey = `restaurant_menu_${restaurantId}`
-    const localMenu = localStorage.getItem(localMenuKey)
-    const customItems = localMenu ? JSON.parse(localMenu) : []
-
-    const formattedCustomItems = customItems.map(item => ({
-      id: `custom_${item.id}`,
-      name: item.name,
-      description: item.description || '',
-      price: item.price,
-      img: item.imageUrl || null,
-      rating: 4.5,
-      sold: 0,
-      quantity: 0,
-    }))
-
-    // GỘP CẢ 2 NGUỒN
-    setItems([...staticItems, ...formattedCustomItems])
-    setLoading(false)
-  }, [restaurantId])
-
-  const updateQuantity = (id, change) => {
+  const updateQuantity = (menuId, change) => {
     setItems(prev =>
       prev.map(item =>
-        item.id === id
+        item.id === menuId
           ? { ...item, quantity: Math.max(0, item.quantity + change) }
           : item
       )
-    )
-  }
+    );
+  };
 
-  const selectedItems = items.filter(i => i.quantity > 0)
-  const totalPrice = selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
+  const filteredItems = useMemo(() => {
+    if (!query.trim()) return items;
+    return items.filter(i =>
+      i.name.toLowerCase().includes(query.toLowerCase().trim())
+    );
+  }, [items, query]);
+
+  const { selectedItems, totalPrice, totalItems } = useMemo(() => {
+    const selected = items.filter(i => i.quantity > 0);
+    const total = selected.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const count = selected.reduce((sum, i) => sum + i.quantity, 0);
+    return { selectedItems: selected, totalPrice: total, totalItems: count };
+  }, [items]);
 
   const handleCheckout = () => {
-    navigate("/checkout", { state: { orderItems: selectedItems, totalPrice } })
-  }
+    if (totalItems === 0) return;
+    navigate("/checkout", {
+      state: { orderItems: selectedItems, totalPrice, restaurantId: Number(id) },
+    });
+  };
 
-  const handleBack = () => navigate(-1)
+  const handleBack = () => navigate(-1);
 
-  if (loading) return <div className="loading">Đang tải menu...</div>
+  if (loading) return <div className="menu-page loading">Đang tải...</div>;
+  if (error) return <div className="menu-page error">Lỗi: {error}</div>;
 
   return (
     <div className="menu-page">
+      {/* ✅ HEADER */}
       <header className="menu-header">
-        <button className="back-btn" onClick={handleBack}>←</button>
-        <span>Menu nhà hàng #{id}</span>
+        <button className="back-btn" onClick={handleBack}>
+          ←
+        </button>
+        <h1>Menu nhà hàng #{id}</h1>
+
+        {/* 🔍 Ô tìm kiếm */}
+        <input
+          type="text"
+          className="search-box"
+          placeholder="Tìm món ăn..."
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+        />
       </header>
 
-      <div className="menu-list">
-        {items.length === 0 ? (
-          <p className="empty">Menu đang cập nhật...</p>
-        ) : (
-          items.map(item => (
-            <MenuItem
-              key={item.id}
-              {...item}
-              updateQuantity={updateQuantity}
-            />
-          ))
-        )}
+      {/* ✅ LAYOUT 2 CỘT */}
+      <div className="menu-layout">
+        {/* 🧱 SIDEBAR */}
+        <aside className="menu-sidebar">
+          <h3>Bộ lọc</h3>
+          <ul>
+            <li><button>Tất cả món</button></li>
+            <li><button>Món chính</button></li>
+            <li><button>Đồ uống</button></li>
+            <li><button>Tráng miệng</button></li>
+          </ul>
+        </aside>
+
+        {/* 🍔 CONTENT */}
+        <main className="menu-content">
+          <h3 className="search-result-title">
+            {query.trim() ? "🔍 Kết quả tìm kiếm" : "⭐ Tất cả món ăn"}
+          </h3>
+
+          {filteredItems.length > 0 ? (
+            filteredItems.map(item => (
+              <MenuItem key={item.id} {...item} updateQuantity={updateQuantity} />
+            ))
+          ) : (
+            <p>Không tìm thấy món phù hợp.</p>
+          )}
+        </main>
       </div>
 
+      {/* 💰 CART BAR */}
       {totalPrice > 0 && (
         <div className="cart-bar">
-          <span>Tổng cộng: {totalPrice.toLocaleString()} đ</span>
+          <div className="cart-info">
+            <span>{totalItems} món</span>
+            <span>{totalPrice.toLocaleString("vi-VN")} đ</span>
+          </div>
           <button className="checkout-btn" onClick={handleCheckout}>
-            Thanh toán ({selectedItems.length}) →
+            Thanh toán
           </button>
         </div>
       )}
+
+      {/* 🦶 FOOTER */}
+      <footer>
+        <FooterNav />
+      </footer>
     </div>
-  )
+  );
 }

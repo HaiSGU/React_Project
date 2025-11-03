@@ -96,15 +96,15 @@ export default function HomePage() {
           </section>
 
           <section className="discounts">
-            <h3>Chương trình giảm giá</h3>
-            <div className="scroll-list">
-              {DISCOUNTS.map((discount) => (
-                <Link key={discount.type} to={`/discount/${discount.type}`}>
-                  <DiscountCard text={discount.label} />
-                </Link>
-              ))}
-            </div>
-          </section>
+  <h3>Chương trình giảm giá</h3>
+  <div className="scroll-list">
+    {DISCOUNTS.map((discount) => (
+      <Link key={discount.type} to={`/discount/${discount.type}`}>
+        <DiscountCard text={discount.label} type={discount.type} />
+      </Link>
+    ))}
+  </div>
+</section>
         </>
       )}
 
@@ -140,6 +140,7 @@ export default function HomePage() {
           )}
         </div>
       </section>
+      
 
       <FooterNav />
     </div>
