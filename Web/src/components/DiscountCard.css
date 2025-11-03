@@ -1,0 +1,23 @@
+.discount-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.discount-title {
+  font-weight: 600;
+}
+
+.discount-meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.discount-link {
+  color: var(--brand);
+}

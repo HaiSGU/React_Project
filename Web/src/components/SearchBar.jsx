@@ -9,13 +9,15 @@ import './SearchBar.css';
  * @param {function} onClear - Callback khi clear search
  * @param {string} className - Custom CSS class
  */
-const SearchBar = ({ 
-  value, 
-  onChange, 
-  placeholder = 'Tìm kiếm...', 
-  onClear,
-  className = ''
-}) => {
+export default function SearchBar(props){
+  const {
+    value, 
+    onChange, 
+    placeholder = 'Tìm kiếm...', 
+    onClear,
+    className = ''
+  } = props;
+
   const handleChange = (e) => {
     onChange(e.target.value);
   };
@@ -29,26 +31,10 @@ const SearchBar = ({
   };
 
   return (
-    <div className={`search-bar ${className}`}>
-      <span className="search-icon">🔍</span>
-      <input
-        type="text"
-        className="search-input"
-        value={value}
-        onChange={handleChange}
-        placeholder={placeholder}
-      />
-      {value && (
-        <button 
-          className="search-clear" 
-          onClick={handleClear}
-          aria-label="Clear search"
-        >
-          ✕
-        </button>
-      )}
+    <div className="search-wrap">
+      <span className="material-icons-outlined search-icon">search</span>
+      {/* đảm bảo input chính dùng className bên dưới */}
+      <input className="search-input" {...props} />
     </div>
   );
 };
-
-export default SearchBar;

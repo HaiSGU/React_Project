@@ -10,30 +10,46 @@ import ProtectedOwnerRoute from './components/ProtectedOwnerRoute'
 import AccountPage from './pages/AccountPage/AccountPage' // ← Import
 import ContactPage from './pages/ContactPage/ContactPage' // ← Import
 import DiscountCard from './components/DiscountCard'
+import ProtectedAdminRoute from './components/ProtectedAdminRoute'
+import AdminLogin from './pages/AdminDashboard/AdminLogin'
+import AdminDashboard from './pages/AdminDashboard/AdminDashboard'
+import './styles/theme.css'
+
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/home" replace />} />
-      <Route path="/home" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/menu/:id" element={<MenuPage />} />
-      <Route path="/checkout" element={<CheckoutPage />} />
-      <Route path="/category/:id" element={<CategoryPage />} />
-      <Route path="/cart" element={<CartPage />} /> {/* ← THÊM ROUTE */}
-      <Route path="/account" element={<AccountPage />} />
-      <Route path="/contact" element={<ContactPage />} />
-      <Route path="/discount/:type" element={<DiscountCard />} />
-      {/* Protected Route cho Owner */}
-      <Route
-        path="/restaurant-dashboard"
-        element={
-          <ProtectedOwnerRoute>
-            <RestaurantDashboard />
-          </ProtectedOwnerRoute>
-        }
-      />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/menu/:id" element={<MenuPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/category/:id" element={<CategoryPage />} />
+        <Route path="/cart" element={<CartPage />} /> {/* ← THÊM ROUTE */}
+        <Route path="/account" element={<AccountPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/discount/:type" element={<DiscountCard />} />
+        {/* Protected Route cho Owner */}
+        <Route
+          path="/restaurant-dashboard"
+          element={
+            <ProtectedOwnerRoute>
+              <RestaurantDashboard />
+            </ProtectedOwnerRoute>
+          }
+        />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedAdminRoute>
+              <AdminDashboard />
+            </ProtectedAdminRoute>
+          }
+        />
+      </Routes>
+    </>
   )
 }
 

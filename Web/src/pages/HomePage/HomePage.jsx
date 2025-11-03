@@ -5,144 +5,113 @@ import DiscountCard from "../../components/DiscountCard";
 import RestaurantCard from "../../components/RestaurantCard";
 import SearchBar from "../../components/SearchBar";
 import FooterNav from "../../components/FooterNav";
-import { RESTAURANTS } from "../../utils/restaurantResolver";
-import { CATEGORIES } from "../../utils/categoryResolver";
+import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
+import { CATEGORIES } from "@shared/constants/CategoryListWeb";
 import { DISCOUNTS } from "@shared/constants/DiscountList";
-import { useSearch } from "@shared/hooks/useSearch";
-import shipperimage from "@shared/assets/images/shipperimage.jpeg";
 import "./HomePage.css";
 
 export default function HomePage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-
-  // Lấy thông tin user nếu có
-  useEffect(() => {
-    const storedUser = localStorage.getItem("userInfo");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  // Đăng xuất
-  const handleLogout = () => {
-    localStorage.removeItem("userInfo");
-    localStorage.removeItem("isLoggedIn");
-    setUser(null);
-  };
-
-  const { query, setQuery, filteredItems: searchResults, noResults } = useSearch(
-    RESTAURANTS,
-    ["name", "address", "category"]
-  );
-
-  const displayRestaurants = query.trim()
-    ? searchResults
-    : RESTAURANTS.filter((r) => r.isFeatured);
+  const promos = [
+    { id: 1, code: 'FREESHIP' },
+    { id: 2, code: 'GIẢM 10%' },
+    { id: 3, code: 'GIẢM 20%' },
+    { id: 4, code: 'GIẢM 30%' },
+  ];
 
   return (
-    <div className="home-page">
-      <header className="home-header">Home</header>
-
-      <div className="banner">
-        {user ? (
-          <div className="user-info">
-            <span>👋 Xin chào {user.username}, hôm nay ăn gì nè?</span>
-            <button className="logout-btn" onClick={handleLogout}>
-              Đăng xuất
-            </button>
+    <div className="homepage">
+      {/* Hero Banner */}
+      <div className="hero-banner">
+        <div className="container">
+          <div className="hero-content">
+            <div className="hero-text">
+              <span className="hero-icon">🔥</span>
+              <span>Xin chào rest-pizza, hôm nay ăn gì nè?</span>
+            </div>
+            <button className="btn-logout">Đăng xuất</button>
           </div>
-        ) : (
-          <div className="guest-info">
-            <span>Chào mừng bạn đến với FoodFast</span>
-            <button
-              className="login-btn"
-              onClick={() => navigate("/login")}
-            >
-              Đăng nhập
-            </button>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* ============== Search Bar ============== */}
-      <div className="search-container">
-        <SearchBar
-          value={query}
-          onChange={setQuery}
-          onClear={() => setQuery("")}
-          placeholder="Tìm nhà hàng, món ăn..."
-        />
-        {query.trim() !== "" && (
-          <div className="search-result-info">
-            {noResults
-              ? "😔 Không tìm thấy kết quả phù hợp"
-              : `Tìm thấy ${searchResults.length} nhà hàng`}
+      {/* Search */}
+      <div className="search-section">
+        <div className="container">
+          <div className="search-wrap">
+            <span className="material-icons-outlined search-icon">search</span>
+            <input 
+              className="search-input" 
+              placeholder="Tìm nhà hàng, món ăn..."
+            />
           </div>
-        )}
+        </div>
       </div>
 
-      {!query.trim() && (
-        <>
-          <section className="categories">
-            <h3>Danh mục</h3>
-            <div className="scroll-list">
-              {CATEGORIES.filter((c) => c.key !== "all").map((cat) => (
-                <Link key={cat.key} to={`/category/${cat.key}`}>
-                  <CategoryCard name={cat.label} img={cat.icon} />
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          <section className="discounts">
-  <h3>Chương trình giảm giá</h3>
-  <div className="scroll-list">
-    {DISCOUNTS.map((discount) => (
-      <Link key={discount.type} to={`/discount/${discount.type}`}>
-        <DiscountCard text={discount.label} type={discount.type} />
-      </Link>
-    ))}
-  </div>
-</section>
-        </>
-      )}
-
-      <section className="restaurants">
-        <h3>{query.trim() ? "🔍 Kết quả tìm kiếm" : "⭐ Nhà hàng nổi bật"}</h3>
-        <div className="scroll-list">
-          {displayRestaurants.length > 0 ? (
-            displayRestaurants.map((restaurant) => (
-              <Link
-                key={restaurant.id}
-                to={`/menu/${restaurant.id}`}
-                onClick={(e) => {
-                  // nếu chưa đăng nhập thì bắt đăng nhập trước khi xem menu
-                  if (!user) {
-                    e.preventDefault();
-                    navigate("/login", { state: { from: `/menu/${restaurant.id}` } });
-                  }
-                }}
-              >
-                <RestaurantCard
-                  name={restaurant.name}
-                  rating={restaurant.rating}
-                  img={restaurant.image}
-                />
-              </Link>
-            ))
-          ) : (
-            <div className="no-results">
-              {noResults
-                ? "😔 Không tìm thấy nhà hàng phù hợp"
-                : "Chưa có nhà hàng"}
-            </div>
-          )}
+      {/* Categories */}
+      <section className="categories-section">
+        <div className="container">
+          <h2 className="section-title">Danh mục</h2>
+          <div className="categories-grid">
+            {CATEGORIES.map(cat => (
+              <div key={cat.id} className="category-item">
+                <div className="category-image-wrap">
+                  <img src={cat.image} alt={cat.name} className="category-image" />
+                </div>
+                <span className="category-name">{cat.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
-      
 
-      <FooterNav />
+      {/* Promotions */}
+      <section className="promos-section">
+        <div className="container">
+          <h2 className="section-title">Chương trình giảm giá</h2>
+          <div className="promos-grid">
+            {promos.map(p => (
+              <div key={p.id} className="promo-badge">
+                {p.code}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Restaurants */}
+      <section className="restaurants-section">
+        <div className="container">
+          <h2 className="section-title">
+            <span className="star-icon">⭐</span>
+            Nhà hàng nổi bật
+          </h2>
+          <div className="restaurants-grid">
+            {RESTAURANTS.filter(r => r.isFeatured).map(r => (
+              <div key={r.id} className="restaurant-card">
+                <div className="restaurant-image-wrap">
+                  <img src={r.image} alt={r.name} className="restaurant-image" />
+                </div>
+                <div className="restaurant-info">
+                  <h3 className="restaurant-name">{r.name}</h3>
+                  <div className="restaurant-meta">
+                    <span className="meta-item">
+                      <span className="meta-icon">⭐</span>
+                      {r.rating}
+                    </span>
+                    <span className="meta-item">
+                      <span className="meta-icon">🕐</span>
+                      {r.deliveryTime}
+                    </span>
+                    <span className="meta-item">
+                      <span className="meta-icon">📍</span>
+                      {r.distance}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,0 +1,14 @@
+.ad-grid { display: grid; gap: 16px; }
+.ad-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.ad-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+.ad-card { background:#fff; border:1px solid #eee; border-radius:10px; padding:16px; }
+.ad-stat .ad-stat-title { color:#666; }
+.ad-stat .ad-stat-value { font-size:24px; font-weight:700; }
+
+.ad-revenue-total { font-size:28px; font-weight:700; margin-bottom:8px; }
+.ad-revenue-split .row { display:flex; justify-content:space-between; margin:6px 0; }
+
+.ad-bars { display:flex; gap:10px; align-items:end; height:150px; }
+.ad-bar { text-align:center; }
+.ad-bar-fill { width:28px; background:#667eea; border-radius:6px 6px 0 0; }

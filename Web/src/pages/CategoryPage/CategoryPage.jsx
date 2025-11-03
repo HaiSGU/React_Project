@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { RESTAURANTS } from "../../utils/restaurantResolver";
+import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
 import { CATEGORIES } from "../../utils/categoryResolver";
 import RestaurantItem from "../../components/RestaurantItem";
 import FooterNav from "../../components/FooterNav";

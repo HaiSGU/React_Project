@@ -25,12 +25,12 @@ const promotions = {
   },
 };
 
-export default function DiscountCard({ text, type: forcedType }) {
+export default function DiscountCard(props){
   const { type: urlType } = useParams();
-  const type = forcedType || urlType;
+  const type = props.type || urlType;
 
   const promo = promotions[type] || {
-    title: text || "Khuyến Mãi",
+    title: props.text || "Khuyến Mãi",
     desc: "Chi tiết ưu đãi",
     gradient: "from-gray-500 to-gray-700",
     icon: "🎟️",
@@ -99,7 +99,7 @@ export default function DiscountCard({ text, type: forcedType }) {
         {/* Nội dung */}
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold mb-1">{text || promo.title}</h3>
+            <h3 className="text-lg font-bold mb-1">{props.text || promo.title}</h3>
             <p className="text-xs opacity-90">{promo.desc}</p>
           </div>
           <div className="text-3xl animate-pulse">{promo.icon}</div>

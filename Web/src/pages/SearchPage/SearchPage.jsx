@@ -1,6 +1,6 @@
 import React from 'react';
 import { useRestaurantSearch } from '@shared/hooks/useSearch';
-import { RESTAURANTS } from '../../utils/restaurantResolver';
+import { RESTAURANTS } from '@shared/constants/RestaurantsListWeb';
 import { MENU_ITEMS } from '@shared/constants/MenuItems';
 import './SearchPage.css';
 
