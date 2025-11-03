@@ -1,19 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./CartPage.css";
-import FooterNav from "../../components/FooterNav"; // ✅ nhớ import
+import FooterNav from "../../components/FooterNav";
 
 export default function CartPage() {
   const [activeTab, setActiveTab] = useState("dangGiao");
+  const [orders, setOrders] = useState({ dangGiao: [], daGiao: [] });
 
-  // fake dữ liệu đơn hàng
-  const orders = {
-    dangGiao: [
-      { id: 1, item: "Hamburger x2", total: 100000, status: "Đang giao 🚚" },
-      { id: 2, item: "Pepsi x1", total: 20000, status: "Đang giao 🚚" },
-    ],
-    daGiao: [
-      { id: 3, item: "Chips x3", total: 90000, status: "Đã giao ✔️" },
-    ]
+  // ✅ Đọc từ localStorage khi component mount
+  useEffect(() => {
+    const loadOrders = () => {
+      const saved = localStorage.getItem('orders');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setOrders(parsed);
+        console.log('✅ Đã load đơn hàng:', parsed);
+      }
+    };
+
+    loadOrders();
+
+    // ✅ Lắng nghe thay đổi từ tab khác
+    const handleStorageChange = (e) => {
+      if (e.key === 'orders') {
+        loadOrders();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // ✅ Chuyển đơn sang "Đã giao"
+  const handleCompleteOrder = (orderId) => {
+    const order = orders.dangGiao.find(o => o.id === orderId);
+    if (!order) return;
+
+    const updatedOrders = {
+      dangGiao: orders.dangGiao.filter(o => o.id !== orderId),
+      daGiao: [{ ...order, status: "Đã giao ✔️" }, ...orders.daGiao]
+    };
+
+    setOrders(updatedOrders);
+    localStorage.setItem('orders', JSON.stringify(updatedOrders));
+    console.log('✅ Đã chuyển đơn sang Đã giao');
+  };
+
+  // ✅ Xóa đơn hàng
+  const handleDeleteOrder = (orderId, tab) => {
+    if (!confirm('Bạn có chắc muốn xóa đơn hàng này?')) return;
+
+    const updatedOrders = {
+      ...orders,
+      [tab]: orders[tab].filter(o => o.id !== orderId)
+    };
+
+    setOrders(updatedOrders);
+    localStorage.setItem('orders', JSON.stringify(updatedOrders));
   };
 
   const list = orders[activeTab];
@@ -21,7 +63,7 @@ export default function CartPage() {
   return (
     <div className="cart-page">
       <header className="cart-header">
-        <h2>Cart</h2>
+        <h2>🛒 Đơn hàng của tôi</h2>
       </header>
 
       {/* Tabs */}
@@ -30,31 +72,183 @@ export default function CartPage() {
           className={activeTab === "dangGiao" ? "tab active" : "tab"}
           onClick={() => setActiveTab("dangGiao")}
         >
-          Đang giao
+          Đang giao ({orders.dangGiao.length})
         </button>
         <button
           className={activeTab === "daGiao" ? "tab active" : "tab"}
           onClick={() => setActiveTab("daGiao")}
         >
-          Đã giao
+          Đã giao ({orders.daGiao.length})
         </button>
       </div>
 
       {/* Danh sách đơn */}
       <div className="order-list">
         {list.length === 0 ? (
-          <p>Không có đơn hàng</p>
+          <div style={{
+            textAlign: "center",
+            padding: "40px 20px",
+            color: "#64748b"
+          }}>
+            <div style={{ fontSize: "48px", marginBottom: "12px" }}>📦</div>
+            <p>Không có đơn hàng nào</p>
+          </div>
         ) : (
-          list.map((o) => (
-            <div key={o.id} className="order-card">
-              <p>{o.item}</p>
-              <p>Tổng: {o.total.toLocaleString()} đ</p>
-              <p>{o.status}</p>
+          list.map((order) => (
+            <div key={order.id} className="order-card" style={{
+              background: "white",
+              borderRadius: "12px",
+              padding: "16px",
+              marginBottom: "12px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+            }}>
+              {/* Header đơn hàng */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "12px",
+                paddingBottom: "12px",
+                borderBottom: "1px solid #f0f0f0"
+              }}>
+                <div>
+                  <div style={{ fontSize: "12px", color: "#64748b" }}>
+                    Đơn hàng #{order.id}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>
+                    {new Date(order.createdAt).toLocaleString('vi-VN')}
+                  </div>
+                </div>
+                <div style={{
+                  padding: "4px 12px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  background: activeTab === "dangGiao" ? "#fff3cd" : "#d4edda",
+                  color: activeTab === "dangGiao" ? "#856404" : "#155724"
+                }}>
+                  {order.status}
+                </div>
+              </div>
+
+              {/* Thông tin shipper */}
+              {order.shipper && (
+                <div style={{
+                  background: "#f8f9fa",
+                  borderRadius: "8px",
+                  padding: "12px",
+                  marginBottom: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px"
+                }}>
+                  <div style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #00bcd4, #0097a7)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "18px"
+                  }}>
+                    {order.shipper.avatar}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "600", fontSize: "14px" }}>
+                      {order.shipper.name}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                      📞 {order.shipper.phone}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#64748b" }}>
+                    ⏱️ {order.shipper.estimatedTime}
+                  </div>
+                </div>
+              )}
+
+              {/* Danh sách món */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{
+                  fontSize: "13px",
+                  color: "#64748b",
+                  marginBottom: "6px"
+                }}>
+                  Món đã đặt:
+                </div>
+                <div style={{
+                  fontSize: "14px",
+                  color: "#1a202c",
+                  lineHeight: "1.5"
+                }}>
+                  {order.itemsSummary || "Không có thông tin"}
+                </div>
+              </div>
+
+              {/* Tổng tiền */}
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingTop: "12px",
+                borderTop: "1px solid #f0f0f0"
+              }}>
+                <div>
+                  <div style={{ fontSize: "12px", color: "#64748b" }}>
+                    Tổng cộng:
+                  </div>
+                  <div style={{
+                    fontSize: "18px",
+                    fontWeight: "700",
+                    color: "#00bcd4"
+                  }}>
+                    {order.total.toLocaleString()} đ
+                  </div>
+                </div>
+
+                {/* Nút hành động */}
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {activeTab === "dangGiao" && (
+                    <button
+                      onClick={() => handleCompleteOrder(order.id)}
+                      style={{
+                        background: "#10b981",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 16px",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: "600"
+                      }}
+                    >
+                      ✓ Đã nhận
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeleteOrder(order.id, activeTab)}
+                    style={{
+                      background: "#ef4444",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      fontWeight: "600"
+                    }}
+                  >
+                    🗑️ Xóa
+                  </button>
+                </div>
+              </div>
             </div>
           ))
         )}
       </div>
-      <FooterNav /> 
+
+      <FooterNav />
     </div>
   );
 }

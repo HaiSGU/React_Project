@@ -1,352 +1,642 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { applyVoucher } from "@shared/services/voucherService";
 import "./CheckoutPage.css";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Lấy dữ liệu từ MenuPage (nếu có)
+  const orderFromMenu = location.state?.orderItems || [];
+  const totalFromMenu = location.state?.totalPrice || 0;
+  const restaurantId = location.state?.restaurantId;
 
-  const [cart, setCart] = useState([]);
-  const [voucherCode, setVoucherCode] = useState("");
-  const [appliedVoucher, setAppliedVoucher] = useState(null);
-  const [discount, setDiscount] = useState(0);
-  const [useDefaultAddress, setUseDefaultAddress] = useState(true);
-  const [customAddress, setCustomAddress] = useState("");
+  // Fallback data nếu không có từ MenuPage
+  const [orderItems] = useState(orderFromMenu.length > 0 ? orderFromMenu : [
+    { id: 1, name: "Phở bò", price: 50000, quantity: 2 },
+    { id: 2, name: "Bún chả", price: 45000, quantity: 1 },
+  ]);
+  
+  const [selectedShipper, setSelectedShipper] = useState(null);
+  const [showShipperModal, setShowShipperModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // User info từ localStorage
-  const [userInfo, setUserInfo] = useState({
-    fullname: "",
-    phone: "",
-    address: "",
-  });
-
-  useEffect(() => {
-    loadCart();
-    loadUserInfo();
-
-    // Lấy địa chỉ từ map nếu có
-    const newAddress = location.state?.newAddress;
-    if (newAddress) {
-      setCustomAddress(newAddress);
-      setUseDefaultAddress(false);
+  // Danh sách shipper có sẵn
+  const shippers = [
+    {
+      id: 1,
+      name: "Nguyễn Văn A",
+      phone: "0912345678",
+      rating: 4.8,
+      trips: 230,
+      vehicle: "Xe máy",
+      distance: "0.8 km",
+      estimatedTime: "15 phút",
+      fee: 15000,
+      avatar: "👨",
+      status: "Đang rảnh"
+    },
+    {
+      id: 2,
+      name: "Trần Thị B",
+      phone: "0987654321",
+      rating: 4.9,
+      trips: 450,
+      vehicle: "Xe máy",
+      distance: "1.2 km",
+      estimatedTime: "20 phút",
+      fee: 18000,
+      avatar: "👩",
+      status: "Đang rảnh"
+    },
+    {
+      id: 3,
+      name: "Lê Văn C",
+      phone: "0909123456",
+      rating: 4.7,
+      trips: 180,
+      vehicle: "Xe máy",
+      distance: "1.5 km",
+      estimatedTime: "25 phút",
+      fee: 20000,
+      avatar: "🧑",
+      status: "Đang giao hàng"
     }
+  ];
 
-    // Auto-apply voucher từ Home
-    const selectedVoucher = localStorage.getItem("selectedVoucher");
-    if (selectedVoucher) {
-      const voucher = JSON.parse(selectedVoucher);
-      setVoucherCode(voucher.code);
-      setTimeout(
-        () => handleApplyVoucher(voucher.code, voucher.restaurantId),
-        500
-      );
-      localStorage.removeItem("selectedVoucher");
-    }
-  }, [location]);
-
-  const loadCart = () => {
-    const cartData = JSON.parse(localStorage.getItem("cart") || "[]");
-    console.log("📦 Cart loaded:", cartData);
-    setCart(cartData);
+  const user = {
+    fullname: "Nguyễn Thanh Đạt",
+    phone: "0365986732",
+    address: "Bình Tân, TP.HCM",
   };
 
-  const loadUserInfo = () => {
-    // Lấy từ localStorage hoặc dùng mặc định
-    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  const shippingFee = selectedShipper ? selectedShipper.fee : 20000;
+  const subtotal = orderItems.reduce((s, i) => s + i.price * i.quantity, 0);
+  const total = subtotal + shippingFee;
 
-    setUserInfo({
-      fullname: currentUser.fullname || currentUser.username || "Khách hàng",
-      phone: currentUser.phone || "0123456789",
-      address: currentUser.address || "Chưa có địa chỉ",
-    });
-  };
-
-  const calculateSubtotal = () => {
-    return cart.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
-  };
-
-  const shippingFee = 20000;
-
-  const calculateTotal = () => {
-    return calculateSubtotal() + shippingFee - discount;
-  };
-
-  const handleApplyVoucher = (code = voucherCode, restaurantId = null) => {
-    if (!code.trim()) {
-      alert("Vui lòng nhập mã voucher!");
-      return;
-    }
-
-    if (!restaurantId && cart.length > 0) {
-      restaurantId = cart[0].restaurantId;
-    }
-
-    if (!restaurantId) {
-      alert("Không xác định được nhà hàng!");
-      return;
-    }
-
-    const result = applyVoucher(restaurantId, code, calculateSubtotal(), localStorage);
-
-    if (result.success) {
-      setAppliedVoucher(result.voucher);
-      setDiscount(result.discount);
-      alert(`✅ Áp dụng voucher thành công! Giảm ${result.discount.toLocaleString()}đ`);
-    } else {
-      alert("❌ " + result.error);
-      setAppliedVoucher(null);
-      setDiscount(0);
-    }
-  };
-
-  const handleRemoveVoucher = () => {
-    setVoucherCode("");
-    setAppliedVoucher(null);
-    setDiscount(0);
-  };
-
-  const handleChooseMap = () => {
-    navigate("/map-select", {
-      state: {
-        returnTo: "/checkout",
-        currentCart: cart,
-      },
-    });
+  const handleSelectShipper = (shipper) => {
+    if (shipper.status !== "Đang rảnh") return;
+    setSelectedShipper(shipper);
+    setShowShipperModal(false);
   };
 
   const handleOrder = () => {
-    if (cart.length === 0) {
-      alert("Giỏ hàng trống!");
+    if (!selectedShipper) {
+      alert("⚠️ Vui lòng chọn shipper trước khi đặt hàng!");
       return;
     }
 
-    if (!userInfo.fullname || !userInfo.phone) {
-      alert("Vui lòng điền đầy đủ thông tin!");
-      return;
-    }
-
-    const finalAddress = useDefaultAddress
-      ? userInfo.address
-      : customAddress || userInfo.address;
-
-    if (!finalAddress || finalAddress === "Chưa có địa chỉ") {
-      alert("Vui lòng chọn địa chỉ giao hàng!");
-      return;
-    }
-
-    // Lấy restaurantId từ cart
-    const restaurantId = cart[0]?.restaurantId;
-
-    if (!restaurantId) {
-      alert("❌ Lỗi: Không xác định được nhà hàng!");
-      console.error("Cart items:", cart);
-      return;
-    }
-
-    const order = {
+    // ✅ Tạo đơn hàng mới
+    const newOrder = {
       id: Date.now(),
-      customerName: userInfo.fullname,
-      phone: userInfo.phone,
-      address: finalAddress,
-      items: cart,
-      subtotal: calculateSubtotal(),
+      restaurantId: restaurantId || 1,
+      items: orderItems,
+      itemsSummary: orderItems.map(i => `${i.name} x${i.quantity}`).join(", "),
+      subtotal: subtotal,
       shippingFee: shippingFee,
-      discount: discount,
-      totalPrice: calculateTotal(),
-      voucher: appliedVoucher,
-      status: "pending",
-      date: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      restaurantId: restaurantId, // ⭐ QUAN TRỌNG
+      total: total,
+      shipper: selectedShipper,
+      user: user,
+      status: "Đang giao 🚚",
+      createdAt: new Date().toISOString()
     };
 
-    console.log("📝 Saving order:", order);
+    // ✅ Lưu vào localStorage
+    const existingOrders = JSON.parse(
+      localStorage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}'
+    );
+    
+    existingOrders.dangGiao.unshift(newOrder); // Thêm vào đầu mảng
+    localStorage.setItem('orders', JSON.stringify(existingOrders));
 
-    // Lưu đơn hàng
-    const orders = JSON.parse(localStorage.getItem("orderHistory") || "[]");
-    orders.push(order);
-    localStorage.setItem("orderHistory", JSON.stringify(orders));
+    console.log('✅ Đã lưu đơn hàng:', newOrder);
+    
+    setShowSuccessModal(true);
+  };
 
-    console.log("✅ Order saved. Total orders:", orders.length);
+  const handleBackToHome = () => {
+    setShowSuccessModal(false);
+    setTimeout(() => {
+      navigate('/home');
+    }, 300);
+  };
 
-    // Xóa giỏ hàng
-    localStorage.removeItem("cart");
-
-    alert("🎉 Đặt hàng thành công!");
-    navigate("/");
+  const handleViewOrders = () => {
+    setShowSuccessModal(false);
+    setTimeout(() => {
+      navigate('/cart');
+    }, 300);
   };
 
   return (
-    <div className="checkout-page">
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(to bottom, #f0f9ff 0%, #e0f2fe 100%)",
+      padding: "20px",
+      fontFamily: "system-ui, -apple-system, sans-serif"
+    }}>
       {/* HEADER */}
-      <header className="checkout-header">
-        <span className="back-btn" onClick={() => navigate(-1)}>
-          ←
-        </span>
-        <span>Thanh toán</span>
+      <header style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        marginBottom: "24px",
+        padding: "12px",
+        background: "white",
+        borderRadius: "12px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+      }}>
+        <button 
+          onClick={() => navigate(-1)}
+          style={{
+            background: "#00bcd4",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            padding: "8px 12px",
+            cursor: "pointer",
+            fontSize: "18px"
+          }}
+        >←</button>
+        <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "700" }}>Thanh toán</h2>
       </header>
 
-      <h2 className="checkout-title">🛒 Xác nhận đơn hàng</h2>
-
       {/* THÔNG TIN NGƯỜI NHẬN */}
-      <section className="receiver-info">
-        <h3>👤 Thông tin người nhận</h3>
-        <div className="user-info-display">
-          <p>
-            <strong>Họ tên:</strong> {userInfo.fullname}
-          </p>
-          <p>
-            <strong>Số điện thoại:</strong> {userInfo.phone}
-          </p>
-        </div>
-
-        <div className="address-section">
-          <h4>📍 Địa chỉ giao hàng</h4>
-          <div className="address-buttons">
-            <button
-              className={useDefaultAddress ? "btn-main active" : "btn-grey"}
-              onClick={() => setUseDefaultAddress(true)}
-            >
-              Địa chỉ mặc định
-            </button>
-            <button
-              className={!useDefaultAddress ? "btn-main active" : "btn-grey"}
-              onClick={handleChooseMap}
-            >
-              📍 Chọn trên bản đồ
-            </button>
-          </div>
-
-          {useDefaultAddress ? (
-            <div className="address-display">
-              <p>{userInfo.address}</p>
-            </div>
-          ) : (
-            <div className="address-display custom">
-              <p>{customAddress || "Chưa chọn địa chỉ"}</p>
-              {!customAddress && (
-                <button className="btn-select-map" onClick={handleChooseMap}>
-                  Chọn địa chỉ trên bản đồ
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+      <section style={{
+        background: "white",
+        borderRadius: "12px",
+        padding: "20px",
+        marginBottom: "16px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+      }}>
+        <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+          👤 Thông tin người nhận
+        </h3>
+        <p style={{ margin: "4px 0", color: "#1a202c" }}><strong>{user.fullname}</strong></p>
+        <p style={{ margin: "4px 0", color: "#64748b" }}>{user.phone}</p>
+        <p style={{ margin: "4px 0", color: "#64748b" }}>📍 {user.address}</p>
       </section>
 
-      {/* MÓN ĂN */}
-      <section className="order-items">
-        <h3>🍔 Món ăn ({cart.length})</h3>
-        {cart.length === 0 ? (
-          <p className="empty-cart">Giỏ hàng trống</p>
-        ) : (
-          <>
-            {cart.map((item, index) => (
-              <div key={index} className="order-line">
-                <div className="item-info">
-                  <span className="item-name">{item.name || item.title}</span>
-                  <span className="item-qty">x{item.quantity}</span>
-                </div>
-                <span className="item-price">
-                  {(item.price * item.quantity).toLocaleString()} đ
-                </span>
+      {/* CHỌN SHIPPER */}
+      <section style={{
+        background: "white",
+        borderRadius: "12px",
+        padding: "20px",
+        marginBottom: "16px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+      }}>
+        <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+          🚚 Chọn Shipper
+        </h3>
+        
+        {selectedShipper ? (
+          <div style={{
+            background: "linear-gradient(135deg, #00bcd4 0%, #0097a7 100%)",
+            borderRadius: "12px",
+            padding: "16px",
+            color: "white",
+            position: "relative"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+              <div style={{
+                width: "50px",
+                height: "50px",
+                borderRadius: "50%",
+                background: "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "24px"
+              }}>
+                {selectedShipper.avatar}
               </div>
-            ))}
-          </>
-        )}
-      </section>
-
-      {/* VOUCHER */}
-      <section className="voucher">
-        <h3>🎟️ Mã giảm giá</h3>
-        {!appliedVoucher ? (
-          <div className="voucher-input-group">
-            <input
-              type="text"
-              value={voucherCode}
-              onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-              placeholder="Nhập mã giảm giá..."
-            />
-            <button
-              className="btn-apply-voucher"
-              onClick={() => handleApplyVoucher()}
-            >
-              Áp dụng
-            </button>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: "700", fontSize: "16px" }}>{selectedShipper.name}</div>
+                <div style={{ fontSize: "13px", opacity: 0.9 }}>⭐ {selectedShipper.rating} • {selectedShipper.trips} chuyến</div>
+              </div>
+              <button 
+                onClick={() => setShowShipperModal(true)}
+                style={{
+                  background: "rgba(255,255,255,0.2)",
+                  border: "1px solid rgba(255,255,255,0.3)",
+                  color: "white",
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "13px"
+                }}
+              >
+                Đổi
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: "16px", fontSize: "13px", opacity: 0.95 }}>
+              <span>🏍️ {selectedShipper.vehicle}</span>
+              <span>📍 {selectedShipper.distance}</span>
+              <span>⏱️ {selectedShipper.estimatedTime}</span>
+            </div>
+            <div style={{ 
+              marginTop: "8px", 
+              paddingTop: "8px", 
+              borderTop: "1px solid rgba(255,255,255,0.3)",
+              fontSize: "14px",
+              fontWeight: "600"
+            }}>
+              Phí ship: {selectedShipper.fee.toLocaleString()} đ
+            </div>
           </div>
         ) : (
-          <div className="voucher-applied">
-            <div className="voucher-info">
-              <span className="voucher-code-badge">✅ {appliedVoucher.code}</span>
-              <span className="voucher-discount-amount">
-                - {discount.toLocaleString()}đ
-              </span>
-            </div>
-            <button
-              className="btn-remove-voucher"
-              onClick={handleRemoveVoucher}
-            >
-              ✕
-            </button>
-          </div>
+          <button 
+            onClick={() => setShowShipperModal(true)}
+            style={{
+              width: "100%",
+              background: "#00bcd4",
+              color: "white",
+              border: "none",
+              padding: "14px",
+              borderRadius: "10px",
+              cursor: "pointer",
+              fontSize: "15px",
+              fontWeight: "600",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px"
+            }}
+          >
+            <span style={{ fontSize: "20px" }}>🚚</span>
+            Chọn Shipper giao hàng
+          </button>
         )}
       </section>
 
-      {/* THÔNG TIN VẬN CHUYỂN */}
-      <section className="shipping-info">
-        <h3>🚚 Thông tin vận chuyển</h3>
-        <div className="shipping-details">
-          <div className="shipping-line">
-            <span>Phí vận chuyển:</span>
-            <span>{shippingFee.toLocaleString()} đ</span>
+      {/* DANH SÁCH MÓN */}
+      <section style={{
+        background: "white",
+        borderRadius: "12px",
+        padding: "20px",
+        marginBottom: "16px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+      }}>
+        <h3 style={{ margin: "0 0 12px 0", fontSize: "16px" }}>🧾 Đơn hàng</h3>
+        {orderItems.map((item) => (
+          <div key={item.id} style={{
+            display: "flex",
+            justifyContent: "space-between",
+            padding: "8px 0",
+            borderBottom: "1px solid #f0f0f0"
+          }}>
+            <span style={{ color: "#1a202c" }}>{item.name} × {item.quantity}</span>
+            <span style={{ fontWeight: "600", color: "#00bcd4" }}>
+              {(item.price * item.quantity).toLocaleString()} đ
+            </span>
           </div>
-          <div className="shipping-line">
-            <span>Thời gian dự kiến:</span>
-            <span>30 - 45 phút</span>
-          </div>
-          <div className="shipping-line weather">
-            <span>Thời tiết:</span>
-            <span>🌤️ Nắng nhẹ</span>
-          </div>
-        </div>
+        ))}
       </section>
 
-      {/* TỔNG TIỀN */}
-      <section className="checkout-summary">
-        <div className="summary-line">
-          <span>Tạm tính:</span>
-          <span>{calculateSubtotal().toLocaleString()} đ</span>
+      {/* TỔNG CỘNG */}
+      <div style={{
+        background: "white",
+        borderRadius: "12px",
+        padding: "20px",
+        marginBottom: "16px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+          <span style={{ color: "#64748b" }}>Tạm tính:</span>
+          <span>{subtotal.toLocaleString()} đ</span>
         </div>
-        <div className="summary-line">
-          <span>Phí vận chuyển:</span>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+          <span style={{ color: "#64748b" }}>Phí ship:</span>
           <span>{shippingFee.toLocaleString()} đ</span>
         </div>
-        {discount > 0 && (
-          <div className="summary-line discount">
-            <span>Giảm giá:</span>
-            <span>- {discount.toLocaleString()} đ</span>
-          </div>
-        )}
-        <div className="checkout-total">
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          paddingTop: "12px",
+          borderTop: "2px solid #e0e0e0",
+          fontSize: "18px",
+          fontWeight: "700"
+        }}>
           <span>Tổng cộng:</span>
-          <b>{calculateTotal().toLocaleString()} đ</b>
+          <span style={{ color: "#00bcd4" }}>{total.toLocaleString()} đ</span>
         </div>
-      </section>
+      </div>
 
-      {/* BUTTON ĐẶT HÀNG */}
-      <button
-        className="order-btn"
+      {/* NÚT ĐẶT HÀNG */}
+      <button 
         onClick={handleOrder}
-        disabled={cart.length === 0}
+        style={{
+          width: "100%",
+          background: selectedShipper ? "linear-gradient(135deg, #00bcd4 0%, #0097a7 100%)" : "#ccc",
+          color: "white",
+          border: "none",
+          padding: "16px",
+          borderRadius: "12px",
+          cursor: selectedShipper ? "pointer" : "not-allowed",
+          fontSize: "16px",
+          fontWeight: "700",
+          boxShadow: selectedShipper ? "0 4px 12px rgba(0,188,212,0.3)" : "none",
+          transition: "all 0.3s ease"
+        }}
       >
-        {cart.length === 0
-          ? "Giỏ hàng trống"
-          : `Đặt hàng (${calculateTotal().toLocaleString()} đ)`}
+        {selectedShipper ? "✅ Đặt hàng ngay" : "⚠️ Chọn shipper để tiếp tục"}
       </button>
+
+      {/* MODAL CHỌN SHIPPER */}
+      {showShipperModal && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          zIndex: 1000,
+          animation: "fadeIn 0.3s ease"
+        }} onClick={() => setShowShipperModal(false)}>
+          <div style={{
+            background: "white",
+            borderRadius: "20px 20px 0 0",
+            width: "100%",
+            maxWidth: "600px",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            padding: "24px",
+            animation: "slideUp 0.3s ease"
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px"
+            }}>
+              <h3 style={{ margin: 0, fontSize: "20px", fontWeight: "700" }}>
+                Chọn Shipper
+              </h3>
+              <button 
+                onClick={() => setShowShipperModal(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "24px",
+                  cursor: "pointer",
+                  color: "#64748b"
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {shippers.map((shipper) => (
+              <div 
+                key={shipper.id}
+                onClick={() => handleSelectShipper(shipper)}
+                style={{
+                  background: shipper.status === "Đang rảnh" ? "#f8f9fa" : "#fff5f5",
+                  border: selectedShipper?.id === shipper.id ? "2px solid #00bcd4" : "1px solid #e0e0e0",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  marginBottom: "12px",
+                  cursor: shipper.status === "Đang rảnh" ? "pointer" : "not-allowed",
+                  opacity: shipper.status === "Đang rảnh" ? 1 : 0.6,
+                  transition: "all 0.2s ease"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+                  <div style={{
+                    width: "50px",
+                    height: "50px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #00bcd4, #0097a7)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "24px"
+                  }}>
+                    {shipper.avatar}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "700", fontSize: "16px", marginBottom: "4px" }}>
+                      {shipper.name}
+                    </div>
+                    <div style={{ fontSize: "13px", color: "#64748b" }}>
+                      ⭐ {shipper.rating} • {shipper.trips} chuyến
+                    </div>
+                  </div>
+                  <div style={{
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    background: shipper.status === "Đang rảnh" ? "#d4edda" : "#f8d7da",
+                    color: shipper.status === "Đang rảnh" ? "#155724" : "#721c24"
+                  }}>
+                    {shipper.status}
+                  </div>
+                </div>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: "8px",
+                  fontSize: "13px",
+                  color: "#64748b"
+                }}>
+                  <div>🏍️ {shipper.vehicle}</div>
+                  <div>📍 {shipper.distance}</div>
+                  <div>⏱️ {shipper.estimatedTime}</div>
+                </div>
+                <div style={{
+                  marginTop: "10px",
+                  paddingTop: "10px",
+                  borderTop: "1px solid #e0e0e0",
+                  fontWeight: "600",
+                  color: "#00bcd4",
+                  fontSize: "15px"
+                }}>
+                  Phí ship: {shipper.fee.toLocaleString()} đ
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL THÀNH CÔNG */}
+      {showSuccessModal && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.6)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 2000,
+          animation: "fadeIn 0.3s ease"
+        }}>
+          <div style={{
+            background: "white",
+            borderRadius: "20px",
+            width: "90%",
+            maxWidth: "400px",
+            padding: "32px",
+            textAlign: "center",
+            animation: "scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)"
+          }}>
+            <div style={{
+              width: "80px",
+              height: "80px",
+              margin: "0 auto 20px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "40px",
+              animation: "bounce 0.6s ease"
+            }}>
+              ✓
+            </div>
+
+            <h2 style={{
+              margin: "0 0 12px 0",
+              fontSize: "24px",
+              fontWeight: "700",
+              color: "#1a202c"
+            }}>
+              Đặt hàng thành công! 🎉
+            </h2>
+
+            <p style={{
+              margin: "0 0 20px 0",
+              color: "#64748b",
+              fontSize: "15px",
+              lineHeight: "1.6"
+            }}>
+              Đơn hàng của bạn đã được xác nhận.<br/>
+              Shipper <strong>{selectedShipper.name}</strong> sẽ giao hàng trong <strong>{selectedShipper.estimatedTime}</strong>
+            </p>
+
+            <div style={{
+              background: "#f8f9fa",
+              borderRadius: "12px",
+              padding: "16px",
+              marginBottom: "20px",
+              textAlign: "left"
+            }}>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                marginBottom: "12px"
+              }}>
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #00bcd4, #0097a7)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "20px"
+                }}>
+                  {selectedShipper.avatar}
+                </div>
+                <div>
+                  <div style={{ fontWeight: "600", fontSize: "15px" }}>
+                    {selectedShipper.name}
+                  </div>
+                  <div style={{ fontSize: "13px", color: "#64748b" }}>
+                    📞 {selectedShipper.phone}
+                  </div>
+                </div>
+              </div>
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "13px",
+                color: "#64748b"
+              }}>
+                <span>⭐ {selectedShipper.rating}</span>
+                <span>🏍️ {selectedShipper.vehicle}</span>
+                <span>⏱️ {selectedShipper.estimatedTime}</span>
+              </div>
+            </div>
+
+            <div style={{
+              background: "linear-gradient(135deg, #00bcd4 0%, #0097a7 100%)",
+              color: "white",
+              borderRadius: "12px",
+              padding: "16px",
+              marginBottom: "20px",
+              fontSize: "18px",
+              fontWeight: "700"
+            }}>
+              Tổng thanh toán: {total.toLocaleString()} đ
+            </div>
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button 
+                onClick={handleViewOrders}
+                style={{
+                  flex: 1,
+                  background: "white",
+                  color: "#00bcd4",
+                  border: "2px solid #00bcd4",
+                  padding: "14px",
+                  borderRadius: "12px",
+                  cursor: "pointer",
+                  fontSize: "15px",
+                  fontWeight: "600"
+                }}
+              >
+                Xem đơn hàng
+              </button>
+              <button 
+                onClick={handleBackToHome}
+                style={{
+                  flex: 1,
+                  background: "linear-gradient(135deg, #00bcd4 0%, #0097a7 100%)",
+                  color: "white",
+                  border: "none",
+                  padding: "14px",
+                  borderRadius: "12px",
+                  cursor: "pointer",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  boxShadow: "0 4px 12px rgba(0,188,212,0.3)"
+                }}
+              >
+                Về trang chủ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+          from { 
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to { 
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+      `}</style>
     </div>
   );
 }
