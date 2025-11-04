@@ -4,7 +4,7 @@
 
 .register-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4a90e2 0%, #2962ff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,7 +46,7 @@
 .section-title {
   font-size: 18px;
   font-weight: 600;
-  color: #667eea;
+  color: #4a90e2;
   margin: 0 0 20px 0;
   display: flex;
   align-items: center;
@@ -57,7 +57,7 @@
   content: '';
   width: 4px;
   height: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4a90e2 0%, #2962ff 100%);
   border-radius: 2px;
 }
 
@@ -92,8 +92,8 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
 .form-input::placeholder {
@@ -139,13 +139,13 @@ textarea.form-input {
 }
 
 .gender-btn:hover:not(:disabled) {
-  border-color: #667eea;
-  background: #f5f7ff;
+  border-color: #4a90e2;
+  background: #e3f2fd;
 }
 
 .gender-btn.active {
-  border-color: #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #4a90e2;
+  background: linear-gradient(135deg, #4a90e2 0%, #2962ff 100%);
   color: white;
 }
 
@@ -170,7 +170,7 @@ textarea.form-input {
 .btn-register {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4a90e2 0%, #2962ff 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -179,12 +179,12 @@ textarea.form-input {
   cursor: pointer;
   transition: all 0.3s;
   font-family: inherit;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
 }
 
 .btn-register:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
 }
 
 .btn-register:active:not(:disabled) {
@@ -214,7 +214,7 @@ textarea.form-input {
 .link-btn {
   background: none;
   border: none;
-  color: #667eea;
+  color: #4a90e2;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -225,7 +225,7 @@ textarea.form-input {
 }
 
 .link-btn:hover {
-  color: #764ba2;
+  color: #2962ff;
 }
 
 /* ========== RESPONSIVE ========== */

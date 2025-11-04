@@ -1,12 +1,20 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useLogin } from "@shared/hooks/useLogin";
 import { loginRestaurantOwner, saveOwnerSession } from "@shared/services/restaurantAuthService";
 import "./LoginPage.css";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const {
+    username,
+    setUsername,
+    password,
+    setPassword,
+    error,
+    setError,
+    validate
+  } = useLogin();
+  
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -21,8 +29,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!username || !password) {
-      setError("Vui lòng nhập đầy đủ thông tin!");
+    // Validate using shared hook
+    if (!validate()) {
       return;
     }
 

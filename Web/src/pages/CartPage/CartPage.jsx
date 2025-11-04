@@ -1,60 +1,41 @@
 import { useState, useEffect } from "react";
+import { 
+  getShippingOrders, 
+  getDeliveredOrders,
+  confirmDelivery
+} from "@shared/services/orderService";
 import "./CartPage.css";
 
 export default function CartPage() {
   const [activeTab, setActiveTab] = useState("dangGiao");
   const [orders, setOrders] = useState({ dangGiao: [], daGiao: [] });
 
-  // ✅ Đọc từ localStorage khi component mount
+  // ✅ Đọc từ orderService khi component mount
   useEffect(() => {
-    const loadOrders = () => {
-      const saved = localStorage.getItem('orders');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setOrders(parsed);
-        console.log('✅ Đã load đơn hàng:', parsed);
-      }
-    };
-
     loadOrders();
-
-    // ✅ Lắng nghe thay đổi từ tab khác
-    const handleStorageChange = (e) => {
-      if (e.key === 'orders') {
-        loadOrders();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // ✅ Chuyển đơn sang "Đã giao"
-  const handleCompleteOrder = (orderId) => {
+  const loadOrders = async () => {
+    const shipping = await getShippingOrders(localStorage);
+    const delivered = await getDeliveredOrders(localStorage);
+    setOrders({ dangGiao: shipping, daGiao: delivered });
+  };
+
+  // ✅ Chuyển đơn sang "Đã giao" using orderService
+  const handleCompleteOrder = async (orderId) => {
     const order = orders.dangGiao.find(o => o.id === orderId);
     if (!order) return;
 
-    const updatedOrders = {
-      dangGiao: orders.dangGiao.filter(o => o.id !== orderId),
-      daGiao: [{ ...order, status: "Đã giao ✔️" }, ...orders.daGiao]
-    };
-
-    setOrders(updatedOrders);
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
-    console.log('✅ Đã chuyển đơn sang Đã giao');
-  };
-
-  // ✅ Xóa đơn hàng
-  const handleDeleteOrder = (orderId, tab) => {
-    if (!confirm('Bạn có chắc muốn xóa đơn hàng này?')) return;
-
-    const updatedOrders = {
-      ...orders,
-      [tab]: orders[tab].filter(o => o.id !== orderId)
-    };
-
-    setOrders(updatedOrders);
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
+    const result = await confirmDelivery(order, localStorage);
+    
+    if (result.success) {
+      setOrders({
+        dangGiao: result.shipping,
+        daGiao: result.delivered
+      });
+    } else {
+      alert(result.error || 'Lỗi khi hoàn tất đơn hàng');
+    }
   };
 
   const list = orders[activeTab];
@@ -207,28 +188,11 @@ export default function CartPage() {
                 </div>
 
                 {/* Nút hành động */}
-                <div style={{ display: "flex", gap: "8px" }}>
-                  {activeTab === "dangGiao" && (
-                    <button
-                      onClick={() => handleCompleteOrder(order.id)}
-                      style={{
-                        background: "#10b981",
-                        color: "white",
-                        border: "none",
-                        padding: "8px 16px",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        fontSize: "13px",
-                        fontWeight: "600"
-                      }}
-                    >
-                      ✓ Đã nhận
-                    </button>
-                  )}
+                {activeTab === "dangGiao" && (
                   <button
-                    onClick={() => handleDeleteOrder(order.id, activeTab)}
+                    onClick={() => handleCompleteOrder(order.id)}
                     style={{
-                      background: "#ef4444",
+                      background: "#10b981",
                       color: "white",
                       border: "none",
                       padding: "8px 16px",
@@ -238,9 +202,9 @@ export default function CartPage() {
                       fontWeight: "600"
                     }}
                   >
-                    🗑️ Xóa
+                    ✓ Đã nhận
                   </button>
-                </div>
+                )}
               </div>
             </div>
           ))

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
-import { CATEGORIES } from "../../utils/categoryResolver";
+import { CATEGORIES } from "@shared/constants/CategoryListWeb";
+import { filterRestaurantsByCategory, getCategoryLabel } from "@shared/utils/restaurantHelpers";
 import "./CategoryPage.css";
 
 export default function CategoryPage() {
@@ -10,25 +11,10 @@ export default function CategoryPage() {
   const [restaurants, setRestaurants] = useState([]);
 
   useEffect(() => {
-    // Lọc nhà hàng theo category từ RESTAURANTS
-    const filtered = RESTAURANTS.filter(restaurant => {
-      // Xử lý trường hợp category là array hoặc string
-      if (Array.isArray(restaurant.category)) {
-        return restaurant.category.includes(id);
-      }
-      return restaurant.category === id;
-    });
-    
-    console.log("Category ID:", id);
-    console.log("Restaurants filtered:", filtered);
+    // Lọc nhà hàng theo category using shared helper
+    const filtered = filterRestaurantsByCategory(RESTAURANTS, id);
     setRestaurants(filtered);
   }, [id]);
-
-  // Lấy tên danh mục từ CATEGORIES
-  const getCategoryName = () => {
-    const category = CATEGORIES.find(cat => cat.key === id);
-    return category ? category.label : id;
-  };
 
   const handleRestaurantClick = (restaurantId) => {
     navigate(`/menu/${restaurantId}`);
@@ -37,7 +23,7 @@ export default function CategoryPage() {
   return (
     <div className="category-page">
       <div className="category-header">
-        <h2 className="category-title">{getCategoryName()}</h2>
+        <h2 className="category-title">{getCategoryLabel(CATEGORIES, id)}</h2>
         <p className="restaurant-count">
           {restaurants.length} nhà hàng
         </p>

@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage/LoginPage'
 import RegisterPage from './pages/RegisterPage/RegisterPage'
 import MenuPage from './pages/MenuPage/MenuPage'
 import CheckoutPage from './pages/CheckoutPage/CheckoutPage'
+import MapSelectPage from './pages/MapSelectPage/MapSelectPage'
 import RestaurantDashboard from './pages/RestaurantDashboard/RestaurantDashboard'
 import CategoryPage from './pages/CategoryPage/CategoryPage'
 import CartPage from './pages/CartPage/CartPage'
@@ -28,6 +29,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/menu/:id" element={<MenuPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/map-select" element={<MapSelectPage />} />
         <Route path="/category/:id" element={<CategoryPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/account" element={<AccountPage />} />

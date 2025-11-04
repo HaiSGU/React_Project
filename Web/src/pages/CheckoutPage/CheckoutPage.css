@@ -252,11 +252,16 @@ textarea.form-input {
 
 .option-main {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
+}
+
+.option-icon {
+  font-size: 20px;
 }
 
 .option-name {
+  flex: 1;
   font-weight: 600;
   color: #333;
   font-size: 15px;
@@ -307,6 +312,81 @@ textarea.form-input {
 }
 
 /* ========== VOUCHER ========== */
+.voucher-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.voucher-card {
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.voucher-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.voucher-card.selected {
+  border-width: 3px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.voucher-header {
+  padding: 16px;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+.voucher-label {
+  display: block;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.voucher-body {
+  padding: 16px;
+  text-align: center;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.voucher-description {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.voucher-selected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #4caf50;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.voucher-selected-badge .checkmark {
+  font-size: 14px;
+}
+
+/* Old voucher input styles (keep for backwards compatibility) */
 .voucher-input-group {
   display: flex;
   gap: 12px;
@@ -851,6 +931,10 @@ textarea.form-input {
   .form-row {
     grid-template-columns: 1fr;
   }
+  
+  .voucher-options {
+    grid-template-columns: 1fr;
+  }
 
   .trust-badges {
     grid-template-columns: 1fr;
@@ -873,4 +957,74 @@ textarea.form-input {
   .success-actions {
     flex-direction: column;
   }
+}
+
+/* ========== MAP SELECT INTEGRATION ========== */
+.address-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.address-textarea {
+  flex: 1;
+}
+
+.btn-map-select {
+  min-width: 48px;
+  height: 48px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.btn-map-select:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+.btn-map-select:active {
+  transform: scale(0.95);
+}
+
+.map-location-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #e3f2fd;
+  color: #007bff;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-remove-location {
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.btn-remove-location:hover {
+  background-color: rgba(220, 53, 69, 0.1);
 }

@@ -1,68 +1,192 @@
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { 
+  searchAddress, 
+  getAddressFromCoords,
+  getCurrentLocation 
+} from '../../../../shared/services/weatherService';
+import { locationService } from '../../utils/locationService';
+import './MapSelectPage.css';
 
-// fix icon leaflet
+// Fix icon issue in Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-function LocationPicker({ setSelected }) {
+function LocationMarker({ position, setPosition, setAddress }) {
   useMapEvents({
-    click(e) {
-      setSelected(e.latlng);
+    async click(e) {
+      const { lat, lng } = e.latlng;
+      setPosition({ latitude: lat, longitude: lng });
+      
+      // Sử dụng weatherService
+      const result = await getAddressFromCoords(lat, lng);
+      if (result.success) {
+        setAddress(result.address);
+      }
     },
   });
-  return null;
+
+  return position ? (
+    <Marker position={[position.latitude, position.longitude]} />
+  ) : null;
 }
 
 export default function MapSelectPage() {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState({ lat: 10.762622, lng: 106.660172 }); // trung tâm HCM
+  const location = useLocation();
+  const { currentLat, currentLng, currentAddress } = location.state || {};
+
+  const [position, setPosition] = useState(
+    currentLat && currentLng
+      ? { latitude: parseFloat(currentLat), longitude: parseFloat(currentLng) }
+      : null
+  );
+  const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [address, setAddress] = useState(currentAddress || '');
+  const [isSearching, setIsSearching] = useState(false);
+  const [center, setCenter] = useState([
+    currentLat ? parseFloat(currentLat) : 10.7769,
+    currentLng ? parseFloat(currentLng) : 106.7009,
+  ]);
+
+  // Lấy vị trí hiện tại khi load (nếu chưa có)
+  useEffect(() => {
+    const loadCurrentLocation = async () => {
+      if (!position) {
+        const result = await getCurrentLocation(locationService);
+        
+        if (result.success) {
+          const { latitude, longitude } = result.location;
+          setPosition({ latitude, longitude });
+          setCenter([latitude, longitude]);
+          
+          // Lấy địa chỉ
+          const addressResult = await getAddressFromCoords(latitude, longitude);
+          if (addressResult.success) {
+            setAddress(addressResult.address);
+          }
+        } else {
+          console.error('Get location error:', result.error);
+        }
+      }
+    };
+
+    loadCurrentLocation();
+  }, []);
+
+  // Tìm kiếm địa chỉ
+  const handleSearch = async () => {
+    if (!searchText.trim()) {
+      alert('Vui lòng nhập địa chỉ cần tìm');
+      return;
+    }
+
+    setIsSearching(true);
+    const result = await searchAddress(searchText);
+    setIsSearching(false);
+
+    if (result.success) {
+      setSearchResults(result.results);
+    } else {
+      alert(result.error);
+    }
+  };
+
+  const handleSelectResult = (item) => {
+    setPosition({ latitude: item.latitude, longitude: item.longitude });
+    setCenter([item.latitude, item.longitude]);
+    setAddress(item.displayName);
+    setSearchResults([]);
+    setSearchText('');
+  };
 
   const handleConfirm = () => {
-    // Giả lập chuyển lat/lng thành địa chỉ
-    const mockAddress = `Toạ độ (${selected.lat.toFixed(4)}, ${selected.lng.toFixed(4)})`;
-    navigate("/checkout", { state: { newAddress: mockAddress } });
+    if (!position) {
+      alert('Vui lòng chọn vị trí trên bản đồ');
+      return;
+    }
+
+    // Quay về checkout với location đã chọn
+    navigate('/checkout', {
+      state: {
+        selectedLocation: {
+          latitude: position.latitude,
+          longitude: position.longitude,
+          address: address,
+        },
+      },
+    });
   };
 
   return (
-    <div style={{ height: "100vh" }}>
-      <header style={{ padding: "10px", fontWeight: "bold" }}>map-select</header>
-      <MapContainer
-        center={selected}
-        zoom={13}
-        style={{ height: "80%", width: "100%" }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://osm.org">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    <div className="map-select-container">
+      {/* Search bar */}
+      <div className="search-container">
+        <input
+          className="search-input"
+          type="text"
+          placeholder="Tìm kiếm địa chỉ..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
-        <Marker position={selected}></Marker>
-        <LocationPicker setSelected={setSelected} />
-      </MapContainer>
-
-      <div style={{ padding: "10px", textAlign: "center" }}>
-        <p>Chọn vị trí trên bản đồ, sau đó Xác nhận:</p>
-        <button
-          style={{
-            background: "#00cfe8",
-            color: "white",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-          }}
-          onClick={handleConfirm}
+        <button 
+          className="search-btn" 
+          onClick={handleSearch}
+          disabled={isSearching}
         >
-          Xác nhận vị trí
+          {isSearching ? '...' : '🔍'}
         </button>
       </div>
+
+      {/* Search results */}
+      {searchResults.length > 0 && (
+        <div className="results-list">
+          {searchResults.map((item, index) => (
+            <div
+              key={index}
+              className="result-item"
+              onClick={() => handleSelectResult(item)}
+            >
+              <p className="result-text">📍 {item.displayName}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Map */}
+      <MapContainer center={center} zoom={15} className="map" key={center.join(',')}>
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        />
+        <LocationMarker
+          position={position}
+          setPosition={setPosition}
+          setAddress={setAddress}
+        />
+      </MapContainer>
+
+      {/* Selected address */}
+      {address && (
+        <div className="address-box">
+          <p className="address-label">Địa chỉ đã chọn:</p>
+          <p className="address-text">{address}</p>
+        </div>
+      )}
+
+      {/* Confirm button */}
+      <button className="confirm-btn" onClick={handleConfirm}>
+        Xác nhận vị trí
+      </button>
     </div>
   );
 }

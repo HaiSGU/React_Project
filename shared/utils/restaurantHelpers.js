@@ -40,3 +40,31 @@ export const getCategoryLabel = (categories, categoryKey) => {
 export const getDiscountByType = (discounts, type) => {
   return discounts.find(d => d.type === type);
 };
+
+/**
+ * Get restaurant by ID
+ */
+export const getRestaurantById = (restaurants, id) => {
+  const restaurantId = typeof id === 'string' ? parseInt(id) : id;
+  return restaurants.find(r => r.id === restaurantId);
+};
+
+/**
+ * Get featured restaurants
+ */
+export const getFeaturedRestaurants = (restaurants) => {
+  return restaurants.filter(r => r.isFeatured);
+};
+
+/**
+ * Search restaurants by name or address
+ */
+export const searchRestaurants = (restaurants, query) => {
+  if (!query || !query.trim()) return restaurants;
+  
+  const lowerQuery = query.toLowerCase().trim();
+  return restaurants.filter(r => 
+    r.name?.toLowerCase().includes(lowerQuery) ||
+    r.address?.toLowerCase().includes(lowerQuery)
+  );
+};

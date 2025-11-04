@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4a90e2 0%, #2962ff 100%);
   padding: 20px;
 }
 
@@ -47,13 +47,13 @@
 
 .login-box input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #4a90e2;
 }
 
 .login-box button[type="submit"] {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4a90e2 0%, #2962ff 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -65,7 +65,7 @@
 
 .login-box button[type="submit"]:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
 }
 
 .login-box button[type="submit"]:active {
@@ -80,14 +80,14 @@
 }
 
 .toggle-auth span {
-  color: #667eea;
+  color: #4a90e2;
   font-weight: bold;
   cursor: pointer;
   text-decoration: underline;
 }
 
 .toggle-auth span:hover {
-  color: #764ba2;
+  color: #2962ff;
 }
 
 /* RESPONSIVE */

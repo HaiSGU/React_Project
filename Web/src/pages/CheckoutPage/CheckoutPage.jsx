@@ -2,18 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./CheckoutPage.css";
 
-// Import data từ shared
-const DELIVERY_METHODS = [
-  { key: 'fast', label: 'Nhanh', fee: 25000, time: '30 phút' },
-  { key: 'standard', label: 'Tiêu chuẩn', fee: 15000, time: '45 phút' },
-  { key: 'economy', label: 'Tiết kiệm', fee: 10000, time: '60 phút' },
-];
-
-const PAYMENT_METHODS = [
-  { key: 'cash', label: 'Tiền mặt', icon: '💵' },
-  { key: 'qr', label: 'QR Code', icon: '📱' },
-  { key: 'card', label: 'Thẻ', icon: '💳' },
-];
+// Import từ shared
+import { DELIVERY_METHODS } from '../../../../shared/constants/DeliveryMethods';
+import { PAYMENT_METHODS } from '../../../../shared/constants/PaymentMethods';
+import { DISCOUNTS } from '../../../../shared/constants/DiscountList';
+import { 
+  calculateSubtotal,
+  calculateShippingFee,
+  calculateDiscountAmount,
+  calculateTotalPrice,
+  adjustShippingForWeather
+} from '../../../../shared/utils/checkoutHelpers';
+import { validateCheckoutInfo } from '../../../../shared/utils/checkoutValidation';
+import { saveOrder } from '../../../../shared/services/orderService';
 
 // Mock QR codes
 const QR_CODES = [
@@ -34,12 +35,14 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [isEditingInfo, setIsEditingInfo] = useState(false);
+  
+  // Location from map
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   // Delivery & Payment
-  const [deliveryMethod, setDeliveryMethod] = useState('standard');
+  const [deliveryMethod, setDeliveryMethod] = useState('fast');
   const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [discount, setDiscount] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [selectedDiscount, setSelectedDiscount] = useState(null);
 
   // Card payment states
   const [cardNumber, setCardNumber] = useState('');
@@ -77,7 +80,14 @@ export default function CheckoutPage() {
         console.error('Error parsing userInfo:', e);
       }
     }
-  }, []);
+    
+    // Check if returning from map select
+    if (location.state?.selectedLocation) {
+      const mapLocation = location.state.selectedLocation;
+      setSelectedLocation(mapLocation);
+      setAddress(mapLocation.address);
+    }
+  }, [location.state]);
 
   // Select random QR when payment method is QR
   useEffect(() => {
@@ -89,80 +99,44 @@ export default function CheckoutPage() {
     }
   }, [paymentMethod]);
 
-  // Calculate prices
+  // Calculate prices using shared helpers
   const orderItems = orderFromMenu.length > 0 ? orderFromMenu : [];
   
-  const subtotal = orderItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  
-  const selectedDelivery = DELIVERY_METHODS.find(d => d.key === deliveryMethod);
-  const baseShippingFee = selectedDelivery ? selectedDelivery.fee : 15000;
+  const subtotal = calculateSubtotal(orderItems);
+  const baseShippingFee = calculateShippingFee(deliveryMethod);
   
   // Adjust shipping for weather
-  let weatherAdjustment = 0;
-  let weatherNote = '';
-  if (weather.condition === 'rain') {
-    weatherAdjustment = 5000;
-    weatherNote = '🌧️ Phụ phí thời tiết xấu';
-  } else if (weather.condition === 'storm') {
-    weatherAdjustment = 10000;
-    weatherNote = '⛈️ Phụ phí bão';
-  }
+  const weatherAdjustment = adjustShippingForWeather(baseShippingFee, weather.condition);
+  const shippingFee = weatherAdjustment.fee;
+  const weatherNote = weatherAdjustment.reason 
+    ? `🌧️ Phụ phí thời tiết: ${weatherAdjustment.reason}` 
+    : '';
   
-  const shippingFee = baseShippingFee + weatherAdjustment;
+  // Discount calculation using shared helper
+  const { itemDiscount, shippingDiscount } = calculateDiscountAmount(
+    selectedDiscount, 
+    subtotal, 
+    shippingFee
+  );
   
-  // Discount calculation
-  let itemDiscount = 0;
-  let shippingDiscount = 0;
-  
-  if (appliedDiscount) {
-    if (appliedDiscount.type === 'percentage') {
-      itemDiscount = Math.round(subtotal * appliedDiscount.value / 100);
-    } else if (appliedDiscount.type === 'fixed') {
-      itemDiscount = appliedDiscount.value;
-    } else if (appliedDiscount.type === 'shipping') {
-      shippingDiscount = Math.round(shippingFee * appliedDiscount.value / 100);
-    }
-  }
-  
-  const totalPrice = subtotal - itemDiscount + shippingFee - shippingDiscount;
+  const totalPrice = calculateTotalPrice(subtotal, shippingFee, itemDiscount, shippingDiscount);
 
-  // Apply voucher
-  const handleApplyVoucher = () => {
-    const code = discount.trim().toUpperCase();
-    
-    // Mock voucher validation
-    const mockVouchers = {
-      'FREESHIP': { type: 'shipping', value: 100, label: 'Miễn phí ship' },
-      'GIAM10': { type: 'percentage', value: 10, label: 'Giảm 10%' },
-      'GIAM20K': { type: 'fixed', value: 20000, label: 'Giảm 20.000đ' },
-    };
-    
-    if (mockVouchers[code]) {
-      setAppliedDiscount(mockVouchers[code]);
-      alert(`✅ Áp dụng mã "${code}" thành công!`);
+  // Select discount
+  const handleSelectDiscount = (discount) => {
+    if (selectedDiscount?.type === discount.type) {
+      // Deselect if clicking the same discount
+      setSelectedDiscount(null);
     } else {
-      alert('❌ Mã giảm giá không hợp lệ');
+      setSelectedDiscount(discount);
     }
-  };
-
-  const handleRemoveVoucher = () => {
-    setAppliedDiscount(null);
-    setDiscount('');
   };
 
   // Validate and place order
-  const handlePlaceOrder = () => {
-    // Validate
-    if (!fullName.trim()) {
-      alert('⚠️ Vui lòng nhập họ tên');
-      return;
-    }
-    if (!phone.trim()) {
-      alert('⚠️ Vui lòng nhập số điện thoại');
-      return;
-    }
-    if (!address.trim()) {
-      alert('⚠️ Vui lòng nhập địa chỉ giao hàng');
+  const handlePlaceOrder = async () => {
+    // Validate using shared validation
+    const validationResult = validateCheckoutInfo(fullName, phone, address, orderItems);
+    if (!validationResult.valid) {
+      alert(`⚠️ ${validationResult.error}`);
       return;
     }
 
@@ -174,12 +148,14 @@ export default function CheckoutPage() {
       }
     }
 
-    // Create order
-    const newOrder = {
-      id: Date.now(),
+    // Get selected delivery method details
+    const selectedDelivery = DELIVERY_METHODS.find(d => d.key === deliveryMethod);
+
+    // Create order using orderService
+    const orderData = {
       restaurantId: restaurantId || 1,
       items: orderItems,
-      itemsSummary: orderItems.map(i => `${i.name} x${i.quantity}`).join(", "),
+      itemsSummary: orderItems.map(i => `${i.name || i.title} x${i.quantity}`).join(", "),
       subtotal: subtotal,
       shippingFee: shippingFee,
       itemDiscount: itemDiscount,
@@ -188,22 +164,17 @@ export default function CheckoutPage() {
       user: { fullName, phone, address },
       deliveryMethod: selectedDelivery,
       paymentMethod: PAYMENT_METHODS.find(p => p.key === paymentMethod),
-      voucher: appliedDiscount,
-      status: 'Đang giao 🚚',
-      createdAt: new Date().toISOString()
+      discount: selectedDiscount,
     };
 
-    // Save to localStorage
-    const existingOrders = JSON.parse(
-      localStorage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}'
-    );
+    const result = await saveOrder(localStorage, orderData);
     
-    existingOrders.dangGiao.unshift(newOrder);
-    localStorage.setItem('orders', JSON.stringify(existingOrders));
-
-    console.log('✅ Đã lưu đơn hàng:', newOrder);
-    
-    setShowSuccessModal(true);
+    if (result.success) {
+      console.log('✅ Đã lưu đơn hàng:', result.order);
+      setShowSuccessModal(true);
+    } else {
+      alert(`❌ ${result.error}`);
+    }
   };
 
   const handleBackToHome = () => {
@@ -218,6 +189,17 @@ export default function CheckoutPage() {
     setTimeout(() => {
       navigate('/cart');
     }, 300);
+  };
+  
+  // Open map select
+  const handleOpenMap = () => {
+    navigate('/map-select', {
+      state: {
+        currentLat: selectedLocation?.latitude,
+        currentLng: selectedLocation?.longitude,
+        currentAddress: address,
+      },
+    });
   };
 
   return (
@@ -281,13 +263,37 @@ export default function CheckoutPage() {
                 </div>
                 <div className="form-group">
                   <label>Địa chỉ giao hàng</label>
-                  <textarea
-                    className="form-input"
-                    placeholder="Nhập địa chỉ chi tiết"
-                    rows="3"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                  />
+                  <div className="address-input-group">
+                    <textarea
+                      className="form-input address-textarea"
+                      placeholder="Nhập địa chỉ chi tiết"
+                      rows="3"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                    />
+                    <button 
+                      type="button"
+                      className="btn-map-select" 
+                      onClick={handleOpenMap}
+                      title="Chọn vị trí trên bản đồ"
+                    >
+                      🗺️
+                    </button>
+                  </div>
+                  {selectedLocation && (
+                    <div className="map-location-badge">
+                      📍 Đã chọn vị trí từ bản đồ
+                      <button 
+                        className="btn-remove-location"
+                        onClick={() => {
+                          setSelectedLocation(null);
+                          setAddress('');
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <button 
                   className="btn-save-info" 
@@ -317,10 +323,11 @@ export default function CheckoutPage() {
                   />
                   <div className="option-content">
                     <div className="option-main">
+                      <span className="option-icon">{method.icon}</span>
                       <span className="option-name">{method.label}</span>
                       <span className="option-price">{method.fee.toLocaleString()} đ</span>
                     </div>
-                    <div className="option-time">⏱️ {method.time}</div>
+                    <div className="option-time">⏱️ {method.description}</div>
                   </div>
                   <div className="radio-checkmark"></div>
                 </label>
@@ -329,41 +336,59 @@ export default function CheckoutPage() {
             
             {weatherNote && (
               <div className="weather-notice">
-                {weatherNote}: +{weatherAdjustment.toLocaleString()} đ
+                {weatherNote}
               </div>
             )}
           </section>
 
           {/* MÃ GIẢM GIÁ */}
           <section className="checkout-card">
-            <h3 className="card-title">🎟️ Mã giảm giá</h3>
-            {!appliedDiscount ? (
-              <div className="voucher-input-group">
-                <input
-                  type="text"
-                  className="voucher-input"
-                  placeholder="Nhập mã giảm giá"
-                  value={discount}
-                  onChange={(e) => setDiscount(e.target.value.toUpperCase())}
-                />
-                <button className="btn-apply-voucher" onClick={handleApplyVoucher}>
-                  Áp dụng
-                </button>
-              </div>
-            ) : (
-              <div className="voucher-applied">
-                <div className="voucher-badge">
-                  <span className="voucher-icon">🎉</span>
-                  <div className="voucher-text">
-                    <div className="voucher-code">{discount}</div>
-                    <div className="voucher-desc">{appliedDiscount.label}</div>
+            <h3 className="card-title">🎟️ Chọn mã giảm giá</h3>
+            <div className="voucher-options">
+              {DISCOUNTS.map((discount) => (
+                <div
+                  key={discount.type}
+                  className={`voucher-card ${selectedDiscount?.type === discount.type ? 'selected' : ''}`}
+                  onClick={() => handleSelectDiscount(discount)}
+                  style={{ 
+                    borderColor: selectedDiscount?.type === discount.type 
+                      ? (discount.type === 'freeship' ? '#00bcd4' : discount.type === 'discount10' ? '#4caf50' : '#ff9800')
+                      : '#ddd' 
+                  }}
+                >
+                  <div 
+                    className="voucher-header" 
+                    style={{ 
+                      backgroundColor: discount.type === 'freeship' 
+                        ? '#00bcd4' 
+                        : discount.type === 'discount10' 
+                          ? '#4caf50' 
+                          : discount.type === 'discount20'
+                            ? '#ff9800'
+                            : '#9c27b0'
+                    }}
+                  >
+                    <span className="voucher-label">{discount.label}</span>
+                  </div>
+                  <div className="voucher-body">
+                    <p className="voucher-description">
+                      {discount.type === 'freeship' 
+                        ? 'Miễn phí ship' 
+                        : discount.type === 'discount10' 
+                          ? 'Giảm 10% đơn hàng'
+                          : discount.type === 'discount20'
+                            ? 'Giảm 20% đơn hàng'
+                            : 'Giảm 30% đơn hàng'}
+                    </p>
+                    {selectedDiscount?.type === discount.type && (
+                      <div className="voucher-selected-badge">
+                        <span className="checkmark">✓</span> Đã chọn
+                      </div>
+                    )}
                   </div>
                 </div>
-                <button className="btn-remove-voucher" onClick={handleRemoveVoucher}>
-                  ✕
-                </button>
-              </div>
-            )}
+              ))}
+            </div>
           </section>
 
           {/* PHƯƠNG THỨC THANH TOÁN */}
@@ -493,15 +518,8 @@ export default function CheckoutPage() {
               
               <div className="breakdown-row">
                 <span>Phí giao hàng</span>
-                <span>{baseShippingFee.toLocaleString()} đ</span>
+                <span>{shippingFee.toLocaleString()} đ</span>
               </div>
-              
-              {weatherAdjustment > 0 && (
-                <div className="breakdown-row weather">
-                  <span>🌧️ Phụ phí thời tiết</span>
-                  <span>+{weatherAdjustment.toLocaleString()} đ</span>
-                </div>
-              )}
               
               {shippingDiscount > 0 && (
                 <div className="breakdown-row discount">
@@ -548,7 +566,7 @@ export default function CheckoutPage() {
             <h2 className="success-title">Đặt hàng thành công! 🎉</h2>
             <p className="success-message">
               Đơn hàng của bạn đã được xác nhận.<br/>
-              Dự kiến giao hàng trong <strong>{selectedDelivery?.time}</strong>
+              Dự kiến giao hàng trong <strong>{DELIVERY_METHODS.find(d => d.key === deliveryMethod)?.description}</strong>
             </p>
             
             <div className="success-summary">
