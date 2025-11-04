@@ -21,6 +21,8 @@ const IMAGE_MAP = {
 };
 
 export const CATEGORIES = CATEGORIES_DATA.map(category => ({
-  ...category,
+  id: category.key,
+  name: category.label, // Map label -> name
+  key: category.key,
   image: IMAGE_MAP[category.imageName] || null
 }));

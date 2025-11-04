@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
 import { CATEGORIES } from "../../utils/categoryResolver";
 import RestaurantItem from "../../components/RestaurantItem";
-import FooterNav from "../../components/FooterNav";
 import "./CategoryPage.css";
 
 export default function CategoryPage() {
@@ -57,8 +56,6 @@ export default function CategoryPage() {
           <p>😔 Không có nhà hàng nào trong danh mục này.</p>
         </div>
       )}
-
-      <FooterNav />
     </div>
   );
 }

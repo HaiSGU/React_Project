@@ -1,136 +1,324 @@
-/* ============================= */
-/* 👤 Trang tài khoản */
-/* ============================= */
-.account-page {
-  min-height: 100vh;
+.account-page {/* ============================= */
+
+  min-height: 100vh;/* 👤 Trang tài khoản */
+
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);/* ============================= */
+
+  padding-bottom: 80px;.account-page {
+
+}  min-height: 100vh;
+
   background: linear-gradient(180deg, #f9fcff 0%, #edf5ff 100%);
-  padding: 40px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: "Segoe UI", Arial, sans-serif;
-  box-sizing: border-box;
-      background-image: url("@shared/assets/images/shipperimage.jpeg");
-  background-size: cover;
-  background-attachment: fixed;
-}
 
-/* ============================= */
+/* Header */  padding: 40px 20px;
+
+.account-header {  display: flex;
+
+  position: sticky;  flex-direction: column;
+
+  top: 0;  align-items: center;
+
+  z-index: 100;  font-family: "Segoe UI", Arial, sans-serif;
+
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);  box-sizing: border-box;
+
+  padding: 16px 20px;      background-image: url("@shared/assets/images/shipperimage.jpeg");
+
+  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);  background-size: cover;
+
+  display: flex;  background-attachment: fixed;
+
+  align-items: center;}
+
+  gap: 16px;
+
+}/* ============================= */
+
 /* 🔖 Header */
-/* ============================= */
-.account-header {
-  font-size: 26px;
-  font-weight: 700;
-  color: #00bcd4;
-  text-align: center;
-  margin-bottom: 25px;
+
+.account-header h1 {/* ============================= */
+
+  font-size: 18px;.account-header {
+
+  font-weight: 700;  font-size: 26px;
+
+  color: white;  font-weight: 700;
+
+  margin: 0;  color: #00bcd4;
+
+  flex: 1;  text-align: center;
+
+}  margin-bottom: 25px;
+
   letter-spacing: 0.3px;
-  position: relative;
-}
 
-.account-header::after {
-  content: "";
-  display: block;
-  width: 60px;
-  height: 3px;
-  background: #00cfe8;
-  margin: 10px auto 0;
-  border-radius: 2px;
-}
+.back-btn {  position: relative;
 
-/* ============================= */
-/* 🧾 Tiêu đề phụ */
-/* ============================= */
-.section-title {
+  display: flex;}
+
+  align-items: center;
+
+  justify-content: center;.account-header::after {
+
+  width: 40px;  content: "";
+
+  height: 40px;  display: block;
+
+  background: rgba(255, 255, 255, 0.2);  width: 60px;
+
+  backdrop-filter: blur(10px);  height: 3px;
+
+  border: 1px solid rgba(255, 255, 255, 0.3);  background: #00cfe8;
+
+  border-radius: 50%;  margin: 10px auto 0;
+
+  color: white;  border-radius: 2px;
+
+  cursor: pointer;}
+
+  font-size: 20px;
+
+  font-weight: 700;/* ============================= */
+
+  transition: all 0.3s ease;/* 🧾 Tiêu đề phụ */
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);/* ============================= */
+
+}.section-title {
+
   font-size: 18px;
-  color: #00bcd4;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
 
-/* ============================= */
-/* 🧩 Form thông tin */
-/* ============================= */
-.form {
-  background: white;
-  padding: 25px 30px;
+.back-btn:hover {  color: #00bcd4;
+
+  background: rgba(255, 255, 255, 0.3);  font-weight: 600;
+
+  transform: translateX(-3px) scale(1.05);  margin-bottom: 15px;
+
+}}
+
+
+
+/* Content *//* ============================= */
+
+.account-content {/* 🧩 Form thông tin */
+
+  max-width: 600px;/* ============================= */
+
+  margin: 24px auto;.form {
+
+  padding: 0 20px;  background: white;
+
+}  padding: 25px 30px;
+
   border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.15);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-  max-width: 420px;
-  animation: fadeIn 0.4s ease;
-}
 
-/* ============================= */
-/* ✏️ Input */
-/* ============================= */
-.form input {
-  padding: 12px 14px;
-  border: 1px solid #dcdcdc;
-  border-radius: 10px;
-  font-size: 15px;
+.loading-container {  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.15);
+
+  display: flex;  display: flex;
+
+  align-items: center;  flex-direction: column;
+
+  justify-content: center;  gap: 14px;
+
+  min-height: 60vh;  width: 100%;
+
+  font-size: 16px;  max-width: 420px;
+
+  color: #64748b;  animation: fadeIn 0.4s ease;
+
+}}
+
+
+
+/* Form *//* ============================= */
+
+.form-container {/* ✏️ Input */
+
+  background: white;/* ============================= */
+
+  border-radius: 16px;.form input {
+
+  padding: 24px;  padding: 12px 14px;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  border: 1px solid #dcdcdc;
+
+  margin-bottom: 20px;  border-radius: 10px;
+
+}  font-size: 15px;
+
   outline: none;
-  transition: 0.2s ease;
+
+.form-group {  transition: 0.2s ease;
+
+  margin-bottom: 20px;}
+
 }
 
 .form input:focus {
-  border-color: #00cfe8;
-  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
-}
 
-/* ============================= */
-/* 💾 Nút chính */
-/* ============================= */
+.form-group label {  border-color: #00cfe8;
+
+  display: block;  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
+
+  font-size: 14px;}
+
+  font-weight: 600;
+
+  color: #475569;/* ============================= */
+
+  margin-bottom: 8px;/* 💾 Nút chính */
+
+}/* ============================= */
+
 .btn-save {
-  background: linear-gradient(135deg, #00cfe8, #00bcd4);
-  color: white;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
 
-.btn-save:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+.form-input {  background: linear-gradient(135deg, #00cfe8, #00bcd4);
+
+  width: 100%;  color: white;
+
+  padding: 12px 16px;  padding: 12px;
+
+  border: 2px solid #e2e8f0;  border: none;
+
+  border-radius: 12px;  border-radius: 10px;
+
+  font-size: 15px;  font-weight: 600;
+
+  color: #1a202c;  font-size: 15px;
+
+  transition: all 0.3s ease;  cursor: pointer;
+
+  box-sizing: border-box;  transition: all 0.25s ease;
+
+}}
+
+
+
+.form-input:focus {.btn-save:hover {
+
+  outline: none;  transform: translateY(-1px);
+
+  border-color: #00bcd4;  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+
+  box-shadow: 0 0 0 4px rgba(0, 188, 212, 0.1);}
+
 }
 
 /* ============================= */
-/* ⚙️ Nút phụ */
-/* ============================= */
-.btn-secondary {
+
+.form-input::placeholder {/* ⚙️ Nút phụ */
+
+  color: #94a3b8;/* ============================= */
+
+}.btn-secondary {
+
   background: #f5f5f5;
-  color: #333;
-  border: none;
-  padding: 12px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
 
-.btn-secondary:hover {
-  background: #e8e8e8;
-  transform: translateY(-1px);
-}
+/* Buttons */  color: #333;
 
-/* ============================= */
-/* ✨ Hiệu ứng load */
-/* ============================= */
-@keyframes fadeIn {
+.btn-save {  border: none;
+
+  width: 100%;  padding: 12px;
+
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);  border-radius: 10px;
+
+  color: white;  font-weight: 600;
+
+  border: none;  font-size: 15px;
+
+  padding: 14px 24px;  cursor: pointer;
+
+  border-radius: 12px;  transition: all 0.25s ease;
+
+  font-size: 16px;}
+
+  font-weight: 700;
+
+  cursor: pointer;.btn-secondary:hover {
+
+  transition: all 0.3s ease;  background: #e8e8e8;
+
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);  transform: translateY(-1px);
+
+}}
+
+
+
+.btn-save:hover {/* ============================= */
+
+  transform: translateY(-2px);/* ✨ Hiệu ứng load */
+
+  box-shadow: 0 6px 16px rgba(0, 188, 212, 0.4);/* ============================= */
+
+}@keyframes fadeIn {
+
   from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
+
+.btn-save:active {    opacity: 0;
+
+  transform: translateY(0);    transform: translateY(10px);
+
+}  }
+
   to {
-    opacity: 1;
-    transform: translateY(0);
+
+/* Menu Actions */    opacity: 1;
+
+.menu-actions {    transform: translateY(0);
+
+  display: flex;  }
+
+  flex-direction: column;}
+
+  gap: 12px;
+}
+
+.menu-btn {
+  width: 100%;
+  background: white;
+  color: #475569;
+  border: 2px solid #e2e8f0;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.menu-btn:hover {
+  background: #f8fafc;
+  border-color: #00bcd4;
+  color: #00bcd4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.logout-btn {
+  color: #ef4444;
+  border-color: #fee2e2;
+}
+
+.logout-btn:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .account-content {
+    padding: 0 16px;
+    margin: 16px auto;
+  }
+
+  .form-container {
+    padding: 20px;
+  }
+
+  .account-header h1 {
+    font-size: 16px;
   }
 }

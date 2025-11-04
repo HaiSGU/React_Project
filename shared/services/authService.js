@@ -181,6 +181,53 @@ export const getCurrentUser = async (storage) => {
   }
 };
 
+/**
+ * Update user info
+ */
+export const updateUserInfo = async (newInfo, storage) => {
+  try {
+    const userInfo = await storage.getItem('userInfo');
+    
+    if (!userInfo) {
+      throw new Error('Vui lòng đăng nhập để cập nhật thông tin!');
+    }
+
+    const user = JSON.parse(userInfo);
+    
+    // Merge new info with existing user data
+    const updatedUser = {
+      ...user,
+      ...newInfo,
+    };
+
+    // Save to userInfo
+    await storage.setItem('userInfo', JSON.stringify(updatedUser));
+
+    // Update in registered users array
+    const registeredUsersStr = await storage.getItem('user');
+    if (registeredUsersStr) {
+      let registeredUsers = JSON.parse(registeredUsersStr);
+      
+      if (Array.isArray(registeredUsers)) {
+        const userIndex = registeredUsers.findIndex(u => u.username === user.username);
+        
+        if (userIndex !== -1) {
+          registeredUsers[userIndex] = updatedUser;
+          await storage.setItem('user', JSON.stringify(registeredUsers));
+        }
+      }
+    }
+
+    return {
+      success: true,
+      user: updatedUser,
+    };
+  } catch (error) {
+    console.error('Update user info error:', error);
+    throw error;
+  }
+};
+
 
 // Change password
 

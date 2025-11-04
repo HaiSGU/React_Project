@@ -1,133 +1,83 @@
-import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { MENU_ITEMS_WEB } from "@shared/constants/MenuItemsListWeb";
+import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
+import { useQuantities } from "@shared/hooks/useQuantities";
 import MenuItem from "../../components/MenuItem";
 import "./MenuPage.css";
-import FooterNav from "../../components/FooterNav";
-import { useSearch } from "@shared/hooks/useSearch";
-import shipperimage from "@shared/assets/images/shipperimage.jpeg";
-
 
 export default function MenuPage() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { id } = useParams();
-  const { query, setQuery } = useSearch(); // ✅ hook tìm kiếm
+  const restaurantId = parseInt(id);
 
-  useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await fetch(`http://localhost:3000/menus?restaurantId=${id}`);
-        if (!res.ok) throw new Error("Không thể tải menu");
+  // Lấy thông tin nhà hàng
+  const restaurant = RESTAURANTS.find(r => r.id === restaurantId);
+  const restaurantName = restaurant ? restaurant.name : 'Menu';
 
-        const data = await res.json();
-        const updated = data.map(item => ({
-          ...item,
-          quantity: 0,
-          price: Number(item.price),
-        }));
-        setItems(updated);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (id) fetchMenu();
-  }, [id]);
+  // Filter menu theo restaurantId
+  const menuForRestaurant = MENU_ITEMS_WEB.filter((item) => {
+    if (Array.isArray(item.restaurantId)) {
+      return item.restaurantId.includes(restaurantId);
+    }
+    return item.restaurantId === restaurantId;
+  });
 
-  const updateQuantity = (menuId, change) => {
-    setItems(prev =>
-      prev.map(item =>
-        item.id === menuId
-          ? { ...item, quantity: Math.max(0, item.quantity + change) }
-          : item
-      )
-    );
-  };
-
-  const filteredItems = useMemo(() => {
-    if (!query.trim()) return items;
-    return items.filter(i =>
-      i.name.toLowerCase().includes(query.toLowerCase().trim())
-    );
-  }, [items, query]);
-
-  const { selectedItems, totalPrice, totalItems } = useMemo(() => {
-    const selected = items.filter(i => i.quantity > 0);
-    const total = selected.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const count = selected.reduce((sum, i) => sum + i.quantity, 0);
-    return { selectedItems: selected, totalPrice: total, totalItems: count };
-  }, [items]);
+  // Dùng custom hook từ shared
+  const { quantities, increase, decrease, totalPrice, cartItems } = useQuantities(menuForRestaurant);
 
   const handleCheckout = () => {
-    if (totalItems === 0) return;
+    if (cartItems.length === 0) return;
     navigate("/checkout", {
-      state: { orderItems: selectedItems, totalPrice, restaurantId: Number(id) },
+      state: { orderItems: cartItems, totalPrice, restaurantId },
     });
   };
 
   const handleBack = () => navigate(-1);
 
-  if (loading) return <div className="menu-page loading">Đang tải...</div>;
-  if (error) return <div className="menu-page error">Lỗi: {error}</div>;
-
   return (
     <div className="menu-page">
-      {/* ✅ HEADER */}
+      {/* HEADER */}
       <header className="menu-header">
-        <button className="back-btn" onClick={handleBack}>
+        <button className="back-btn" onClick={handleBack} aria-label="Quay lại">
           ←
         </button>
-        <h1>Menu nhà hàng #{id}</h1>
-
-        {/* 🔍 Ô tìm kiếm */}
-        <input
-          type="text"
-          className="search-box"
-          placeholder="Tìm món ăn..."
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
+        <h1>{restaurantName}</h1>
       </header>
 
-      {/* ✅ LAYOUT 2 CỘT */}
-      <div className="menu-layout">
-        {/* 🧱 SIDEBAR */}
-        <aside className="menu-sidebar">
-          <h3>Bộ lọc</h3>
-          <ul>
-            <li><button>Tất cả món</button></li>
-            <li><button>Món chính</button></li>
-            <li><button>Đồ uống</button></li>
-            <li><button>Tráng miệng</button></li>
-          </ul>
-        </aside>
-
-        {/* 🍔 CONTENT */}
-        <main className="menu-content">
-          <h3 className="search-result-title">
-            {query.trim() ? "🔍 Kết quả tìm kiếm" : "⭐ Tất cả món ăn"}
-          </h3>
-
-          {filteredItems.length > 0 ? (
-            filteredItems.map(item => (
-              <MenuItem key={item.id} {...item} updateQuantity={updateQuantity} />
-            ))
-          ) : (
-            <p>Không tìm thấy món phù hợp.</p>
-          )}
-        </main>
+      {/* MENU LIST */}
+      <div className="menu-content">
+        {menuForRestaurant.length > 0 ? (
+          <div className="menu-list">
+            {menuForRestaurant.map((item) => (
+              <MenuItem
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                price={item.price}
+                rating={item.rating}
+                sold={item.sold}
+                image={item.image}
+                description={item.description}
+                quantity={quantities[item.id] || 0}
+                updateQuantity={(id, change) => {
+                  if (change > 0) increase(id);
+                  else decrease(id);
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-menu">
+            <p>Menu đang cập nhật...</p>
+          </div>
+        )}
       </div>
 
-      {/* 💰 CART BAR */}
+      {/* CART BAR */}
       {totalPrice > 0 && (
         <div className="cart-bar">
           <div className="cart-info">
-            <span>{totalItems} món</span>
+            <span>{cartItems.length} món</span>
             <span>{totalPrice.toLocaleString("vi-VN")} đ</span>
           </div>
           <button className="checkout-btn" onClick={handleCheckout}>
@@ -135,11 +85,6 @@ export default function MenuPage() {
           </button>
         </div>
       )}
-
-      {/* 🦶 FOOTER */}
-      <footer>
-        <FooterNav />
-      </footer>
     </div>
   );
 }

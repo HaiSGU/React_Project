@@ -1,8 +1,47 @@
-.footer-nav{
-  position:sticky; bottom:0; left:0; right:0; z-index:20;
-  backdrop-filter:saturate(180%) blur(10px);
-  background:rgba(255,255,255,.85); border-top:1px solid var(--border);
+.footer-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  backdrop-filter: saturate(180%) blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+  border-top: 1px solid #e0e0e0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
-.footer-nav .bar{display:flex; justify-content:space-around; align-items:center; padding:10px 6px}
-.footer-nav a{display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted); font-size:12px}
-.footer-nav a.active{color:var(--brand)}
+
+.footer-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 12px 6px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.footer-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #666;
+  font-size: 12px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+
+.footer-item:hover {
+  color: #00bcd4;
+  background: rgba(0, 188, 212, 0.1);
+}
+
+.footer-item.active {
+  color: #00bcd4;
+  font-weight: 600;
+}
+
+.footer-icon {
+  font-size: 24px;
+}

@@ -32,28 +32,12 @@ a{color:inherit; text-decoration:none}
 .section{padding:24px 0}
 .section-title{font-size:20px; font-weight:600; margin-bottom:16px}
 
-/* Hero banner - shipper làm background decoration */
+/* Hero banner - gradient xanh dương */
 .hero-banner{
   background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
   padding: 20px 0;
-  margin-bottom: -120px;
   position: relative;
-  overflow: visible;
   min-height: 200px;
-}
-
-/* Shipper nằm ẩn phía sau - dùng đường dẫn từ shared */
-.hero-banner::after {
-  content: '';
-  position: absolute;
-  right: 10%;
-  bottom: -180px;
-  width: 420px;
-  height: 420px;
-  background: url('../../../shared/assets/images/shipperimage.jpeg') center/contain no-repeat;
-  opacity: 0.9;
-  pointer-events: none;
-  z-index: 0;
 }
 
 .hero-content{

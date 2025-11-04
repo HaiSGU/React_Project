@@ -5,11 +5,12 @@ import MenuPage from './pages/MenuPage/MenuPage'
 import CheckoutPage from './pages/CheckoutPage/CheckoutPage'
 import RestaurantDashboard from './pages/RestaurantDashboard/RestaurantDashboard'
 import CategoryPage from './pages/CategoryPage/CategoryPage'
-import CartPage from './pages/CartPage/CartPage' // ← THÊM IMPORT
+import CartPage from './pages/CartPage/CartPage'
 import ProtectedOwnerRoute from './components/ProtectedOwnerRoute'
-import AccountPage from './pages/AccountPage/AccountPage' // ← Import
-import ContactPage from './pages/ContactPage/ContactPage' // ← Import
-import DiscountCard from './components/DiscountCard'
+import AccountPage from './pages/AccountPage/AccountPage'
+import ContactPage from './pages/ContactPage/ContactPage'
+import DiscountPage from './pages/DiscountPage/DiscountPage'
+import ChangePasswordPage from './pages/ChangePasswordPage/ChangePasswordPage'
 import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 import AdminLogin from './pages/AdminDashboard/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard'
@@ -26,10 +27,11 @@ function App() {
         <Route path="/menu/:id" element={<MenuPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/category/:id" element={<CategoryPage />} />
-        <Route path="/cart" element={<CartPage />} /> {/* ← THÊM ROUTE */}
+        <Route path="/cart" element={<CartPage />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
         <Route path="/contact" element={<ContactPage />} />
-        <Route path="/discount/:type" element={<DiscountCard />} />
+        <Route path="/discount/:type" element={<DiscountPage />} />
         {/* Protected Route cho Owner */}
         <Route
           path="/restaurant-dashboard"

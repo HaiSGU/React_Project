@@ -71,11 +71,11 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--bg-primary);
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
   backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
   padding: 16px 20px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);
   display: flex;
   align-items: center;
   gap: 16px;
@@ -85,37 +85,41 @@
 .menu-header h1 {
   font-size: 18px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: white;
   margin: 0;
   white-space: nowrap;
+  flex: 1;
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: white;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   transition: var(--transition);
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .back-btn:hover {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-  transform: translateX(-2px);
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateX(-3px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .back-btn:active {
-  transform: translateX(-2px) scale(0.95);
+  transform: translateX(-2px) scale(0.98);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* ========== TÌM KIẾM ========== */
@@ -260,9 +264,23 @@
 
 /* ========== CONTENT AREA ========== */
 .menu-content {
+  padding: 16px;
+  padding-bottom: 140px; /* Space for cart bar */
+}
+
+.menu-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.empty-menu {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+  font-size: 16px;
 }
 
 .search-result-title {
