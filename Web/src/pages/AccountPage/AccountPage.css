@@ -1,204 +1,406 @@
-.account-page {/* ============================= */
+/* ============================= */.account-page {/* ============================= */
 
-  min-height: 100vh;/* 👤 Trang tài khoản */
+/* 👤 Trang tài khoản */
 
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);/* ============================= */
+/* ============================= */  min-height: 100vh;/* 👤 Trang tài khoản */
 
-  padding-bottom: 80px;.account-page {
+.account-page {
 
-}  min-height: 100vh;
+  min-height: 100vh;  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);/* ============================= */
 
   background: linear-gradient(180deg, #f9fcff 0%, #edf5ff 100%);
 
-/* Header */  padding: 40px 20px;
+  padding: 40px 20px;  padding-bottom: 80px;.account-page {
 
-.account-header {  display: flex;
+  display: flex;
 
-  position: sticky;  flex-direction: column;
-
-  top: 0;  align-items: center;
-
-  z-index: 100;  font-family: "Segoe UI", Arial, sans-serif;
-
-  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);  box-sizing: border-box;
-
-  padding: 16px 20px;      background-image: url("@shared/assets/images/shipperimage.jpeg");
-
-  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);  background-size: cover;
-
-  display: flex;  background-attachment: fixed;
-
-  align-items: center;}
-
-  gap: 16px;
-
-}/* ============================= */
-
-/* 🔖 Header */
-
-.account-header h1 {/* ============================= */
-
-  font-size: 18px;.account-header {
-
-  font-weight: 700;  font-size: 26px;
-
-  color: white;  font-weight: 700;
-
-  margin: 0;  color: #00bcd4;
-
-  flex: 1;  text-align: center;
-
-}  margin-bottom: 25px;
-
-  letter-spacing: 0.3px;
-
-.back-btn {  position: relative;
-
-  display: flex;}
+  flex-direction: column;}  min-height: 100vh;
 
   align-items: center;
 
-  justify-content: center;.account-header::after {
+  font-family: "Segoe UI", Arial, sans-serif;  background: linear-gradient(180deg, #f9fcff 0%, #edf5ff 100%);
 
-  width: 40px;  content: "";
+  box-sizing: border-box;
 
-  height: 40px;  display: block;
+  background-image: url("@shared/assets/images/shipperimage.jpeg");/* Header */  padding: 40px 20px;
 
-  background: rgba(255, 255, 255, 0.2);  width: 60px;
+  background-size: cover;
 
-  backdrop-filter: blur(10px);  height: 3px;
-
-  border: 1px solid rgba(255, 255, 255, 0.3);  background: #00cfe8;
-
-  border-radius: 50%;  margin: 10px auto 0;
-
-  color: white;  border-radius: 2px;
-
-  cursor: pointer;}
-
-  font-size: 20px;
-
-  font-weight: 700;/* ============================= */
-
-  transition: all 0.3s ease;/* 🧾 Tiêu đề phụ */
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);/* ============================= */
-
-}.section-title {
-
-  font-size: 18px;
-
-.back-btn:hover {  color: #00bcd4;
-
-  background: rgba(255, 255, 255, 0.3);  font-weight: 600;
-
-  transform: translateX(-3px) scale(1.05);  margin-bottom: 15px;
-
-}}
-
-
-
-/* Content *//* ============================= */
-
-.account-content {/* 🧩 Form thông tin */
-
-  max-width: 600px;/* ============================= */
-
-  margin: 24px auto;.form {
-
-  padding: 0 20px;  background: white;
-
-}  padding: 25px 30px;
-
-  border-radius: 16px;
-
-.loading-container {  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.15);
-
-  display: flex;  display: flex;
-
-  align-items: center;  flex-direction: column;
-
-  justify-content: center;  gap: 14px;
-
-  min-height: 60vh;  width: 100%;
-
-  font-size: 16px;  max-width: 420px;
-
-  color: #64748b;  animation: fadeIn 0.4s ease;
-
-}}
-
-
-
-/* Form *//* ============================= */
-
-.form-container {/* ✏️ Input */
-
-  background: white;/* ============================= */
-
-  border-radius: 16px;.form input {
-
-  padding: 24px;  padding: 12px 14px;
-
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  border: 1px solid #dcdcdc;
-
-  margin-bottom: 20px;  border-radius: 10px;
-
-}  font-size: 15px;
-
-  outline: none;
-
-.form-group {  transition: 0.2s ease;
-
-  margin-bottom: 20px;}
+  background-attachment: fixed;.account-header {  display: flex;
 
 }
 
-.form input:focus {
+  position: sticky;  flex-direction: column;
 
-.form-group label {  border-color: #00cfe8;
+/* ============================= */
 
-  display: block;  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
+/* 🔖 Header */  top: 0;  align-items: center;
 
-  font-size: 14px;}
+/* ============================= */
 
-  font-weight: 600;
+.account-header {  z-index: 100;  font-family: "Segoe UI", Arial, sans-serif;
 
-  color: #475569;/* ============================= */
+  width: 100%;
 
-  margin-bottom: 8px;/* 💾 Nút chính */
+  max-width: 600px;  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);  box-sizing: border-box;
+
+  text-align: center;
+
+  margin-bottom: 25px;  padding: 16px 20px;      background-image: url("@shared/assets/images/shipperimage.jpeg");
+
+}
+
+  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);  background-size: cover;
+
+.account-header h1 {
+
+  font-size: 26px;  display: flex;  background-attachment: fixed;
+
+  font-weight: 700;
+
+  color: #00bcd4;  align-items: center;}
+
+  margin: 0;
+
+  letter-spacing: 0.3px;  gap: 16px;
+
+}
 
 }/* ============================= */
 
+.account-header::after {
+
+  content: "";/* 🔖 Header */
+
+  display: block;
+
+  width: 60px;.account-header h1 {/* ============================= */
+
+  height: 3px;
+
+  background: #00cfe8;  font-size: 18px;.account-header {
+
+  margin: 10px auto 0;
+
+  border-radius: 2px;  font-weight: 700;  font-size: 26px;
+
+}
+
+  color: white;  font-weight: 700;
+
+/* ============================= */
+
+/* Content Container */  margin: 0;  color: #00bcd4;
+
+/* ============================= */
+
+.account-content {  flex: 1;  text-align: center;
+
+  max-width: 600px;
+
+  width: 100%;}  margin-bottom: 25px;
+
+  padding: 0 20px;
+
+}  letter-spacing: 0.3px;
+
+
+
+.loading-container {.back-btn {  position: relative;
+
+  display: flex;
+
+  align-items: center;  display: flex;}
+
+  justify-content: center;
+
+  min-height: 60vh;  align-items: center;
+
+  font-size: 16px;
+
+  color: #64748b;  justify-content: center;.account-header::after {
+
+}
+
+  width: 40px;  content: "";
+
+/* ============================= */
+
+/* 🧩 Form thông tin */  height: 40px;  display: block;
+
+/* ============================= */
+
+.form-container {  background: rgba(255, 255, 255, 0.2);  width: 60px;
+
+  background: white;
+
+  padding: 25px 30px;  backdrop-filter: blur(10px);  height: 3px;
+
+  border-radius: 16px;
+
+  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.15);  border: 1px solid rgba(255, 255, 255, 0.3);  background: #00cfe8;
+
+  margin-bottom: 20px;
+
+  animation: fadeIn 0.4s ease;  border-radius: 50%;  margin: 10px auto 0;
+
+}
+
+  color: white;  border-radius: 2px;
+
+.form-group {
+
+  margin-bottom: 20px;  cursor: pointer;}
+
+}
+
+  font-size: 20px;
+
+.form-group label {
+
+  display: block;  font-weight: 700;/* ============================= */
+
+  font-size: 14px;
+
+  font-weight: 600;  transition: all 0.3s ease;/* 🧾 Tiêu đề phụ */
+
+  color: #475569;
+
+  margin-bottom: 8px;  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);/* ============================= */
+
+}
+
+}.section-title {
+
+/* ============================= */
+
+/* ✏️ Input */  font-size: 18px;
+
+/* ============================= */
+
+.form-input {.back-btn:hover {  color: #00bcd4;
+
+  width: 100%;
+
+  padding: 12px 14px;  background: rgba(255, 255, 255, 0.3);  font-weight: 600;
+
+  border: 1px solid #dcdcdc;
+
+  border-radius: 10px;  transform: translateX(-3px) scale(1.05);  margin-bottom: 15px;
+
+  font-size: 15px;
+
+  outline: none;}}
+
+  transition: 0.2s ease;
+
+  box-sizing: border-box;
+
+}
+
+/* Content *//* ============================= */
+
+.form-input:focus {
+
+  border-color: #00cfe8;.account-content {/* 🧩 Form thông tin */
+
+  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
+
+}  max-width: 600px;/* ============================= */
+
+
+
+.form-input::placeholder {  margin: 24px auto;.form {
+
+  color: #94a3b8;
+
+}  padding: 0 20px;  background: white;
+
+
+
+/* ============================= */}  padding: 25px 30px;
+
+/* 💾 Nút chính */
+
+/* ============================= */  border-radius: 16px;
+
 .btn-save {
 
-.form-input {  background: linear-gradient(135deg, #00cfe8, #00bcd4);
+  width: 100%;.loading-container {  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.15);
 
-  width: 100%;  color: white;
+  background: linear-gradient(135deg, #00cfe8, #00bcd4);
 
-  padding: 12px 16px;  padding: 12px;
+  color: white;  display: flex;  display: flex;
 
-  border: 2px solid #e2e8f0;  border: none;
+  padding: 12px;
 
-  border-radius: 12px;  border-radius: 10px;
+  border: none;  align-items: center;  flex-direction: column;
 
-  font-size: 15px;  font-weight: 600;
+  border-radius: 10px;
 
-  color: #1a202c;  font-size: 15px;
+  font-weight: 600;  justify-content: center;  gap: 14px;
 
-  transition: all 0.3s ease;  cursor: pointer;
+  font-size: 15px;
 
-  box-sizing: border-box;  transition: all 0.25s ease;
+  cursor: pointer;  min-height: 60vh;  width: 100%;
 
-}}
+  transition: all 0.25s ease;
+
+}  font-size: 16px;  max-width: 420px;
 
 
 
-.form-input:focus {.btn-save:hover {
+.btn-save:hover {  color: #64748b;  animation: fadeIn 0.4s ease;
 
-  outline: none;  transform: translateY(-1px);
+  transform: translateY(-1px);
 
-  border-color: #00bcd4;  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);}}
+
+}
+
+
+
+/* ============================= */
+
+/* ⚙️ Menu Actions *//* Form *//* ============================= */
+
+/* ============================= */
+
+.menu-actions {.form-container {/* ✏️ Input */
+
+  display: flex;
+
+  flex-direction: column;  background: white;/* ============================= */
+
+  gap: 12px;
+
+}  border-radius: 16px;.form input {
+
+
+
+.menu-btn {  padding: 24px;  padding: 12px 14px;
+
+  width: 100%;
+
+  background: white;  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  border: 1px solid #dcdcdc;
+
+  color: #475569;
+
+  border: 2px solid #e2e8f0;  margin-bottom: 20px;  border-radius: 10px;
+
+  padding: 14px 24px;
+
+  border-radius: 12px;}  font-size: 15px;
+
+  font-size: 15px;
+
+  font-weight: 600;  outline: none;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;.form-group {  transition: 0.2s ease;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  text-align: center;  margin-bottom: 20px;}
+
+}
+
+}
+
+.menu-btn:hover {
+
+  background: #f8fafc;.form input:focus {
+
+  border-color: #00bcd4;
+
+  color: #00bcd4;.form-group label {  border-color: #00cfe8;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  display: block;  box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.15);
+
+}
+
+  font-size: 14px;}
+
+.logout-btn {
+
+  color: #ef4444;  font-weight: 600;
+
+  border-color: #fee2e2;
+
+}  color: #475569;/* ============================= */
+
+
+
+.logout-btn:hover {  margin-bottom: 8px;/* 💾 Nút chính */
+
+  background: #fef2f2;
+
+  border-color: #ef4444;}/* ============================= */
+
+  color: #dc2626;
+
+}.btn-save {
+
+
+
+/* ============================= */.form-input {  background: linear-gradient(135deg, #00cfe8, #00bcd4);
+
+/* ✨ Hiệu ứng load */
+
+/* ============================= */  width: 100%;  color: white;
+
+@keyframes fadeIn {
+
+  from {  padding: 12px 16px;  padding: 12px;
+
+    opacity: 0;
+
+    transform: translateY(10px);  border: 2px solid #e2e8f0;  border: none;
+
+  }
+
+  to {  border-radius: 12px;  border-radius: 10px;
+
+    opacity: 1;
+
+    transform: translateY(0);  font-size: 15px;  font-weight: 600;
+
+  }
+
+}  color: #1a202c;  font-size: 15px;
+
+
+
+/* Responsive */  transition: all 0.3s ease;  cursor: pointer;
+
+@media (max-width: 768px) {
+
+  .account-content {  box-sizing: border-box;  transition: all 0.25s ease;
+
+    padding: 0 16px;
+
+  }}}
+
+
+
+  .form-container {
+
+    padding: 20px;
+
+  }.form-input:focus {.btn-save:hover {
+
+
+
+  .account-header h1 {  outline: none;  transform: translateY(-1px);
+
+    font-size: 22px;
+
+  }  border-color: #00bcd4;  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+
+}
 
   box-shadow: 0 0 0 4px rgba(0, 188, 212, 0.1);}
 

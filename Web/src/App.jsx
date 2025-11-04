@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import HomePage from './pages/HomePage/HomePage'
 import LoginPage from './pages/LoginPage/LoginPage'
+import RegisterPage from './pages/RegisterPage/RegisterPage'
 import MenuPage from './pages/MenuPage/MenuPage'
 import CheckoutPage from './pages/CheckoutPage/CheckoutPage'
 import RestaurantDashboard from './pages/RestaurantDashboard/RestaurantDashboard'
@@ -24,6 +25,7 @@ function App() {
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/menu/:id" element={<MenuPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/category/:id" element={<CategoryPage />} />

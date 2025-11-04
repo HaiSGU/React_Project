@@ -1,4 +1,4 @@
-import "./MenuItem.css"; // Tách CSS để dễ quản lý
+import "./MenuItem.css";
 
 export default function MenuItem({
   id,
@@ -6,8 +6,9 @@ export default function MenuItem({
   price,
   rating = 0,
   sold = 0,
-  image, // đổi từ `img` → `image` (chuẩn hơn)
+  image,
   description = "",
+  originalPrice,
   quantity,
   updateQuantity
 }) {
@@ -18,6 +19,11 @@ export default function MenuItem({
   const handleIncrease = () => {
     updateQuantity(id, 1);
   };
+
+  // Tính % giảm giá nếu có
+  const discount = originalPrice && originalPrice > price 
+    ? Math.round(((originalPrice - price) / originalPrice) * 100) 
+    : 0;
 
   return (
     <div className="menu-item">
@@ -35,10 +41,19 @@ export default function MenuItem({
         {description && <p className="menu-desc">{description}</p>}
 
         <div className="menu-meta">
-          <p className="price">{Number(price).toLocaleString("vi-VN")} đ</p>
-          <p className="rating-sold">
-            Rating: {rating} <span className="sold">| Đã bán: {sold}</span>
-          </p>
+          <div>
+            <p className="price">
+              {Number(price).toLocaleString("vi-VN")}
+              {originalPrice && originalPrice > price && (
+                <span className="price-original">
+                  {Number(originalPrice).toLocaleString("vi-VN")}
+                </span>
+              )}
+            </p>
+            {discount > 0 && (
+              <span className="price-save">Save {discount}.000 đ</span>
+            )}
+          </div>
         </div>
 
         {/* Nút điều khiển số lượng */}

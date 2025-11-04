@@ -41,7 +41,8 @@ export const useQuantities = (items = []) => {
       .filter(item => (quantities[item.id] || 0) > 0)
       .map(item => ({
         id: item.id,
-        title: item.title,
+        name: item.name || item.title, // Hỗ trợ cả name và title
+        title: item.title || item.name, // Backward compatibility
         price: item.price,
         quantity: quantities[item.id] || 0,
         image: item.image,

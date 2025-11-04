@@ -59,9 +59,6 @@ export default function ChangePasswordPage() {
   return (
     <div className="change-password-page">
       <header className="change-password-header">
-        <button className="back-btn" onClick={() => navigate('/account')} aria-label="Quay lại">
-          ←
-        </button>
         <h1>Đổi mật khẩu</h1>
       </header>
 

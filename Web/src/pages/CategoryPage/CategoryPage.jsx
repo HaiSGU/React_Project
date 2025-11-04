@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
 import { CATEGORIES } from "../../utils/categoryResolver";
-import RestaurantItem from "../../components/RestaurantItem";
 import "./CategoryPage.css";
 
 export default function CategoryPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
 
   useEffect(() => {
@@ -30,6 +30,10 @@ export default function CategoryPage() {
     return category ? category.label : id;
   };
 
+  const handleRestaurantClick = (restaurantId) => {
+    navigate(`/menu/${restaurantId}`);
+  };
+
   return (
     <div className="category-page">
       <div className="category-header">
@@ -42,13 +46,30 @@ export default function CategoryPage() {
       {restaurants.length > 0 ? (
         <div className="restaurants-list">
           {restaurants.map((restaurant) => (
-            <RestaurantItem 
+            <div 
               key={restaurant.id} 
-              id={restaurant.id}
-              img={restaurant.image}
-              name={restaurant.name}
-              rating={restaurant.rating}
-            />
+              className="restaurant-item"
+              onClick={() => handleRestaurantClick(restaurant.id)}
+            >
+              <img 
+                src={restaurant.image} 
+                alt={restaurant.name}
+                className="restaurant-logo"
+              />
+              <div className="restaurant-info">
+                <h3>{restaurant.name}</h3>
+                <div className="restaurant-meta">
+                  <p className="restaurant-rating">⭐ {restaurant.rating}</p>
+                  <p>🕐 {restaurant.deliveryTime || '20-30 phút'}</p>
+                  <p>📍 {restaurant.distance || '2.5 km'}</p>
+                </div>
+                {restaurant.promo && (
+                  <div className="restaurant-promo">
+                    🏷️ {restaurant.promo}
+                  </div>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       ) : (

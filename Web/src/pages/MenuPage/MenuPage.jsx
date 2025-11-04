@@ -32,15 +32,10 @@ export default function MenuPage() {
     });
   };
 
-  const handleBack = () => navigate(-1);
-
   return (
     <div className="menu-page">
       {/* HEADER */}
       <header className="menu-header">
-        <button className="back-btn" onClick={handleBack} aria-label="Quay lại">
-          ←
-        </button>
         <h1>{restaurantName}</h1>
       </header>
 

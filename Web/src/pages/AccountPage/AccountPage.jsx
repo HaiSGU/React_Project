@@ -66,9 +66,6 @@ export default function AccountPage() {
   return (
     <div className="account-page">
       <header className="account-header">
-        <button className="back-btn" onClick={() => navigate('/home')} aria-label="Quay về trang chủ">
-          ←
-        </button>
         <h1>Thông tin cá nhân</h1>
       </header>
 

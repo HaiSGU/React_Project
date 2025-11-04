@@ -78,7 +78,7 @@
   box-shadow: 0 2px 8px rgba(0, 188, 212, 0.2);
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
   transition: var(--transition);
 }
 
@@ -87,39 +87,7 @@
   font-weight: 700;
   color: white;
   margin: 0;
-  white-space: nowrap;
-  flex: 1;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  color: white;
-  cursor: pointer;
-  font-size: 20px;
-  font-weight: 700;
-  transition: var(--transition);
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateX(-3px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.back-btn:active {
-  transform: translateX(-2px) scale(0.98);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
 /* ========== TÌM KIẾM ========== */
@@ -265,15 +233,28 @@
 /* ========== CONTENT AREA ========== */
 .menu-content {
   padding: 16px;
-  padding-bottom: 140px; /* Space for cart bar */
+  padding-bottom: 140px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .menu-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 800px;
-  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .menu-list {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-list {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .empty-menu {
@@ -291,116 +272,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-/* ========== MENU ITEM CARD ========== */
-.menu-item {
-  display: flex;
-  align-items: stretch;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition);
-  cursor: pointer;
-  overflow: hidden;
-}
-
-.menu-item:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-4px);
-  border-color: var(--accent);
-}
-
-.menu-img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-  margin-right: 16px;
-  flex-shrink: 0;
-  background: var(--bg-secondary);
-  transition: var(--transition);
-}
-
-.menu-item:hover .menu-img {
-  transform: scale(1.05);
-}
-
-.menu-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.menu-info h3 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.price {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--accent);
-  margin: 4px 0;
-}
-
-.rating {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-/* ========== QUANTITY CONTROLS ========== */
-.qty-control {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: auto;
-}
-
-.qty-control button {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.qty-control button:hover {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-  transform: scale(1.15);
-}
-
-.qty-control button:active {
-  transform: scale(1.05);
-}
-
-.qty-control span {
-  min-width: 32px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--text-primary);
 }
 
 /* ========== CART BAR ========== */
@@ -547,38 +418,14 @@ footer nav a:hover {
 
   .menu-header {
     padding: 12px 16px;
-    gap: 12px;
   }
 
   .menu-header h1 {
     font-size: 16px;
   }
 
-  .search-box {
-    font-size: 14px;
-    padding: 8px 12px;
-  }
-
-  .menu-layout {
-    padding: 16px;
-    gap: 16px;
-  }
-
-  .menu-item {
+  .menu-content {
     padding: 12px;
-  }
-
-  .menu-img {
-    width: 90px;
-    height: 90px;
-  }
-
-  .menu-info h3 {
-    font-size: 16px;
-  }
-
-  .price {
-    font-size: 18px;
   }
 
   .cart-bar {
