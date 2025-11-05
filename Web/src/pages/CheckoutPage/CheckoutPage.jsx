@@ -14,12 +14,18 @@ import {
   calculateTotalPrice,
   adjustShippingForWeather
 } from '../../../../shared/utils/checkoutHelpers';
-import { validateCheckoutInfo } from '../../../../shared/utils/checkoutValidation';
+import { 
+  validateFullName,
+  validatePhone,
+  validateAddress,
+  validateCart,
+} from '../../../../shared/utils/checkoutValidation';
 import { saveOrder } from "@shared/services/orderService";
 import { notifyNewOrder } from "@shared/services/notificationService";
 import { syncSystemRevenue } from "@shared/services/dataSyncService";
 import eventBus, { EVENT_TYPES } from "@shared/services/eventBus";
 import { isLoggedIn } from "@shared/services/authService";
+import { getAllShippers } from "@shared/services/shipperService";
 
 // Mock QR codes
 const QR_CODES = [
@@ -62,6 +68,24 @@ export default function CheckoutPage() {
       console.error("Failed to restore pending checkout:", error);
     }
 
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        const snapshot = window.sessionStorage.getItem("activeCheckoutSnapshot");
+        if (snapshot) {
+          const parsed = JSON.parse(snapshot);
+          if (Array.isArray(parsed?.orderItems) && parsed.orderItems.length > 0) {
+            return {
+              orderItems: parsed.orderItems,
+              totalPrice: parsed.totalPrice || 0,
+              restaurantId: parsed.restaurantId,
+            };
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to restore active checkout snapshot:", error);
+    }
+
     return {
       orderItems: [],
       totalPrice: 0,
@@ -84,6 +108,18 @@ export default function CheckoutPage() {
 
   const orderItems = checkoutPayload.orderItems || [];
   const restaurantId = checkoutPayload.restaurantId;
+
+  useEffect(() => {
+    if (orderItems.length > 0) {
+      try {
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.removeItem("activeCheckoutSnapshot");
+        }
+      } catch (error) {
+        console.error("Failed to clear active checkout snapshot:", error);
+      }
+    }
+  }, [orderItems.length]);
 
   // User info
   const [fullName, setFullName] = useState('');
@@ -108,17 +144,106 @@ export default function CheckoutPage() {
   // QR Code state
   const [selectedQR, setSelectedQR] = useState(null);
 
-  // Shipper state - chọn ngẫu nhiên
-  const [selectedDriver] = useState(() => {
-    const randomIndex = Math.floor(Math.random() * DRIVERS.length);
-    return DRIVERS[randomIndex];
-  });
+  // Shipper state - chọn từ danh sách còn hoạt động
+  const [selectedDriver, setSelectedDriver] = useState(null);
 
   // Modals
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Weather (mock)
   const [weather, setWeather] = useState({ condition: 'clear', temp: 28 });
+
+  // Form validation helpers
+  const [formErrors, setFormErrors] = useState({
+    fullName: 'Vui lòng nhập họ tên',
+    phone: 'Vui lòng nhập số điện thoại',
+    address: 'Vui lòng nhập địa chỉ',
+  });
+  const [touched, setTouched] = useState({
+    fullName: false,
+    phone: false,
+    address: false,
+  });
+  const [submissionAttempted, setSubmissionAttempted] = useState(false);
+
+  useEffect(() => {
+    try {
+      const allShippers = getAllShippers(localStorage) || [];
+      const availableShippers = allShippers.filter((shipper) => shipper.status === 'active');
+
+      if (availableShippers.length === 0) {
+        setSelectedDriver(null);
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * availableShippers.length);
+      const chosen = availableShippers[randomIndex];
+      const driverProfile = DRIVERS.find((driver) => driver.id === chosen.id);
+
+      setSelectedDriver({
+        ...driverProfile,
+        ...chosen,
+        image: driverProfile?.image || chosen.image || null,
+      });
+    } catch (error) {
+      console.error('Failed to select available driver:', error);
+      setSelectedDriver(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    const nameResult = validateFullName(fullName);
+    const phoneResult = validatePhone(phone);
+    const addressResult = validateAddress(address);
+
+    const nextErrors = {
+      fullName: nameResult.valid ? '' : nameResult.error,
+      phone: phoneResult.valid ? '' : phoneResult.error,
+      address: addressResult.valid ? '' : addressResult.error,
+    };
+
+    setFormErrors((prev) => {
+      if (
+        prev.fullName === nextErrors.fullName &&
+        prev.phone === nextErrors.phone &&
+        prev.address === nextErrors.address
+      ) {
+        return prev;
+      }
+      return nextErrors;
+    });
+  }, [fullName, phone, address]);
+
+  const shouldShowError = (field) => {
+    const message = formErrors[field];
+    return Boolean(message) && (touched[field] || submissionAttempted);
+  };
+
+  const hasValidationErrors = Object.values(formErrors).some((error) => Boolean(error));
+
+  const markFieldTouched = (field) => {
+    setTouched((prev) => ({
+      ...prev,
+      [field]: true,
+    }));
+  };
+
+  const touchAllFields = () => {
+    setTouched({
+      fullName: true,
+      phone: true,
+      address: true,
+    });
+  };
+
+  const resetInteractionState = () => {
+    setTouched({
+      fullName: false,
+      phone: false,
+      address: false,
+    });
+    setSubmissionAttempted(false);
+  };
 
   // Load user info from localStorage
   useEffect(() => {
@@ -210,6 +335,7 @@ export default function CheckoutPage() {
   );
   
   const totalPrice = calculateTotalPrice(subtotal, shippingFee, itemDiscount, shippingDiscount);
+  const isCheckoutDisabled = hasValidationErrors || orderItems.length === 0 || !selectedDriver;
 
   // Select discount
   const handleSelectDiscount = (discount) => {
@@ -223,10 +349,40 @@ export default function CheckoutPage() {
 
   // Validate and place order
   const handlePlaceOrder = async () => {
-    // Validate using shared validation
-    const validationResult = validateCheckoutInfo(fullName, phone, address, orderItems);
-    if (!validationResult.valid) {
-      alert(`⚠️ ${validationResult.error}`);
+    setSubmissionAttempted(true);
+
+    const nameResult = validateFullName(fullName);
+    const phoneResult = validatePhone(phone);
+    const addressResult = validateAddress(address);
+
+    const nextErrors = {
+      fullName: nameResult.valid ? '' : nameResult.error,
+      phone: phoneResult.valid ? '' : phoneResult.error,
+      address: addressResult.valid ? '' : addressResult.error,
+    };
+
+    setFormErrors(nextErrors);
+
+    const hasErrors = Object.values(nextErrors).some((error) => Boolean(error));
+    if (hasErrors) {
+      touchAllFields();
+      if (!isEditingInfo) {
+        setIsEditingInfo(true);
+      }
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
+
+    const cartValidation = validateCart(orderItems);
+    if (!cartValidation.valid) {
+      alert(`⚠️ ${cartValidation.error}`);
+      return;
+    }
+
+    if (!selectedDriver) {
+      alert('⚠️ Hiện chưa có tài xế nào sẵn sàng. Vui lòng thử lại sau.');
       return;
     }
 
@@ -255,7 +411,7 @@ export default function CheckoutPage() {
       deliveryMethod: selectedDelivery,
       paymentMethod: PAYMENT_METHODS.find(p => p.key === paymentMethod),
       discount: selectedDiscount,
-      driver: selectedDriver, // ⭐ Thêm thông tin shipper
+  driver: selectedDriver, // ⭐ Thêm thông tin shipper
     };
 
     const result = await saveOrder(localStorage, orderData);
@@ -272,10 +428,35 @@ export default function CheckoutPage() {
       // 🎯 Emit event để các trang khác cập nhật real-time
       eventBus.emit(EVENT_TYPES.ORDER_CREATED, result.order);
       
+      resetInteractionState();
       setShowSuccessModal(true);
     } else {
       alert(`❌ ${result.error}`);
     }
+  };
+
+  const handleSaveInfo = () => {
+    const nameResult = validateFullName(fullName);
+    const phoneResult = validatePhone(phone);
+    const addressResult = validateAddress(address);
+
+    const nextErrors = {
+      fullName: nameResult.valid ? '' : nameResult.error,
+      phone: phoneResult.valid ? '' : phoneResult.error,
+      address: addressResult.valid ? '' : addressResult.error,
+    };
+
+    setFormErrors(nextErrors);
+
+    const hasErrors = Object.values(nextErrors).some((error) => Boolean(error));
+    if (hasErrors) {
+      touchAllFields();
+      setSubmissionAttempted(true);
+      return;
+    }
+
+    resetInteractionState();
+    setIsEditingInfo(false);
   };
 
   const handleBackToHome = () => {
@@ -294,11 +475,30 @@ export default function CheckoutPage() {
   
   // Open map select
   const handleOpenMap = () => {
+    const snapshot = orderItems.length > 0
+      ? {
+          orderItems,
+          totalPrice,
+          restaurantId,
+        }
+      : null;
+
+    if (snapshot) {
+      try {
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem("activeCheckoutSnapshot", JSON.stringify(snapshot));
+        }
+      } catch (error) {
+        console.error("Failed to cache active checkout snapshot:", error);
+      }
+    }
+
     navigate('/map-select', {
       state: {
         currentLat: selectedLocation?.latitude,
         currentLng: selectedLocation?.longitude,
         currentAddress: address,
+        checkoutSnapshot: snapshot,
       },
     });
   };
@@ -319,7 +519,11 @@ export default function CheckoutPage() {
             <div className="card-header">
               <h3 className="card-title">📍 Thông tin giao hàng</h3>
               {!isEditingInfo && (
-                <button className="btn-edit" onClick={() => setIsEditingInfo(true)}>
+                <button
+                  type="button"
+                  className="btn-edit"
+                  onClick={() => setIsEditingInfo(true)}
+                >
                   Thay đổi
                 </button>
               )}
@@ -327,6 +531,11 @@ export default function CheckoutPage() {
             
             {!isEditingInfo ? (
               <div className="info-display">
+                {hasValidationErrors && (
+                  <div className="info-warning">
+                    Thông tin giao hàng chưa đầy đủ. Nhấn "Thay đổi" để cập nhật.
+                  </div>
+                )}
                 <div className="info-row">
                   <span className="info-label">Người nhận:</span>
                   <span className="info-value">{fullName || 'Chưa có thông tin'}</span>
@@ -342,35 +551,44 @@ export default function CheckoutPage() {
               </div>
             ) : (
               <div className="info-edit">
-                <div className="form-group">
+                <div className={`form-group ${shouldShowError('fullName') ? 'has-error' : ''}`}>
                   <label>Họ tên</label>
                   <input
                     type="text"
-                    className="form-input"
+                    className={`form-input ${shouldShowError('fullName') ? 'has-error' : ''}`}
                     placeholder="Nhập họ tên"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
+                    onBlur={() => markFieldTouched('fullName')}
                   />
+                  {shouldShowError('fullName') && (
+                    <p className="form-error-message">{formErrors.fullName}</p>
+                  )}
                 </div>
-                <div className="form-group">
+                <div className={`form-group ${shouldShowError('phone') ? 'has-error' : ''}`}>
                   <label>Số điện thoại</label>
                   <input
                     type="tel"
-                    className="form-input"
+                    className={`form-input ${shouldShowError('phone') ? 'has-error' : ''}`}
                     placeholder="Nhập số điện thoại"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    onBlur={() => markFieldTouched('phone')}
                   />
+                  {shouldShowError('phone') && (
+                    <p className="form-error-message">{formErrors.phone}</p>
+                  )}
                 </div>
-                <div className="form-group">
+                <div className={`form-group ${shouldShowError('address') ? 'has-error' : ''}`}>
                   <label>Địa chỉ giao hàng</label>
-                  <div className="address-input-group">
+                  <div className={`address-input-group ${shouldShowError('address') ? 'has-error' : ''}`}>
                     <textarea
-                      className="form-input address-textarea"
+                      className={`form-input address-textarea ${shouldShowError('address') ? 'has-error' : ''}`}
                       placeholder="Nhập địa chỉ chi tiết"
                       rows="3"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
+                      onBlur={() => markFieldTouched('address')}
                     />
                     <button 
                       type="button"
@@ -385,20 +603,26 @@ export default function CheckoutPage() {
                     <div className="map-location-badge">
                       📍 Đã chọn vị trí từ bản đồ
                       <button 
+                        type="button"
                         className="btn-remove-location"
                         onClick={() => {
                           setSelectedLocation(null);
                           setAddress('');
+                          markFieldTouched('address');
                         }}
                       >
                         ✕
                       </button>
                     </div>
                   )}
+                  {shouldShowError('address') && (
+                    <p className="form-error-message">{formErrors.address}</p>
+                  )}
                 </div>
                 <button 
+                  type="button"
                   className="btn-save-info" 
-                  onClick={() => setIsEditingInfo(false)}
+                  onClick={handleSaveInfo}
                 >
                   Lưu thông tin
                 </button>
@@ -445,19 +669,29 @@ export default function CheckoutPage() {
           {/* SHIPPER ĐƯỢC CHỌN */}
           <section className="checkout-card">
             <h3 className="card-title">🚴 Shipper giao hàng</h3>
-            <div className="driver-info-box">
-              <img 
-                src={selectedDriver.image} 
-                alt={selectedDriver.name}
-                className="driver-avatar"
-              />
-              <div className="driver-details">
-                <div className="driver-name">{selectedDriver.name}</div>
-                <div className="driver-rating">
-                  ⭐ {selectedDriver.rating} • {selectedDriver.vehicle}
+            {selectedDriver ? (
+              <div className="driver-info-box">
+                {selectedDriver.image ? (
+                  <img 
+                    src={selectedDriver.image} 
+                    alt={selectedDriver.name}
+                    className="driver-avatar"
+                  />
+                ) : (
+                  <div className="driver-avatar driver-avatar-placeholder">🚴</div>
+                )}
+                <div className="driver-details">
+                  <div className="driver-name">{selectedDriver.name}</div>
+                  <div className="driver-rating">
+                    ⭐ {typeof selectedDriver.rating === 'number' ? selectedDriver.rating.toFixed(1) : selectedDriver.rating} • {selectedDriver.vehicle}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="driver-info-empty">
+                Hiện chưa có tài xế nào sẵn sàng. Vui lòng thử lại sau hoặc đặt lại khi có thông báo.
+              </div>
+            )}
           </section>
 
           {/* MÃ GIẢM GIÁ */}
@@ -657,7 +891,12 @@ export default function CheckoutPage() {
             </div>
 
             {/* CTA BUTTON */}
-            <button className="btn-checkout-cta" onClick={handlePlaceOrder}>
+            <button
+              type="button"
+              className="btn-checkout-cta"
+              onClick={handlePlaceOrder}
+              disabled={isCheckoutDisabled}
+            >
               <span>Đặt hàng ngay</span>
               <span className="cta-arrow">→</span>
             </button>

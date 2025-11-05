@@ -1,8 +1,10 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MENU_ITEMS_WEB } from "@shared/constants/MenuItemsListWeb";
 import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
 import { isLoggedIn } from "@shared/services/authService";
 import { useQuantities } from "@shared/hooks/useQuantities";
+import { getRestaurantMenu } from "@shared/services/ownerMenuService";
 import MenuItem from "../../components/MenuItem";
 import "./MenuPage.css";
 
@@ -15,16 +17,51 @@ export default function MenuPage() {
   const restaurant = RESTAURANTS.find(r => r.id === restaurantId);
   const restaurantName = restaurant ? restaurant.name : 'Menu';
 
-  // Filter menu theo restaurantId
-  const menuForRestaurant = MENU_ITEMS_WEB.filter((item) => {
-    if (Array.isArray(item.restaurantId)) {
-      return item.restaurantId.includes(restaurantId);
+  const staticMenu = useMemo(() => {
+    return MENU_ITEMS_WEB.filter((item) => {
+      if (Array.isArray(item.restaurantId)) {
+        return item.restaurantId.includes(restaurantId);
+      }
+      return item.restaurantId === restaurantId;
+    });
+  }, [restaurantId]);
+
+  const [menuItems, setMenuItems] = useState(staticMenu);
+
+  useEffect(() => {
+    if (Number.isNaN(restaurantId)) {
+      setMenuItems(staticMenu);
+      return;
     }
-    return item.restaurantId === restaurantId;
-  });
+
+    if (typeof window === "undefined") {
+      setMenuItems(staticMenu);
+      return;
+    }
+
+    try {
+      const { customMenu = [] } = getRestaurantMenu(restaurantId, window.localStorage);
+      const normalizedCustom = customMenu
+        .filter((item) => item && item.isAvailable !== false)
+        .map((item) => ({
+          ...item,
+          name: item.name || item.title || "Món mới",
+          title: item.title || item.name,
+          price: Number(item.price) || 0,
+          description: item.description || "",
+          rating: item.rating || 0,
+          sold: item.sold || 0,
+        }));
+
+      setMenuItems([...staticMenu, ...normalizedCustom]);
+    } catch (error) {
+      console.error("Failed to load custom menu:", error);
+      setMenuItems(staticMenu);
+    }
+  }, [restaurantId, staticMenu]);
 
   // Dùng custom hook từ shared
-  const { quantities, increase, decrease, totalPrice, cartItems } = useQuantities(menuForRestaurant);
+  const { quantities, increase, decrease, totalPrice, cartItems } = useQuantities(menuItems);
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
@@ -67,9 +104,9 @@ export default function MenuPage() {
 
       {/* MENU LIST */}
       <div className="menu-content">
-        {menuForRestaurant.length > 0 ? (
+        {menuItems.length > 0 ? (
           <div className="menu-list">
-            {menuForRestaurant.map((item) => (
+            {menuItems.map((item) => (
               <MenuItem
                 key={item.id}
                 id={item.id}

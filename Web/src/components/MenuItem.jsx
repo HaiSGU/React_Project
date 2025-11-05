@@ -1,5 +1,7 @@
 import "./MenuItem.css";
 
+const DEFAULT_IMAGE = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 180'><rect fill='%23e0e0e0' width='240' height='180'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23757575' font-size='20' font-family='sans-serif'>No%20Image</text></svg>";
+
 export default function MenuItem({
   id,
   name,
@@ -29,7 +31,7 @@ export default function MenuItem({
     <div className="menu-item">
       {/* Hình ảnh */}
       <div className="menu-img-wrapper">
-        <img src={image} alt={name} className="menu-img" loading="lazy" />
+        <img src={image || DEFAULT_IMAGE} alt={name} className="menu-img" loading="lazy" />
       </div>
 
       {/* Thông tin */}

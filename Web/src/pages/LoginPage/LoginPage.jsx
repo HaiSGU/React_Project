@@ -81,10 +81,12 @@ export default function LoginPage() {
         return;
       }
 
+      const isReturningFromCheckout = location.state?.from === "/checkout";
       let redirectPayload = null;
+
       try {
         const pendingCheckoutStr = localStorage.getItem("pendingCheckout");
-        if (pendingCheckoutStr) {
+        if (isReturningFromCheckout && pendingCheckoutStr) {
           redirectPayload = JSON.parse(pendingCheckoutStr);
         }
       } catch (error) {
@@ -93,13 +95,13 @@ export default function LoginPage() {
         localStorage.removeItem("pendingCheckout");
       }
 
-      if (redirectPayload?.orderItems?.length) {
+      if (isReturningFromCheckout && redirectPayload?.orderItems?.length) {
         navigate("/checkout", { replace: true, state: redirectPayload });
         return;
       }
 
-      const from = location.state?.from || "/home";
-      navigate(from, { replace: true });
+  const fallbackRoute = isReturningFromCheckout ? "/home" : (location.state?.from || "/home");
+  navigate(fallbackRoute, { replace: true });
     } catch (err) {
       console.error("Customer login error:", err);
       setError("Đã có lỗi xảy ra, vui lòng thử lại!");
@@ -141,11 +143,6 @@ export default function LoginPage() {
             Đăng ký ngay
           </span>
         </p>
-
-        <div className="demo-hint">
-          💡 <strong>Demo tài khoản nhà hàng:</strong><br/>
-          <code>kfc_admin / kfc123</code>
-        </div>
       </form>
     </div>
   );

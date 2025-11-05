@@ -656,22 +656,6 @@ export default function AdminDashboard() {
                             ✓ Kích hoạt
                           </button>
                         )}
-                        {shipper.status === 'active' && (
-                          <button 
-                            onClick={() => handleShipperStatusChange(shipper.id, 'offline')}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#6b7280',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: 6,
-                              cursor: 'pointer',
-                              fontSize: 12
-                            }}
-                          >
-                            💤 Nghỉ
-                          </button>
-                        )}
                         {shipper.status !== 'suspended' && (
                           <button 
                             onClick={() => handleShipperStatusChange(shipper.id, 'suspended')}

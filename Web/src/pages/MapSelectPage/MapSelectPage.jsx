@@ -41,7 +41,36 @@ function LocationMarker({ position, setPosition, setAddress }) {
 export default function MapSelectPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentLat, currentLng, currentAddress } = location.state || {};
+  const { currentLat, currentLng, currentAddress, checkoutSnapshot: incomingCheckoutSnapshot } = location.state || {};
+
+  const [checkoutSnapshot] = useState(() => {
+    if (incomingCheckoutSnapshot && Array.isArray(incomingCheckoutSnapshot.orderItems) && incomingCheckoutSnapshot.orderItems.length > 0) {
+      try {
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem('activeCheckoutSnapshot', JSON.stringify(incomingCheckoutSnapshot));
+        }
+      } catch (error) {
+        console.error('Failed to persist checkout snapshot on map select:', error);
+      }
+      return incomingCheckoutSnapshot;
+    }
+
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        const cached = window.sessionStorage.getItem('activeCheckoutSnapshot');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed?.orderItems) && parsed.orderItems.length > 0) {
+            return parsed;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to restore checkout snapshot on map select:', error);
+    }
+
+    return null;
+  });
 
   const [position, setPosition] = useState(
     currentLat && currentLng
@@ -114,9 +143,19 @@ export default function MapSelectPage() {
       return;
     }
 
+    const restoredCheckout = checkoutSnapshot && Array.isArray(checkoutSnapshot.orderItems) && checkoutSnapshot.orderItems.length > 0
+      ? {
+          orderItems: checkoutSnapshot.orderItems,
+          totalPrice: checkoutSnapshot.totalPrice || 0,
+          restaurantId: checkoutSnapshot.restaurantId,
+        }
+      : null;
+
     // Quay về checkout với location đã chọn
     navigate('/checkout', {
+      replace: true,
       state: {
+        ...(restoredCheckout || {}),
         selectedLocation: {
           latitude: position.latitude,
           longitude: position.longitude,

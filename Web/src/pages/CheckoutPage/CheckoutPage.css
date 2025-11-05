@@ -157,6 +157,37 @@ textarea.form-input {
   min-height: 80px;
 }
 
+.form-group.has-error label {
+  color: #f44336;
+}
+
+.form-input.has-error {
+  border-color: #f44336;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+.address-input-group.has-error .form-input {
+  border-color: #f44336;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+.form-error-message {
+  color: #f44336;
+  font-size: 12px;
+  font-weight: 500;
+  margin: -4px 0 0;
+}
+
+.info-warning {
+  background: #fff8e1;
+  border-left: 4px solid #ff9800;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #e65100;
+}
+
 .btn-save-info {
   background: #00bcd4;
   color: white;
@@ -331,6 +362,15 @@ textarea.form-input {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+.driver-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2f1;
+  color: #00695c;
+  font-size: 24px;
+}
+
 .driver-details {
   flex: 1;
   display: flex;
@@ -347,6 +387,16 @@ textarea.form-input {
 .driver-rating {
   font-size: 14px;
   color: #666;
+  font-weight: 500;
+}
+
+.driver-info-empty {
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff8e1;
+  border: 1px dashed #ffb74d;
+  color: #e65100;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -736,6 +786,19 @@ textarea.form-input {
 
 .btn-checkout-cta:active {
   transform: translateY(0);
+}
+
+.btn-checkout-cta:disabled {
+  background: linear-gradient(135deg, #cfd8dc 0%, #b0bec5 100%);
+  color: #607d8b;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-checkout-cta:disabled:hover {
+  box-shadow: none;
+  transform: none;
 }
 
 .cta-arrow {
