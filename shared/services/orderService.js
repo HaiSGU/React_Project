@@ -33,18 +33,54 @@ export const saveOrder = async (storage, order) => {
       };
     }
 
+    // ⚠️ KIỂM TRA TRẠNG THÁI NHÀ HÀNG
+    const restaurants = JSON.parse(storage.getItem('restaurants') || '[]');
+    const restaurant = restaurants.find(r => r.id === order.restaurantId);
+    
+    if (!restaurant) {
+      return {
+        success: false,
+        error: 'Nhà hàng không tồn tại',
+      };
+    }
+    
+    if (restaurant.status === 'suspended') {
+      return {
+        success: false,
+        error: '⛔ Nhà hàng tạm ngưng hoạt động. Vui lòng chọn nhà hàng khác!',
+      };
+    }
+    
+    if (restaurant.status === 'pending') {
+      return {
+        success: false,
+        error: '⏳ Nhà hàng đang chờ duyệt. Vui lòng chọn nhà hàng khác!',
+      };
+    }
+
     const newOrder = {
       ...order,
       id: Date.now().toString(),
       status: 'pending',
       createdAt: new Date().toISOString(),
+      date: new Date().toISOString(), // ⭐ Thêm field date cho ownerOrderService
       username, // Thêm username vào order
+      customerName: order.user?.fullName || username, // ⭐ Thêm customerName
+      address: order.user?.address || 'Không có địa chỉ', // ⭐ Thêm address
+      totalPrice: order.total, // ⭐ Thêm totalPrice cho backward compatibility
     };
 
-    //  Lưu theo username
+    // 1️⃣ Lưu theo username (cho user)
     const shippingOrders = await getShippingOrders(storage);
     const updatedShipping = [...shippingOrders, newOrder];
     await storage.setItem(`shippingOrders_${username}`, JSON.stringify(updatedShipping));
+
+    // 2️⃣ Lưu vào hệ thống orders (cho restaurant)
+    const ordersData = JSON.parse(storage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
+    ordersData.dangGiao.push(newOrder);
+    storage.setItem('orders', JSON.stringify(ordersData));
+
+    console.log('✅ Order saved to both systems:', newOrder);
 
     return {
       success: true,

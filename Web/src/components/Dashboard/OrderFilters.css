@@ -23,7 +23,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #4a90e2;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -39,7 +39,7 @@
 
 .status-filter:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #4a90e2;
 }
 
 .date-filter-tabs {
@@ -62,14 +62,14 @@
 }
 
 .filter-tab:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #4a90e2;
+  color: #4a90e2;
 }
 
 .filter-tab.active {
-  background: #667eea;
+  background: #4a90e2;
   color: white;
-  border-color: #667eea;
+  border-color: #4a90e2;
 }
 
 .filter-result {
@@ -80,7 +80,7 @@
 }
 
 .filter-result strong {
-  color: #667eea;
+  color: #4a90e2;
   font-weight: 600;
 }
 

@@ -11,4 +11,4 @@
 
 .ad-bars { display:flex; gap:10px; align-items:end; height:150px; }
 .ad-bar { text-align:center; }
-.ad-bar-fill { width:28px; background:#667eea; border-radius:6px 6px 0 0; }
+.ad-bar-fill { width:28px; background:#4a90e2; border-radius:6px 6px 0 0; }

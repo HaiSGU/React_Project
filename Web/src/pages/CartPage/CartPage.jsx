@@ -4,16 +4,33 @@ import {
   getDeliveredOrders,
   confirmDelivery
 } from "@shared/services/orderService";
+import { useRealtimeOrders, useEventListener } from "@shared/hooks/useRealtime";
+import { EVENT_TYPES } from "@shared/services/eventBus";
 import "./CartPage.css";
 
 export default function CartPage() {
   const [activeTab, setActiveTab] = useState("dangGiao");
   const [orders, setOrders] = useState({ dangGiao: [], daGiao: [] });
+  
+  // 🔥 Real-time orders hook
+  const { orders: realtimeOrders, lastUpdate } = useRealtimeOrders();
 
   // ✅ Đọc từ orderService khi component mount
   useEffect(() => {
     loadOrders();
   }, []);
+  
+  // 🔥 Listen to order status changes
+  useEventListener(EVENT_TYPES.ORDER_CONFIRMED, () => {
+    loadOrders();
+    // Show toast notification
+    console.log('📦 Đơn hàng của bạn đã được xác nhận!');
+  });
+  
+  useEventListener(EVENT_TYPES.ORDER_SHIPPING, () => {
+    loadOrders();
+    console.log('🚚 Đơn hàng đang được giao!');
+  });
 
   const loadOrders = async () => {
     const shipping = await getShippingOrders(localStorage);

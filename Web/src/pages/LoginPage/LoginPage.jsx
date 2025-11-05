@@ -37,7 +37,7 @@ export default function LoginPage() {
     // ================================
     // KIỂM TRA TẠI KHOẢN NHÀ HÀNG
     // ================================
-    const ownerLoginResult = loginRestaurantOwner(username, password);
+    const ownerLoginResult = loginRestaurantOwner(username, password, localStorage);
     
     if (ownerLoginResult.success) {
       const saveResult = saveOwnerSession(ownerLoginResult.data, localStorage);
@@ -49,6 +49,12 @@ export default function LoginPage() {
         setError("Lỗi lưu phiên đăng nhập!");
         return;
       }
+    }
+    
+    // Nếu có lỗi từ restaurant login (tạm ngưng/chờ duyệt)
+    if (ownerLoginResult.error && ownerLoginResult.error.includes('⛔') || ownerLoginResult.error?.includes('⏳')) {
+      setError(ownerLoginResult.error);
+      return;
     }
 
     // ================================

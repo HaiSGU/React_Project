@@ -20,6 +20,11 @@ import {
   updateVoucher,
   deleteVoucher
 } from '@shared/services/voucherService'
+import { useRealtimeOrders, useNotifications, useEventListener } from '@shared/hooks/useRealtime'
+import { notifyOrderConfirmed, notifyOrderShipping } from '@shared/services/notificationService'
+import { syncSystemRevenue } from '@shared/services/dataSyncService'
+import { EVENT_TYPES } from '@shared/services/eventBus'
+import NotificationBell from '../../components/NotificationBell/NotificationBell'
 import OrderChart from '../../components/Dashboard/OrderChart'
 import NotificationSystem from '../../components/Dashboard/NotificationSystem'
 import OrderFilters from '../../components/Dashboard/OrderFilters'
@@ -36,6 +41,10 @@ export default function RestaurantDashboard() {
   const [vouchers, setVouchers] = useState([])
   const [activeTab, setActiveTab] = useState('overview')
   
+  // 🔥 Real-time hooks
+  const { orders: realtimeOrders, lastUpdate } = useRealtimeOrders()
+  const { unreadCount } = useNotifications('restaurant')
+  
   // Filters
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -48,6 +57,15 @@ export default function RestaurantDashboard() {
   const [editingVoucher, setEditingVoucher] = useState(null)
   
   const navigate = useNavigate()
+
+  // 🔥 Listen to new orders
+  useEventListener(EVENT_TYPES.ORDER_CREATED, (newOrder) => {
+    if (newOrder.restaurantId === ownerInfo?.restaurantId) {
+      // Play sound or show toast
+      console.log('🔔 Đơn hàng mới:', newOrder)
+      loadDashboardData()
+    }
+  })
 
   useEffect(() => {
     if (!ownerInfo) return
@@ -86,6 +104,19 @@ export default function RestaurantDashboard() {
   const handleUpdateOrderStatus = (orderId, newStatus) => {
     const result = updateOrderStatus(orderId, newStatus, localStorage)
     if (result.success) {
+      // 🔔 Gửi notification cho customer
+      const order = orders.find(o => o.id === orderId)
+      if (order) {
+        if (newStatus === 'processing') {
+          notifyOrderConfirmed(localStorage, order)
+        } else if (newStatus === 'shipping') {
+          notifyOrderShipping(localStorage, order)
+        }
+      }
+      
+      // 📊 Sync system revenue
+      syncSystemRevenue(localStorage)
+      
       loadDashboardData()
       alert(`✅ Đã cập nhật trạng thái đơn hàng thành công!`)
     } else {
@@ -236,7 +267,7 @@ export default function RestaurantDashboard() {
 
   const newOrdersCount = orders.filter(o => o.status === 'pending').length
 
-  if (!ownerInfo || !stats) {
+  if (!ownerInfo || !stats || !menuInfo) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -251,8 +282,16 @@ export default function RestaurantDashboard() {
       <header className="dashboard-header">
         <div className="header-left">
           <h1>🍽️ {ownerInfo.restaurantName}</h1>
+          {lastUpdate && (
+            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+              📡 Cập nhật: {lastUpdate.toLocaleTimeString('vi-VN')}
+            </div>
+          )}
         </div>
         <div className="header-actions">
+          {/* 🔔 Notification Bell */}
+          <NotificationBell role="restaurant" />
+          
           <button className="refresh-btn" onClick={loadDashboardData} title="Làm mới">
             🔄
           </button>

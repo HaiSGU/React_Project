@@ -6,6 +6,7 @@ import "./CheckoutPage.css";
 import { DELIVERY_METHODS } from '../../../../shared/constants/DeliveryMethods';
 import { PAYMENT_METHODS } from '../../../../shared/constants/PaymentMethods';
 import { DISCOUNTS } from '../../../../shared/constants/DiscountList';
+import { DRIVERS } from '../../../../shared/constants/DriversListWeb';
 import { 
   calculateSubtotal,
   calculateShippingFee,
@@ -14,7 +15,10 @@ import {
   adjustShippingForWeather
 } from '../../../../shared/utils/checkoutHelpers';
 import { validateCheckoutInfo } from '../../../../shared/utils/checkoutValidation';
-import { saveOrder } from '../../../../shared/services/orderService';
+import { saveOrder } from "@shared/services/orderService";
+import { notifyNewOrder } from "@shared/services/notificationService";
+import { syncSystemRevenue } from "@shared/services/dataSyncService";
+import eventBus, { EVENT_TYPES } from "@shared/services/eventBus";
 
 // Mock QR codes
 const QR_CODES = [
@@ -52,6 +56,12 @@ export default function CheckoutPage() {
 
   // QR Code state
   const [selectedQR, setSelectedQR] = useState(null);
+
+  // Shipper state - chọn ngẫu nhiên
+  const [selectedDriver] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * DRIVERS.length);
+    return DRIVERS[randomIndex];
+  });
 
   // Modals
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -165,12 +175,23 @@ export default function CheckoutPage() {
       deliveryMethod: selectedDelivery,
       paymentMethod: PAYMENT_METHODS.find(p => p.key === paymentMethod),
       discount: selectedDiscount,
+      driver: selectedDriver, // ⭐ Thêm thông tin shipper
     };
 
     const result = await saveOrder(localStorage, orderData);
     
     if (result.success) {
       console.log('✅ Đã lưu đơn hàng:', result.order);
+      
+      // 🔔 Gửi notification cho restaurant
+      notifyNewOrder(localStorage, result.order, result.order.restaurantId);
+      
+      // 📊 Sync revenue metrics
+      syncSystemRevenue(localStorage);
+      
+      // 🎯 Emit event để các trang khác cập nhật real-time
+      eventBus.emit(EVENT_TYPES.ORDER_CREATED, result.order);
+      
       setShowSuccessModal(true);
     } else {
       alert(`❌ ${result.error}`);
@@ -339,6 +360,24 @@ export default function CheckoutPage() {
                 {weatherNote}
               </div>
             )}
+          </section>
+
+          {/* SHIPPER ĐƯỢC CHỌN */}
+          <section className="checkout-card">
+            <h3 className="card-title">🚴 Shipper giao hàng</h3>
+            <div className="driver-info-box">
+              <img 
+                src={selectedDriver.image} 
+                alt={selectedDriver.name}
+                className="driver-avatar"
+              />
+              <div className="driver-details">
+                <div className="driver-name">{selectedDriver.name}</div>
+                <div className="driver-rating">
+                  ⭐ {selectedDriver.rating} • {selectedDriver.vehicle}
+                </div>
+              </div>
+            </div>
           </section>
 
           {/* MÃ GIẢM GIÁ */}

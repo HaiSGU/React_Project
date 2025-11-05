@@ -3,30 +3,24 @@
  */
 export const getRestaurantOrders = (restaurantId, storage) => {
   try {
-    const allOrders = JSON.parse(storage.getItem('orderHistory') || '[]')
+    // Đọc từ cấu trúc mới: {dangGiao: [], daGiao: []}
+    const ordersData = JSON.parse(storage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
+    const allOrders = [...ordersData.dangGiao, ...ordersData.daGiao];
     
-    console.log('🔍 All orders:', allOrders)
-    console.log('🔍 Looking for restaurantId:', restaurantId)
+    console.log('🔍 All orders:', allOrders);
+    console.log('🔍 Looking for restaurantId:', restaurantId);
     
     // Lọc đơn hàng theo restaurantId (hỗ trợ cả string và number)
     const filtered = allOrders.filter(order => {
-      // So sánh restaurantId
-      const matchRestaurant = String(order.restaurantId) === String(restaurantId)
-      
-      // Hoặc kiểm tra trong items
-      const matchItems = order.items?.some(item => 
-        String(item.restaurantId) === String(restaurantId)
-      )
-      
-      return matchRestaurant || matchItems
-    })
+      return String(order.restaurantId) === String(restaurantId);
+    });
     
-    console.log('✅ Filtered orders:', filtered)
-    return filtered
+    console.log('✅ Filtered orders for restaurant', restaurantId, ':', filtered);
+    return filtered;
     
   } catch (error) {
-    console.error('Error getting restaurant orders:', error)
-    return []
+    console.error('Error getting restaurant orders:', error);
+    return [];
   }
 }
 
@@ -48,7 +42,8 @@ export const getTodayOrders = (restaurantId, storage) => {
  */
 export const calculateRevenue = (orders) => {
   return orders.reduce((total, order) => {
-    return total + (order.totalPrice || 0)
+    // Hỗ trợ cả 2 field: total (mới) và totalPrice (cũ)
+    return total + (order.total || order.totalPrice || 0)
   }, 0)
 }
 
@@ -57,33 +52,60 @@ export const calculateRevenue = (orders) => {
  */
 export const updateOrderStatus = (orderId, newStatus, storage) => {
   try {
-    const allOrders = JSON.parse(storage.getItem('orderHistory') || '[]')
+    // Đọc từ cấu trúc mới: {dangGiao: [], daGiao: []}
+    const ordersData = JSON.parse(storage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
     
-    const updatedOrders = allOrders.map(order => {
-      if (String(order.id) === String(orderId)) {
-        return { 
-          ...order, 
-          status: newStatus, 
-          updatedAt: new Date().toISOString() 
+    let updated = false;
+    let updatedOrder = null;
+    
+    // Tìm và cập nhật order
+    if (newStatus === 'processing') {
+      // Pending → Processing: vẫn ở dangGiao
+      ordersData.dangGiao = ordersData.dangGiao.map(order => {
+        if (String(order.id) === String(orderId)) {
+          updatedOrder = { ...order, status: newStatus, updatedAt: new Date().toISOString() };
+          updated = true;
+          return updatedOrder;
         }
+        return order;
+      });
+    } else if (newStatus === 'delivered') {
+      // Processing → Delivered: chuyển từ dangGiao sang daGiao
+      const orderIndex = ordersData.dangGiao.findIndex(o => String(o.id) === String(orderId));
+      if (orderIndex !== -1) {
+        updatedOrder = { 
+          ...ordersData.dangGiao[orderIndex], 
+          status: newStatus, 
+          updatedAt: new Date().toISOString(),
+          deliveredAt: new Date().toISOString()
+        };
+        ordersData.dangGiao.splice(orderIndex, 1);
+        ordersData.daGiao.push(updatedOrder);
+        updated = true;
       }
-      return order
-    })
+    }
     
-    storage.setItem('orderHistory', JSON.stringify(updatedOrders))
-    return { success: true }
+    if (updated) {
+      storage.setItem('orders', JSON.stringify(ordersData));
+      console.log('✅ Order status updated:', orderId, '→', newStatus);
+      return { success: true, order: updatedOrder };
+    }
+    
+    return { success: false, error: 'Order not found' };
   } catch (error) {
-    console.error('Error updating order status:', error)
-    return { success: false, error: error.message }
+    console.error('Error updating order status:', error);
+    return { success: false, error: error.message };
   }
-}
+};
 
 /**
  * Cấu hình phí hoa hồng
  */
 const COMMISSION_CONFIG = {
-  app: 0.10,        // App lấy 10%
-  restaurant: 0.90  // Nhà hàng nhận 90%
+  restaurant: 0.80,  // Nhà hàng nhận 80%
+  app: 0.20,         // App lấy 20% (Platform 10% + Shipper 10%)
+  platform: 0.10,    // Platform phí 10%
+  shipper: 0.10      // Shipper phí 10%
 }
 
 /**
@@ -94,11 +116,15 @@ export const calculateRevenueBreakdown = (orders) => {
   
   return {
     total: totalRevenue,
-    app: Math.round(totalRevenue * COMMISSION_CONFIG.app),
     restaurant: Math.round(totalRevenue * COMMISSION_CONFIG.restaurant),
+    platform: Math.round(totalRevenue * COMMISSION_CONFIG.platform),
+    shipper: Math.round(totalRevenue * COMMISSION_CONFIG.shipper),
+    app: Math.round(totalRevenue * COMMISSION_CONFIG.app), // Tổng app = platform + shipper
     percentages: {
-      app: COMMISSION_CONFIG.app * 100,
       restaurant: COMMISSION_CONFIG.restaurant * 100,
+      platform: COMMISSION_CONFIG.platform * 100,
+      shipper: COMMISSION_CONFIG.shipper * 100,
+      app: COMMISSION_CONFIG.app * 100,
     }
   }
 }

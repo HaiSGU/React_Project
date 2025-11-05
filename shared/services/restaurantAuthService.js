@@ -3,7 +3,7 @@ import { RESTAURANTS_DATA } from '../constants/RestaurantsData'
 /**
  * Đăng nhập cho Restaurant Owner
  */
-export const loginRestaurantOwner = (username, password) => {
+export const loginRestaurantOwner = (username, password, storage) => {
   const restaurant = RESTAURANTS_DATA.find(
     r => r.owner && r.owner.username === username && r.owner.password === password
   )
@@ -12,6 +12,26 @@ export const loginRestaurantOwner = (username, password) => {
     return {
       success: false,
       error: 'Sai tên đăng nhập hoặc mật khẩu'
+    }
+  }
+  
+  // ⚠️ KIỂM TRA TRẠNG THÁI NHÀ HÀNG
+  const restaurants = JSON.parse(storage.getItem('restaurants') || '[]');
+  const restaurantStatus = restaurants.find(r => r.id === restaurant.id);
+  
+  if (restaurantStatus) {
+    if (restaurantStatus.status === 'suspended') {
+      return {
+        success: false,
+        error: '⛔ Nhà hàng của bạn đã bị tạm ngưng hoạt động. Vui lòng liên hệ Admin!'
+      }
+    }
+    
+    if (restaurantStatus.status === 'pending') {
+      return {
+        success: false,
+        error: '⏳ Nhà hàng của bạn đang chờ duyệt. Vui lòng chờ Admin phê duyệt!'
+      }
     }
   }
 

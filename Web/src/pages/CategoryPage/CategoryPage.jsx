@@ -13,7 +13,16 @@ export default function CategoryPage() {
   useEffect(() => {
     // Lọc nhà hàng theo category using shared helper
     const filtered = filterRestaurantsByCategory(RESTAURANTS, id);
-    setRestaurants(filtered);
+    
+    // ⚠️ CHỈ HIỂN THỊ NHÀ HÀNG ACTIVE
+    const restaurantStatuses = JSON.parse(localStorage.getItem('restaurants') || '[]');
+    const activeRestaurants = filtered.filter(restaurant => {
+      const status = restaurantStatuses.find(r => r.id === restaurant.id);
+      // Nếu không tìm thấy status, mặc định là active
+      return !status || status.status === 'active';
+    });
+    
+    setRestaurants(activeRestaurants);
   }, [id]);
 
   const handleRestaurantClick = (restaurantId) => {
