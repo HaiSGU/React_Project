@@ -165,6 +165,40 @@ export const confirmDelivery = async (order, storage) => {
     const newDelivered = [...deliveredOrders, deliveredOrder];
     await storage.setItem(`deliveredOrders_${username}`, JSON.stringify(newDelivered));
 
+    // 🔄 Đồng bộ vào hệ thống orders chung (cho restaurant / admin / shipper)
+    const ordersData = JSON.parse(storage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
+    const globalIndex = ordersData.dangGiao.findIndex(o => String(o.id) === String(order.id));
+
+    if (globalIndex !== -1) {
+      const existingOrder = ordersData.dangGiao[globalIndex];
+      const completedOrder = {
+        ...existingOrder,
+        ...deliveredOrder, // Giữ thông tin driver, total, ... từ bản mới nhất
+        status: 'completed',
+        updatedAt: new Date().toISOString(),
+        deliveredAt: new Date().toISOString(),
+      };
+
+      ordersData.dangGiao.splice(globalIndex, 1);
+      ordersData.daGiao.push(completedOrder);
+      storage.setItem('orders', JSON.stringify(ordersData));
+    } else {
+      // Nếu đã ở daGiao thì cập nhật trạng thái cho chắc
+      ordersData.daGiao = ordersData.daGiao.map(o => {
+        if (String(o.id) === String(order.id)) {
+          return {
+            ...o,
+            ...deliveredOrder,
+            status: 'completed',
+            updatedAt: new Date().toISOString(),
+            deliveredAt: new Date().toISOString(),
+          };
+        }
+        return o;
+      });
+      storage.setItem('orders', JSON.stringify(ordersData));
+    }
+
     return { 
       success: true,
       shipping: newShipping, 

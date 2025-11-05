@@ -7,7 +7,7 @@ import {
   updateUserStatus 
 } from '../../../../shared/services/adminMetricsService';
 import { logoutAdmin, getAdminSession } from '../../../../shared/services/adminAuthService';
-import { useSystemMetrics, useRealtimeOrders } from '@shared/hooks/useRealtime';
+import { useSystemMetrics, useRealtimeOrders, useEventListener } from '@shared/hooks/useRealtime';
 import { getAllShippers, updateShipperStatus, getShipperStats, initShippers } from '@shared/services/shipperService';
 import initAdminData from '@shared/services/initAdminData';
 import NotificationBell from '../../components/NotificationBell/NotificationBell';
@@ -15,6 +15,7 @@ import AdminStatCard from '../../components/Admin/AdminStatCard';
 import AdminRevenueCard from '../../components/Admin/AdminRevenueCard';
 import AdminBarChart from '../../components/Admin/AdminBarChart';
 import '../../components/Admin/Admin.css';
+import eventBus, { EVENT_TYPES } from '@shared/services/eventBus';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -31,6 +32,22 @@ export default function AdminDashboard() {
   const { metrics } = useSystemMetrics();
   const { orders, lastUpdate } = useRealtimeOrders();
 
+  // 🔥 Auto-refresh khi có order mới
+  useEffect(() => {
+    if (lastUpdate) {
+      console.log('🔔 New order detected, refreshing shipper stats...');
+      refresh();
+    }
+  }, [lastUpdate]);
+
+  // 🔥 Auto-refresh khi chuyển tab Shippers
+  useEffect(() => {
+    if (activeTab === 'shippers') {
+      console.log('🔄 Shippers tab opened, refreshing stats...');
+      refresh();
+    }
+  }, [activeTab]);
+
   // 🔥 Auto-refresh mỗi 30 giây
   useEffect(() => {
     const interval = setInterval(() => {
@@ -40,8 +57,8 @@ export default function AdminDashboard() {
   }, []);
 
   const refresh = () => {
-    // Force reinit để cập nhật dữ liệu mới
-    initAdminData(localStorage, true);
+  // Chỉ init khi thiếu dữ liệu để tránh ghi đè trạng thái do các dashboard khác cập nhật
+  initAdminData(localStorage, false);
     initShippers(localStorage);
     
     const overview = getAdminOverview(localStorage);
@@ -57,6 +74,12 @@ export default function AdminDashboard() {
   
   useEffect(() => { refresh(); }, []);
 
+  // Lắng nghe sự kiện thay đổi trạng thái nhà hàng (từ Restaurant Dashboard)
+  useEventListener(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, () => {
+    console.log('🔁 Restaurant status changed event received → refreshing admin data');
+    refresh();
+  });
+
   // 🔥 Show toast notification
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -64,12 +87,16 @@ export default function AdminDashboard() {
   };
 
   const handleRestaurantStatusChange = (restaurantId, newStatus) => {
+    console.log('🔧 Changing restaurant status:', { restaurantId, newStatus });
     setAnimatingRow(`restaurant-${restaurantId}`);
     
     const result = updateRestaurantStatus(localStorage, restaurantId, newStatus);
+    console.log('📊 Update result:', result);
+    
     if (result.success) {
       const statusText = newStatus === 'active' ? 'kích hoạt' : newStatus === 'suspended' ? 'tạm ngưng' : 'cập nhật';
       showToast(`✅ Đã ${statusText} nhà hàng!`);
+      eventBus.emit(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, { restaurantId, status: newStatus });
       refresh();
     } else {
       showToast(`❌ Lỗi: ${result.error}`, 'error');
@@ -583,10 +610,15 @@ export default function AdminDashboard() {
                       {shipper.phone}
                     </td>
                     <td style={{ padding:12, textAlign:'center', fontWeight: 600 }}>
-                      {shipper.totalDeliveries || 0} đơn
+                      {shipper.totalAssigned || 0} đơn
+                      {shipper.totalAssigned > 0 && shipper.totalDeliveries !== shipper.totalAssigned && (
+                        <div style={{ fontSize: 11, color: '#666', fontWeight: 400 }}>
+                          ({shipper.totalDeliveries || 0} đã giao)
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding:12, textAlign:'center', fontWeight: 600, color: '#10b981' }}>
-                      {((shipper.earnings || 0) / 1000000).toFixed(1)}M
+                      {((shipper.earnings || 0) / 1000).toFixed(1)}K
                     </td>
                     <td style={{ padding:12, textAlign:'center' }}>
                       <span style={{

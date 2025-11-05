@@ -1,11 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
+import { getRestaurantsWithStatus } from "@shared/constants/RestaurantsListWeb";
 import { CATEGORIES } from "@shared/constants/CategoryListWeb";
 import { DISCOUNTS } from "@shared/constants/DiscountList";
 import { MENU_ITEMS_WEB } from "@shared/constants/MenuItemsListWeb";
 import { isLoggedIn, getCurrentUser, logout } from "@shared/services/authService";
 import { useRestaurantSearch } from "@shared/hooks/useSearch";
+import { useEventListener } from "@shared/hooks/useRealtime";
+import eventBus, { EVENT_TYPES } from "@shared/services/eventBus";
 import FooterNav from "../../components/FooterNav";
 import shipperBg from "@shared/assets/images/shipperimage.jpeg";
 import "./HomePage.css";
@@ -14,6 +16,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [loggedIn, setLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
+  const [restaurantsData, setRestaurantsData] = useState(() => getRestaurantsWithStatus());
 
   // Search functionality - tìm nhà hàng theo tên, địa chỉ, category VÀ món ăn
   const { 
@@ -21,10 +24,12 @@ export default function HomePage() {
     setQuery, 
     filteredRestaurants, 
     noResults 
-  } = useRestaurantSearch(RESTAURANTS, MENU_ITEMS_WEB); // Dùng MENU_ITEMS_WEB với ảnh đã resolve
+  } = useRestaurantSearch(restaurantsData, MENU_ITEMS_WEB); // Dùng MENU_ITEMS_WEB với ảnh đã resolve
 
   // Hiển thị kết quả search hoặc featured restaurants
-  const displayRestaurants = query.trim() ? filteredRestaurants : RESTAURANTS.filter(r => r.isFeatured);
+  const displayRestaurants = query.trim() 
+    ? filteredRestaurants 
+    : restaurantsData.filter(r => r.isFeatured);
 
   // Check login status
   useEffect(() => {
@@ -38,7 +43,22 @@ export default function HomePage() {
       }
     };
     loadLoginStatus();
+    // Đồng bộ restaurant status lần đầu
+    setRestaurantsData(getRestaurantsWithStatus());
+
+    const unsubscribe = eventBus.on(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, () => {
+      setRestaurantsData(getRestaurantsWithStatus());
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
+
+  // Cập nhật khi storage thay đổi (từ tab khác)
+  useEventListener(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, () => {
+    setRestaurantsData(getRestaurantsWithStatus());
+  });
 
   const handleLogout = async () => {
     await logout(localStorage);
@@ -175,34 +195,62 @@ export default function HomePage() {
           </h2>
           {displayRestaurants.length > 0 ? (
             <div className="restaurants-scroll">
-              {displayRestaurants.map(r => (
-                <div 
-                  key={r.id} 
-                  className="restaurant-card"
-                  onClick={() => handleRestaurantClick(r.id)}
-                >
-                  <div className="restaurant-image-wrap">
-                    <img src={r.image} alt={r.name} className="restaurant-image" />
-                  </div>
-                  <div className="restaurant-info">
-                    <h3 className="restaurant-name">{r.name}</h3>
-                    <div className="restaurant-meta">
-                      <span className="meta-item">
-                        <span className="meta-icon">⭐</span>
-                        {r.rating}
-                      </span>
-                      <span className="meta-item">
-                        <span className="meta-icon">🕐</span>
-                        {r.deliveryTime}
-                      </span>
-                      <span className="meta-item">
-                        <span className="meta-icon">📍</span>
-                        {r.distance}
-                      </span>
+              {displayRestaurants.map((r) => {
+                const isActive = r.status === 'active';
+                let statusLabel = null;
+
+                if (!isActive) {
+                  if (r.status === 'suspended') {
+                    statusLabel = 'Tạm ngưng';
+                  } else if (r.status === 'pending') {
+                    statusLabel = 'Chờ duyệt';
+                  } else {
+                    statusLabel = 'Không khả dụng';
+                  }
+                }
+
+                return (
+                  <div 
+                    key={r.id} 
+                    className={`restaurant-card ${!isActive ? 'is-disabled' : ''}`}
+                    onClick={() => isActive && handleRestaurantClick(r.id)}
+                    role="button"
+                    tabIndex={isActive ? 0 : -1}
+                    aria-disabled={!isActive}
+                    onKeyDown={(e) => {
+                      if (isActive && (e.key === 'Enter' || e.key === ' ')) {
+                        handleRestaurantClick(r.id);
+                      }
+                    }}
+                  >
+                    {!isActive && (
+                      <div className="restaurant-status-overlay">
+                        {statusLabel}
+                      </div>
+                    )}
+                    <div className="restaurant-image-wrap">
+                      <img src={r.image} alt={r.name} className="restaurant-image" />
+                    </div>
+                    <div className="restaurant-info">
+                      <h3 className="restaurant-name">{r.name}</h3>
+                      <div className="restaurant-meta">
+                        <span className="meta-item">
+                          <span className="meta-icon">⭐</span>
+                          {r.rating}
+                        </span>
+                        <span className="meta-item">
+                          <span className="meta-icon">🕐</span>
+                          {r.deliveryTime}
+                        </span>
+                        <span className="meta-item">
+                          <span className="meta-icon">📍</span>
+                          {r.distance}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="empty-container">

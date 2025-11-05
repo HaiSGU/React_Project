@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { MENU_ITEMS_WEB } from "@shared/constants/MenuItemsListWeb";
 import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
+import { isLoggedIn } from "@shared/services/authService";
 import { useQuantities } from "@shared/hooks/useQuantities";
 import MenuItem from "../../components/MenuItem";
 import "./MenuPage.css";
@@ -25,10 +26,35 @@ export default function MenuPage() {
   // Dùng custom hook từ shared
   const { quantities, increase, decrease, totalPrice, cartItems } = useQuantities(menuForRestaurant);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cartItems.length === 0) return;
+
+    const checkoutPayload = {
+      orderItems: cartItems,
+      totalPrice,
+      restaurantId,
+    };
+
+    const loggedIn = await isLoggedIn(localStorage);
+
+    if (!loggedIn) {
+      try {
+        localStorage.setItem("pendingCheckout", JSON.stringify(checkoutPayload));
+      } catch (error) {
+        console.error("Failed to cache pending checkout:", error);
+      }
+
+      navigate("/login", {
+        state: {
+          from: "/checkout",
+          message: "Vui lòng đăng nhập để tiếp tục đặt món.",
+        },
+      });
+      return;
+    }
+
     navigate("/checkout", {
-      state: { orderItems: cartItems, totalPrice, restaurantId },
+      state: checkoutPayload,
     });
   };
 

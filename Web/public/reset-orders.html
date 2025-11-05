@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔧 Reset Orders - Admin Tool</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+    
+    .warning-box {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .warning-box h3 {
+      color: #856404;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .warning-box p {
+      color: #856404;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    
+    .info-box {
+      background: #e3f2fd;
+      border: 2px solid #2196f3;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .info-box h3 {
+      color: #1976d2;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .info-box ul {
+      color: #1565c0;
+      line-height: 1.8;
+      margin-left: 20px;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 16px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .btn-reset {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+    
+    .btn-reset:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(245, 87, 108, 0.3);
+    }
+    
+    .btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+    
+    .btn-cancel:hover {
+      background: #d0d0d0;
+      transform: translateY(-2px);
+    }
+    
+    .log-box {
+      background: #f5f5f5;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .log-box.show {
+      display: block;
+    }
+    
+    .log-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #e0e0e0;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    
+    .log-item:last-child {
+      border-bottom: none;
+    }
+    
+    .log-success {
+      color: #4caf50;
+    }
+    
+    .log-error {
+      color: #f44336;
+    }
+    
+    .log-info {
+      color: #2196f3;
+    }
+    
+    .success-message {
+      background: #d4edda;
+      border: 2px solid #28a745;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+    }
+    
+    .success-message.show {
+      display: block;
+    }
+    
+    .success-message h3 {
+      color: #155724;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .success-message p {
+      color: #155724;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Reset Orders Tool</h1>
+    <p class="subtitle">Công cụ xóa tất cả đơn hàng cũ để test lại tính năng Shipper Stats</p>
+    
+    <div class="warning-box">
+      <h3>⚠️ Cảnh báo quan trọng</h3>
+      <p><strong>Hành động này không thể hoàn tác!</strong></p>
+      <p>Tất cả đơn hàng hiện tại sẽ bị xóa vĩnh viễn khỏi localStorage.</p>
+    </div>
+    
+    <div class="info-box">
+      <h3>ℹ️ Dữ liệu sẽ bị xóa</h3>
+      <ul>
+        <li><code>orders</code> - Tất cả đơn hàng (đang giao + đã giao)</li>
+        <li><code>shippingOrders_*</code> - Đơn hàng của từng user</li>
+        <li><code>deliveredOrders_*</code> - Đơn hàng đã giao của từng user</li>
+      </ul>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn-reset" onclick="resetOrders()">
+        🗑️ Xóa tất cả đơn hàng
+      </button>
+      <button class="btn-cancel" onclick="goBack()">
+        ❌ Hủy bỏ
+      </button>
+    </div>
+    
+    <div class="log-box" id="logBox"></div>
+    
+    <div class="success-message" id="successMessage">
+      <h3>✅ Xóa thành công!</h3>
+      <p>Tất cả đơn hàng đã được xóa. Bây giờ bạn có thể:</p>
+      <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+        <li>Đặt đơn hàng mới từ trang Menu</li>
+        <li>Kiểm tra Shipper Stats trong Admin Dashboard</li>
+        <li>Console logs sẽ hiển thị driver info đầy đủ</li>
+      </ul>
+    </div>
+  </div>
+  
+  <script>
+    function addLog(message, type = 'info') {
+      const logBox = document.getElementById('logBox');
+      logBox.classList.add('show');
+      
+      const logItem = document.createElement('div');
+      logItem.className = `log-item log-${type}`;
+      logItem.textContent = message;
+      logBox.appendChild(logItem);
+      
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+    
+    function resetOrders() {
+      if (!confirm('⚠️ BẠN CHẮC CHẮN MUỐN XÓA TẤT CẢ ĐỜN HÀNG?\n\nHành động này không thể hoàn tác!')) {
+        return;
+      }
+      
+      addLog('🚀 Bắt đầu xóa dữ liệu...', 'info');
+      
+      try {
+        // 1. Xóa orders chính
+        if (localStorage.getItem('orders')) {
+          const ordersData = JSON.parse(localStorage.getItem('orders'));
+          const totalOrders = (ordersData.dangGiao?.length || 0) + (ordersData.daGiao?.length || 0);
+          localStorage.removeItem('orders');
+          addLog(`✅ Đã xóa ${totalOrders} đơn hàng từ 'orders'`, 'success');
+        } else {
+          addLog('ℹ️ Không tìm thấy orders', 'info');
+        }
+        
+        // 2. Xóa shippingOrders_* và deliveredOrders_*
+        let deletedCount = 0;
+        const keys = Object.keys(localStorage);
+        
+        for (const key of keys) {
+          if (key.startsWith('shippingOrders_') || key.startsWith('deliveredOrders_')) {
+            localStorage.removeItem(key);
+            deletedCount++;
+            addLog(`✅ Đã xóa '${key}'`, 'success');
+          }
+        }
+        
+        addLog(`✅ Đã xóa ${deletedCount} key của user orders`, 'success');
+        
+        // 3. Reset orders về trạng thái ban đầu
+        localStorage.setItem('orders', JSON.stringify({
+          dangGiao: [],
+          daGiao: []
+        }));
+        addLog('✅ Đã khởi tạo lại orders rỗng', 'success');
+        
+        addLog('', 'info');
+        addLog('🎉 HOÀN TẤT! Tất cả đơn hàng đã được xóa.', 'success');
+        addLog('', 'info');
+        addLog('📝 Bước tiếp theo:', 'info');
+        addLog('1️⃣ Vào trang Menu và đặt đơn hàng mới', 'info');
+        addLog('2️⃣ Hoàn tất checkout', 'info');
+        addLog('3️⃣ Vào Admin Dashboard → Tab Shippers', 'info');
+        addLog('4️⃣ Mở Console (F12) để xem logs', 'info');
+        addLog('5️⃣ Shipper sẽ hiển thị đúng số đơn và thu nhập', 'info');
+        
+        document.getElementById('successMessage').classList.add('show');
+        
+      } catch (error) {
+        addLog(`❌ Lỗi: ${error.message}`, 'error');
+        console.error('Reset error:', error);
+      }
+    }
+    
+    function goBack() {
+      window.location.href = '/';
+    }
+    
+    // Log thông tin hiện tại khi load trang
+    window.addEventListener('load', () => {
+      try {
+        const ordersData = JSON.parse(localStorage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
+        const totalOrders = (ordersData.dangGiao?.length || 0) + (ordersData.daGiao?.length || 0);
+        
+        addLog(`📊 Thống kê hiện tại:`, 'info');
+        addLog(`   • Đơn đang giao: ${ordersData.dangGiao?.length || 0}`, 'info');
+        addLog(`   • Đơn đã giao: ${ordersData.daGiao?.length || 0}`, 'info');
+        addLog(`   • Tổng cộng: ${totalOrders} đơn`, 'info');
+        
+        // Đếm user orders
+        let userOrdersCount = 0;
+        const keys = Object.keys(localStorage);
+        for (const key of keys) {
+          if (key.startsWith('shippingOrders_') || key.startsWith('deliveredOrders_')) {
+            userOrdersCount++;
+          }
+        }
+        addLog(`   • User order keys: ${userOrdersCount}`, 'info');
+        addLog('', 'info');
+        
+      } catch (error) {
+        addLog(`⚠️ Không thể đọc dữ liệu: ${error.message}`, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

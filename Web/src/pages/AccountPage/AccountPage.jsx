@@ -1,24 +1,57 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isLoggedIn, getCurrentUser, updateUserInfo, logout } from "@shared/services/authService";
 import "./AccountPage.css";
 
 export default function AccountPage() {
   const navigate = useNavigate();
-  const [userInfo, setUserInfo] = useState({ username: '', phone: '', address: '' });
+  const [userInfo, setUserInfo] = useState({ 
+    username: '', 
+    fullName: '',
+    phone: '', 
+    address: '' 
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkLogin = async () => {
-      // Dùng shared service với localStorage
       const loggedIn = await isLoggedIn(localStorage);
       if (!loggedIn) {
         navigate('/login');
         return;
       }
 
-      const user = await getCurrentUser(localStorage);
-      if (user) setUserInfo(user);
+      let user = await getCurrentUser(localStorage);
+      console.log('🔍 Loaded user data from userInfo:', user);
+      
+      // Nếu userInfo không có hoặc thiếu dữ liệu, thử load từ user array
+      if (!user || !user.fullName) {
+        console.log('⚠️ userInfo empty, trying to load from user array...');
+        const usersStr = localStorage.getItem('user');
+        if (usersStr) {
+          const users = JSON.parse(usersStr);
+          const currentUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+          const foundUser = Array.isArray(users) 
+            ? users.find(u => u.username === currentUserInfo.username)
+            : null;
+          
+          if (foundUser) {
+            console.log('✅ Found user in array:', foundUser);
+            user = foundUser;
+            // Update userInfo in localStorage
+            localStorage.setItem('userInfo', JSON.stringify(foundUser));
+          }
+        }
+      }
+      
+      if (user) {
+        setUserInfo({
+          username: user.username || '',
+          fullName: user.fullName || '',
+          phone: user.phone || '',
+          address: user.address || ''
+        });
+      }
       setLoading(false);
     };
     checkLogin();
@@ -31,20 +64,36 @@ export default function AccountPage() {
 
   const handleSave = async () => {
     try {
-      // Dùng shared service
-      await updateUserInfo({
+      const updatedInfo = {
         username: userInfo.username,
+        fullName: userInfo.fullName,
         phone: userInfo.phone,
         address: userInfo.address,
-      }, localStorage);
-      alert('Đã lưu thông tin!');
+      };
+      
+      console.log('💾 Saving user info:', updatedInfo); // Debug log
+      
+      await updateUserInfo(updatedInfo, localStorage);
+      
+      // Re-fetch user data to confirm update
+      const user = await getCurrentUser(localStorage);
+      if (user) {
+        setUserInfo({
+          username: user.username || '',
+          fullName: user.fullName || '',
+          phone: user.phone || '',
+          address: user.address || ''
+        });
+      }
+      
+      alert('✅ Đã lưu thông tin thành công!');
     } catch (error) {
-      alert('Lỗi: ' + error.message);
+      console.error('Save error:', error);
+      alert('❌ Lỗi: ' + error.message);
     }
   };
 
   const handleLogout = async () => {
-    // Dùng shared service
     await logout(localStorage);
     navigate('/login');
   };
@@ -65,63 +114,91 @@ export default function AccountPage() {
 
   return (
     <div className="account-page">
-      <header className="account-header">
-        <h1>Thông tin cá nhân</h1>
-      </header>
-
-      <div className="account-content">
-        <div className="form-container">
-          <div className="form-group">
-            <label htmlFor="username">Tên</label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              placeholder="Nhập tên của bạn"
-              value={userInfo.username}
-              onChange={handleChange}
-              className="form-input"
-            />
+      <div className="account-container">
+        <div className="account-sidebar">
+          <div className="sidebar-header">
+            <div className="user-avatar">
+              <span className="avatar-icon">👤</span>
+            </div>
+            <h3 className="user-name">{userInfo.fullName || userInfo.username || 'Người dùng'}</h3>
+            <p className="user-role">Khách hàng</p>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="phone">Số điện thoại</label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              placeholder="Nhập số điện thoại"
-              value={userInfo.phone}
-              onChange={handleChange}
-              className="form-input"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="address">Địa chỉ mặc định</label>
-            <input
-              id="address"
-              name="address"
-              type="text"
-              placeholder="Nhập địa chỉ"
-              value={userInfo.address}
-              onChange={handleChange}
-              className="form-input"
-            />
-          </div>
-
-          <button className="btn-save" onClick={handleSave}>
-            💾 Lưu thông tin
-          </button>
+          
+          <nav className="sidebar-menu">
+            <button className="menu-item active">
+              <span className="menu-icon">👤</span>
+              <span>Thông tin cá nhân</span>
+            </button>
+            <button className="menu-item" onClick={handleChangePassword}>
+              <span className="menu-icon">🔒</span>
+              <span>Đổi mật khẩu</span>
+            </button>
+            <button className="menu-item logout" onClick={handleLogout}>
+              <span className="menu-icon">🚪</span>
+              <span>Đăng xuất</span>
+            </button>
+          </nav>
         </div>
 
-        <div className="menu-actions">
-          <button className="menu-btn" onClick={handleChangePassword}>
-            🔒 Đổi mật khẩu
-          </button>
-          <button className="menu-btn logout-btn" onClick={handleLogout}>
-            🚪 Đăng xuất
-          </button>
+        <div className="account-main">
+          <div className="page-header">
+            <h1>Thông tin cá nhân</h1>
+            <p className="page-subtitle">Quản lý thông tin để bảo mật tài khoản</p>
+          </div>
+
+          <div className="info-card">
+            <h2 className="card-title">Thông tin tài khoản</h2>
+            
+            <div className="form-row">
+              <div className="form-col">
+                <label htmlFor="fullName">Họ và tên</label>
+                <input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  placeholder="Nhập họ và tên"
+                  value={userInfo.fullName || ''}
+                  onChange={handleChange}
+                  className="form-input"
+                />
+              </div>
+              
+              <div className="form-col">
+                <label htmlFor="phone">Số điện thoại</label>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="Nhập số điện thoại"
+                  value={userInfo.phone || ''}
+                  onChange={handleChange}
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-col-full">
+                <label htmlFor="address">Địa chỉ</label>
+                <input
+                  id="address"
+                  name="address"
+                  type="text"
+                  placeholder="Nhập địa chỉ"
+                  value={userInfo.address || ''}
+                  onChange={handleChange}
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button className="btn-save" onClick={handleSave}>
+                <span className="btn-icon">💾</span>
+                Lưu thay đổi
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -15,9 +15,40 @@ const readRestaurants = (storage = localStorage) => {
   catch { return []; }
 };
 
+const parseUsers = (value) => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('Failed to parse users from storage:', error);
+    return [];
+  }
+};
+
 const readUsers = (storage = localStorage) => {
-  try { return JSON.parse(storage.getItem('registeredUsers') || '[]'); }
-  catch { return []; }
+  try {
+    const registeredUsers = parseUsers(storage.getItem('registeredUsers'));
+    const primaryUsers = parseUsers(storage.getItem('user'));
+    const source = registeredUsers.length >= primaryUsers.length ? registeredUsers : primaryUsers;
+    return source.map(user => ({
+      ...user,
+      banned: Boolean(user?.banned),
+    }));
+  } catch (error) {
+    console.error('adminMetricsService.readUsers error:', error);
+    return [];
+  }
+};
+
+const persistUsers = (storage, users) => {
+  const normalized = users.map(user => ({
+    ...user,
+    banned: Boolean(user?.banned),
+  }));
+  const serialized = JSON.stringify(normalized);
+  storage.setItem('registeredUsers', serialized);
+  storage.setItem('user', serialized);
 };
 
 const toNumber = (v) => Number(v) || 0;
@@ -122,13 +153,13 @@ export const getRestaurants = (storage = localStorage) => {
 export const updateRestaurantStatus = (storage, restaurantId, status) => {
   try {
     const restaurants = readRestaurants(storage);
-    const restaurant = restaurants.find(r => r.id === restaurantId);
+    const restaurant = restaurants.find(r => String(r.id) === String(restaurantId));
     
     if (!restaurant) {
       return { success: false, error: 'Restaurant not found' };
     }
 
-    restaurant.status = status; // 'active' | 'pending' | 'suspended'
+  restaurant.status = status; // 'active' | 'pending' | 'suspended'
     restaurant.updatedAt = new Date().toISOString();
     
     storage.setItem('restaurants', JSON.stringify(restaurants));
@@ -160,8 +191,22 @@ export const updateUserStatus = (storage, username, banned) => {
 
     user.banned = banned;
     user.updatedAt = new Date().toISOString();
-    
-    storage.setItem('registeredUsers', JSON.stringify(users));
+    persistUsers(storage, users);
+
+    try {
+      const currentUserInfo = storage.getItem('userInfo');
+      if (currentUserInfo) {
+        const currentUser = JSON.parse(currentUserInfo);
+        if (currentUser?.username === user.username) {
+          storage.setItem('userInfo', JSON.stringify(user));
+          if (banned) {
+            storage.removeItem('isLoggedIn');
+          }
+        }
+      }
+    } catch (syncError) {
+      console.error('Failed to sync current user after status change:', syncError);
+    }
     
     return { success: true, user };
   } catch (error) {

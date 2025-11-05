@@ -1,7 +1,8 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useLogin } from "@shared/hooks/useLogin";
 import { loginRestaurantOwner, saveOwnerSession } from "@shared/services/restaurantAuthService";
+import { login as loginUser } from "@shared/services/authService";
 import "./LoginPage.css";
 
 export default function LoginPage() {
@@ -12,6 +13,8 @@ export default function LoginPage() {
     setPassword,
     error,
     setError,
+    loading,
+    setLoading,
     validate
   } = useLogin();
   
@@ -22,8 +25,13 @@ export default function LoginPage() {
     if (location.state?.error === 'owner_required') {
       setError("Vui lòng đăng nhập với tài khoản nhà hàng hợp lệ!");
       window.history.replaceState({}, document.title);
+      return;
     }
-  }, [location]);
+
+    if (location.state?.message) {
+      setError(location.state.message);
+    }
+  }, [location, setError]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,6 +41,8 @@ export default function LoginPage() {
     if (!validate()) {
       return;
     }
+
+     setLoading(true);
 
     // ================================
     // KIỂM TRA TẠI KHOẢN NHÀ HÀNG
@@ -44,9 +54,11 @@ export default function LoginPage() {
       
       if (saveResult.success) {
         navigate("/restaurant-dashboard", { replace: true });
+        setLoading(false);
         return;
       } else {
         setError("Lỗi lưu phiên đăng nhập!");
+        setLoading(false);
         return;
       }
     }
@@ -54,28 +66,46 @@ export default function LoginPage() {
     // Nếu có lỗi từ restaurant login (tạm ngưng/chờ duyệt)
     if (ownerLoginResult.error && ownerLoginResult.error.includes('⛔') || ownerLoginResult.error?.includes('⏳')) {
       setError(ownerLoginResult.error);
+      setLoading(false);
       return;
     }
 
     // ================================
     // ĐĂNG NHẬP KHÁCH HÀNG
     // ================================
-    const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
-    const foundUser = registeredUsers.find(
-      (u) => u.username === username && u.password === password
-    );
+    try {
+      const result = await loginUser(localStorage, username, password);
 
-    if (!foundUser) {
-      setError("Sai tên đăng nhập hoặc mật khẩu!");
-      return;
+      if (!result.success) {
+        setError(result.error || "Đăng nhập thất bại!");
+        return;
+      }
+
+      let redirectPayload = null;
+      try {
+        const pendingCheckoutStr = localStorage.getItem("pendingCheckout");
+        if (pendingCheckoutStr) {
+          redirectPayload = JSON.parse(pendingCheckoutStr);
+        }
+      } catch (error) {
+        console.error("Failed to parse pending checkout payload:", error);
+      } finally {
+        localStorage.removeItem("pendingCheckout");
+      }
+
+      if (redirectPayload?.orderItems?.length) {
+        navigate("/checkout", { replace: true, state: redirectPayload });
+        return;
+      }
+
+      const from = location.state?.from || "/home";
+      navigate(from, { replace: true });
+    } catch (err) {
+      console.error("Customer login error:", err);
+      setError("Đã có lỗi xảy ra, vui lòng thử lại!");
+    } finally {
+      setLoading(false);
     }
-
-    const userInfo = { username, role: "user" };
-    localStorage.setItem("userInfo", JSON.stringify(userInfo));
-    localStorage.setItem("isLoggedIn", "true");
-
-    const from = location.state?.from || "/home";
-    navigate(from, { replace: true });
   };
 
   return (
@@ -101,7 +131,9 @@ export default function LoginPage() {
           autoComplete="current-password"
         />
 
-        <button type="submit">Đăng nhập</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Đang xử lý..." : "Đăng nhập"}
+        </button>
 
         <p className="toggle-auth">
           Chưa có tài khoản?{" "}

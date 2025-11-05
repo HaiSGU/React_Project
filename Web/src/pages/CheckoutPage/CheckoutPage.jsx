@@ -19,6 +19,7 @@ import { saveOrder } from "@shared/services/orderService";
 import { notifyNewOrder } from "@shared/services/notificationService";
 import { syncSystemRevenue } from "@shared/services/dataSyncService";
 import eventBus, { EVENT_TYPES } from "@shared/services/eventBus";
+import { isLoggedIn } from "@shared/services/authService";
 
 // Mock QR codes
 const QR_CODES = [
@@ -29,10 +30,60 @@ const QR_CODES = [
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const orderFromMenu = location.state?.orderItems || [];
-  const totalFromMenu = location.state?.totalPrice || 0;
-  const restaurantId = location.state?.restaurantId;
+
+  const getPayloadFromState = (state) => {
+    if (state?.orderItems && Array.isArray(state.orderItems) && state.orderItems.length > 0) {
+      return {
+        orderItems: state.orderItems,
+        totalPrice: state.totalPrice || 0,
+        restaurantId: state.restaurantId,
+      };
+    }
+    return null;
+  };
+
+  const [checkoutPayload, setCheckoutPayload] = useState(() => {
+    const statePayload = getPayloadFromState(location.state);
+    if (statePayload) {
+      return statePayload;
+    }
+
+    try {
+      const pending = localStorage.getItem("pendingCheckout");
+      if (pending) {
+        const parsed = JSON.parse(pending);
+        return {
+          orderItems: Array.isArray(parsed?.orderItems) ? parsed.orderItems : [],
+          totalPrice: parsed?.totalPrice || 0,
+          restaurantId: parsed?.restaurantId,
+        };
+      }
+    } catch (error) {
+      console.error("Failed to restore pending checkout:", error);
+    }
+
+    return {
+      orderItems: [],
+      totalPrice: 0,
+      restaurantId: undefined,
+    };
+  });
+
+  // Update checkout payload when navigation state changes
+  useEffect(() => {
+    const statePayload = getPayloadFromState(location.state);
+    if (statePayload) {
+      setCheckoutPayload(statePayload);
+      try {
+        localStorage.removeItem("pendingCheckout");
+      } catch (error) {
+        console.error("Failed to clear pending checkout cache:", error);
+      }
+    }
+  }, [location.state]);
+
+  const orderItems = checkoutPayload.orderItems || [];
+  const restaurantId = checkoutPayload.restaurantId;
 
   // User info
   const [fullName, setFullName] = useState('');
@@ -71,6 +122,37 @@ export default function CheckoutPage() {
 
   // Load user info from localStorage
   useEffect(() => {
+    const ensureAuthenticated = async () => {
+      const loggedIn = await isLoggedIn(localStorage);
+      if (!loggedIn) {
+        try {
+          if (orderItems.length > 0) {
+            localStorage.setItem("pendingCheckout", JSON.stringify(checkoutPayload));
+          }
+        } catch (error) {
+          console.error("Failed to save pending checkout before redirect:", error);
+        }
+
+        navigate("/login", {
+          replace: true,
+          state: {
+            from: "/checkout",
+            message: "Vui lòng đăng nhập để tiếp tục thanh toán.",
+          },
+        });
+        return;
+      }
+
+      // Authenticated → remove any stale pending checkout cache
+      try {
+        localStorage.removeItem("pendingCheckout");
+      } catch (error) {
+        console.error("Failed to clean pending checkout cache:", error);
+      }
+    };
+
+    ensureAuthenticated();
+
     const userInfoStr = localStorage.getItem('userInfo');
     if (userInfoStr) {
       try {
@@ -97,7 +179,7 @@ export default function CheckoutPage() {
       setSelectedLocation(mapLocation);
       setAddress(mapLocation.address);
     }
-  }, [location.state]);
+  }, [location.state, navigate, checkoutPayload]);
 
   // Select random QR when payment method is QR
   useEffect(() => {
@@ -110,8 +192,6 @@ export default function CheckoutPage() {
   }, [paymentMethod]);
 
   // Calculate prices using shared helpers
-  const orderItems = orderFromMenu.length > 0 ? orderFromMenu : [];
-  
   const subtotal = calculateSubtotal(orderItems);
   const baseShippingFee = calculateShippingFee(deliveryMethod);
   

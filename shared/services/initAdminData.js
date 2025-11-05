@@ -38,10 +38,9 @@ export const initAdminData = (storage = localStorage, forceReinit = false) => {
   console.log('📋 Restaurants:', restaurants.map(r => `#${r.id} ${r.name} (${r.status})`).join(', '));
 };
 
-// Auto-init when imported
+// Auto-init when imported (chỉ init nếu chưa có dữ liệu)
 if (typeof window !== 'undefined') {
-  // Force reinit để cập nhật dữ liệu mới
-  initAdminData(localStorage, true);
+  initAdminData(localStorage, false);
 }
 
 export default initAdminData;

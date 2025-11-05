@@ -23,7 +23,8 @@ import {
 import { useRealtimeOrders, useNotifications, useEventListener } from '@shared/hooks/useRealtime'
 import { notifyOrderConfirmed, notifyOrderShipping } from '@shared/services/notificationService'
 import { syncSystemRevenue } from '@shared/services/dataSyncService'
-import { EVENT_TYPES } from '@shared/services/eventBus'
+import eventBus, { EVENT_TYPES } from '@shared/services/eventBus'
+import { updateRestaurantStatus } from '@shared/services/adminMetricsService'
 import NotificationBell from '../../components/NotificationBell/NotificationBell'
 import OrderChart from '../../components/Dashboard/OrderChart'
 import NotificationSystem from '../../components/Dashboard/NotificationSystem'
@@ -40,6 +41,7 @@ export default function RestaurantDashboard() {
   const [chartData, setChartData] = useState([])
   const [vouchers, setVouchers] = useState([])
   const [activeTab, setActiveTab] = useState('overview')
+  const [restaurantStatus, setRestaurantStatus] = useState('active') // active | suspended
   
   // 🔥 Real-time hooks
   const { orders: realtimeOrders, lastUpdate } = useRealtimeOrders()
@@ -70,6 +72,13 @@ export default function RestaurantDashboard() {
   useEffect(() => {
     if (!ownerInfo) return
     loadDashboardData()
+    
+    // Load restaurant status
+    const restaurants = JSON.parse(localStorage.getItem('restaurants') || '[]')
+    const currentRestaurant = restaurants.find(r => r.id === ownerInfo.restaurantId)
+    if (currentRestaurant) {
+      setRestaurantStatus(currentRestaurant.status || 'active')
+    }
   }, [ownerInfo, dateFilter])
 
   const loadDashboardData = () => {
@@ -99,6 +108,25 @@ export default function RestaurantDashboard() {
   const handleLogout = async () => {
     await logoutOwner(localStorage)
     navigate('/login')
+  }
+
+  const handleToggleRestaurantStatus = () => {
+    const newStatus = restaurantStatus === 'active' ? 'suspended' : 'active'
+    const result = updateRestaurantStatus(localStorage, ownerInfo.restaurantId, newStatus)
+
+    if (result.success) {
+      setRestaurantStatus(newStatus)
+      eventBus.emit(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, {
+        restaurantId: ownerInfo.restaurantId,
+        status: newStatus,
+      })
+
+      alert(newStatus === 'active'
+        ? '✅ Đã kích hoạt nhà hàng! Khách hàng có thể đặt hàng.'
+        : '⏸️ Đã tạm ngưng nhà hàng. Khách hàng sẽ không thấy nhà hàng trong danh sách.')
+    } else {
+      alert(result.error || '⚠️ Không thể cập nhật trạng thái nhà hàng. Vui lòng thử lại.')
+    }
   }
 
   const handleUpdateOrderStatus = (orderId, newStatus) => {
@@ -291,6 +319,19 @@ export default function RestaurantDashboard() {
         <div className="header-actions">
           {/* 🔔 Notification Bell */}
           <NotificationBell role="restaurant" />
+          
+          {/* Toggle Restaurant Status */}
+          <button 
+            className={`status-toggle-btn ${restaurantStatus === 'active' ? 'active' : 'suspended'}`}
+            onClick={handleToggleRestaurantStatus}
+            title={restaurantStatus === 'active' ? 'Click để tạm ngưng' : 'Click để kích hoạt'}
+          >
+            {restaurantStatus === 'active' ? (
+              <>✓ Đang hoạt động</>
+            ) : (
+              <>⏸️ Đã tạm ngưng</>
+            )}
+          </button>
           
           <button className="refresh-btn" onClick={loadDashboardData} title="Làm mới">
             🔄

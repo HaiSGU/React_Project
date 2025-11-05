@@ -305,6 +305,41 @@
   gap: 16px;
 }
 
+.status-toggle-btn {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-toggle-btn.active {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.status-toggle-btn.active:hover {
+  background: rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+.status-toggle-btn.suspended {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.status-toggle-btn.suspended:hover {
+  background: rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
 .refresh-btn {
   background: rgba(255,255,255,0.2);
   border: 1px solid rgba(255,255,255,0.3);

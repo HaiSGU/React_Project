@@ -148,24 +148,69 @@ export const getShipperStats = (storage) => {
   const ordersData = JSON.parse(storage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
   const allOrders = [...ordersData.dangGiao, ...ordersData.daGiao];
   
+  console.log('📊 getShipperStats - Total orders:', allOrders.length);
+  console.log('📊 Sample order driver:', allOrders[0]?.driver);
+  console.log('📊 Sample order delivery.driver:', allOrders[0]?.delivery?.driver);
+  console.log('📊 Sample order status:', allOrders[0]?.status);
+  console.log('📊 All order statuses:', allOrders.map(o => o.status).join(', '));
+  
+  // Helper: chuẩn hóa status (bỏ dấu, lowercase) để so sánh linh hoạt
+  const normalizeStatus = (status) => {
+    if (!status) return '';
+    return status
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  };
+
+  const isDeliveredStatus = (status) => {
+    const normalized = normalizeStatus(status);
+    return (
+      normalized.includes('delivered') ||
+      normalized.includes('completed') ||
+      normalized.includes('done') ||
+      normalized.includes('da giao') // "Đã giao" (có hoặc không dấu)
+    );
+  };
+
   // Tính toán thống kê cho mỗi shipper
   const shipperStats = shippers.map(shipper => {
     // Lọc các đơn hàng của shipper này
-    const shipperOrders = allOrders.filter(order => order.driver && order.driver.id === shipper.id);
+    // ⚠️ Driver có thể ở order.driver hoặc order.delivery.driver
+    const shipperOrders = allOrders.filter(order => {
+      const driver = order.driver || order.delivery?.driver;
+      if (!driver) return false;
+      
+      const hasDriver = driver.id === shipper.id || 
+                       driver.id === shipper.id.toString() ||
+                       driver.name === shipper.name; // Fallback so sánh tên
+      return hasDriver;
+    });
     
-    // Tính tổng đơn đã giao (status = 'delivered')
-    const deliveredOrders = shipperOrders.filter(order => order.status === 'delivered');
+    console.log(`🚴 Shipper #${shipper.id} (${shipper.name}): ${shipperOrders.length} orders, statuses:`, shipperOrders.map(o => o.status).join(', '));
+    
+    // ⭐ TỔNG ĐƠN ĐƯỢC GÁN (bao gồm tất cả status)
+    const totalAssigned = shipperOrders.length;
+    
+    // ⭐ TỔNG ĐƠN ĐÃ GIAO (chỉ delivered/completed)
+    const deliveredOrders = shipperOrders.filter(order => isDeliveredStatus(order.status));
     const totalDeliveries = deliveredOrders.length;
     
-    // Tính tổng thu nhập (10% của mỗi đơn hàng đã giao)
+    // ⭐ TỔNG THU NHẬP (10% của đơn đã giao)
     const totalEarnings = deliveredOrders.reduce((sum, order) => {
       const orderTotal = order.total || order.totalPrice || 0;
       const shipperCommission = Math.round(orderTotal * 0.10); // 10% cho shipper
+      
+      console.log(`💰 Order #${order.id}: total=${order.total}, totalPrice=${order.totalPrice}, orderTotal=${orderTotal}, commission=${shipperCommission}`);
+      
       return sum + shipperCommission;
     }, 0);
     
+    console.log(`💵 Shipper #${shipper.id} total earnings:`, totalEarnings);
+    
     // Tính tỷ lệ thành công
-    const totalAssigned = shipperOrders.length;
     const successRate = totalAssigned > 0 ? Math.round((totalDeliveries / totalAssigned) * 100) : 100;
     
     return {

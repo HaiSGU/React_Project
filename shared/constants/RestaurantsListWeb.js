@@ -58,3 +58,30 @@ export const RESTAURANTS = RESTAURANTS_DATA.map(restaurant => ({
     ? restaurant.category 
     : [restaurant.category]
 }));
+
+// Helper: kết hợp status từ localStorage với dữ liệu hiển thị
+export const getRestaurantsWithStatus = (storage = localStorage) => {
+  let stored = [];
+  try {
+    stored = JSON.parse(storage.getItem('restaurants') || '[]');
+  } catch {
+    stored = [];
+  }
+
+  const statusMap = new Map(
+    stored.map(rest => [String(rest.id), rest])
+  );
+
+  return RESTAURANTS.map(restaurant => {
+    const storedRestaurant = statusMap.get(String(restaurant.id));
+    const status = storedRestaurant?.status || restaurant.status || 'active';
+
+    return {
+      ...restaurant,
+      status,
+      isSuspended: status === 'suspended',
+      isPending: status === 'pending',
+      lastUpdatedAt: storedRestaurant?.updatedAt,
+    };
+  });
+};

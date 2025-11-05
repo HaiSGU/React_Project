@@ -83,6 +83,7 @@ export const buildOrderObject = (checkoutData) => {
       method: deliveryMethod,
       fee: Number(shippingFee),
       driver: driver ? {
+        id: driver.id, // ⭐ THÊM ID
         name: driver.name,
         phone: driver.phone,
         vehicle: driver.vehicle,

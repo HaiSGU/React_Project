@@ -70,6 +70,13 @@ export const login = async (storage, username, password) => {
       };
     }
 
+    if (user.banned) {
+      return {
+        success: false,
+        error: 'Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ!',
+      };
+    }
+
     if (user.password !== password) {
       return {
         success: false,
@@ -78,12 +85,17 @@ export const login = async (storage, username, password) => {
     }
 
     // Save login state
+    const normalizedUser = {
+      ...user,
+      banned: Boolean(user.banned),
+    };
+
     await storage.setItem('isLoggedIn', 'true');
-    await storage.setItem('userInfo', JSON.stringify(user));
+    await storage.setItem('userInfo', JSON.stringify(normalizedUser));
 
     return {
       success: true,
-      user,
+      user: normalizedUser,
     };
   } catch (error) {
     console.error('Login error:', error);
@@ -150,10 +162,13 @@ export const register = async (storage, userData) => {
       address: address || '',
       gender: gender || 'other',
       createdAt: new Date().toISOString(),
+      banned: false,
     };
 
     registeredUsers.push(newUser);
-    await storage.setItem('user', JSON.stringify(registeredUsers));
+  const serializedUsers = JSON.stringify(registeredUsers);
+  await storage.setItem('user', serializedUsers);
+  await storage.setItem('registeredUsers', serializedUsers);
 
     return {
       success: true,
@@ -212,8 +227,13 @@ export const updateUserInfo = async (newInfo, storage) => {
         const userIndex = registeredUsers.findIndex(u => u.username === user.username);
         
         if (userIndex !== -1) {
-          registeredUsers[userIndex] = updatedUser;
-          await storage.setItem('user', JSON.stringify(registeredUsers));
+          registeredUsers[userIndex] = {
+            ...updatedUser,
+            banned: Boolean(updatedUser.banned),
+          };
+          const serializedUsers = JSON.stringify(registeredUsers);
+          await storage.setItem('user', serializedUsers);
+          await storage.setItem('registeredUsers', serializedUsers);
         }
       }
     }
@@ -268,8 +288,14 @@ export const changePassword = async (storage, oldPassword, newPassword) => {
         const userIndex = registeredUsers.findIndex(u => u.username === user.username);
         
         if (userIndex !== -1) {
-          registeredUsers[userIndex].password = newPassword;
-          await storage.setItem('user', JSON.stringify(registeredUsers));
+          registeredUsers[userIndex] = {
+            ...registeredUsers[userIndex],
+            password: newPassword,
+            banned: Boolean(registeredUsers[userIndex].banned),
+          };
+          const serializedUsers = JSON.stringify(registeredUsers);
+          await storage.setItem('user', serializedUsers);
+          await storage.setItem('registeredUsers', serializedUsers);
         }
       }
     }
@@ -304,7 +330,8 @@ export const logout = async (storage) => {
 
 export const clearAllData = async (storage) => {
   try {
-    await storage.removeItem('user');
+  await storage.removeItem('user');
+  await storage.removeItem('registeredUsers');
     await storage.removeItem('isLoggedIn');
     await storage.removeItem('userInfo');
     console.log('✅ All data cleared');
@@ -331,7 +358,9 @@ export const createDemoUser = async (storage) => {
       createdAt: new Date().toISOString(),
     }];
     
-    await storage.setItem('user', JSON.stringify(demoUser));
+  const serializedUsers = JSON.stringify(demoUser);
+  await storage.setItem('user', serializedUsers);
+  await storage.setItem('registeredUsers', serializedUsers);
     console.log('✅ Demo user created: user/123456');
     return { success: true };
   } catch (error) {

@@ -209,6 +209,20 @@ section h3 {
   width: 100%;
 }
 
+.empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 16px;
+  color: #666;
+  font-weight: 500;
+}
+
 /* ============================= */
 /* 📱 Footer nav */
 /* ============================= */
@@ -300,6 +314,23 @@ section h3 {
   transform: translateY(-50%);
   color: #757575;
   font-size: 20px;
+}
+
+.search-clear {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: #9e9e9e;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.search-clear:hover {
+  color: #616161;
 }
 
 /* Sections */
@@ -411,6 +442,12 @@ section {
   margin: 0 15px 20px 15px;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.promos-section .section-title {
+  margin-bottom: 20px;
+}
+
 /* Promos Grid - SCROLL NGANG */
 .promos-grid {
   display: flex;
@@ -420,6 +457,25 @@ section {
   scrollbar-width: thin;
   scrollbar-color: #00bcd4 #e0e0e0;
 }
+
+.promos-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.promos-grid::-webkit-scrollbar-track {
+  background: #e0e0e0;
+  border-radius: 3px;
+}
+
+.promos-grid::-webkit-scrollbar-thumb {
+  background: #00bcd4;
+  border-radius: 3px;
+}
+
+.promos-grid::-webkit-scrollbar-thumb:hover {
+  background: #00acc1;
+}
+
 .promo-badge {
   background: linear-gradient(135deg, #00bcd4 0%, #00acc1 100%);
   color: #fff;
@@ -433,27 +489,6 @@ section {
   box-shadow: 0 2px 8px rgba(0,188,212,0.2);
   flex-shrink: 0;
   min-width: 200px;
-} background: #00bcd4;
-  border-radius: 3px;
-}
-
-.promos-grid::-webkit-scrollbar-thumb:hover {
-  background: #00acc1;
-} grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.promo-badge {
-  background: linear-gradient(135deg, #00bcd4 0%, #00acc1 100%);
-  color: #fff;
-  padding: 16px 24px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0,188,212,0.2);
 }
 
 .promo-badge:hover {
@@ -507,11 +542,32 @@ section {
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   flex-shrink: 0;
   width: 280px;
+  position: relative;
 }
 
 .restaurant-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.restaurant-card.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  filter: grayscale(0.1);
+  transform: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.restaurant-card.is-disabled:hover {
+  transform: none;
+}
+
+.restaurant-card.is-disabled .restaurant-info,
+.restaurant-card.is-disabled .restaurant-name,
+.restaurant-card.is-disabled .restaurant-meta,
+.restaurant-card.is-disabled .meta-item,
+.restaurant-card.is-disabled .meta-icon {
+  color: #b0b8c4;
 }
 
 .restaurant-image-wrap {
@@ -534,6 +590,10 @@ section {
 
 .restaurant-card:hover .restaurant-image {
   transform: scale(1.05);
+}
+
+.restaurant-card.is-disabled .restaurant-image {
+  transform: none;
 }
 
 .restaurant-info {
@@ -565,6 +625,21 @@ section {
 
 .meta-icon {
   font-size: 13px;
+}
+
+.restaurant-status-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 24, 40, 0.6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  z-index: 2;
 }
 
 /* Responsive */
