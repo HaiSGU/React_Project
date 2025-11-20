@@ -1,3 +1,28 @@
+import { MENU_ITEMS } from '../constants/MenuItems';
+import { RESTAURANTS_DATA } from '../constants/RestaurantsData';
+
+const resolveRestaurantInfo = (cart, providedRestaurantId) => {
+  const firstItem = cart?.[0];
+  let resolvedId = providedRestaurantId ?? firstItem?.restaurantId ?? null;
+  let resolvedName = firstItem?.restaurantName ?? null;
+
+  if (!resolvedId && firstItem) {
+    const catalogItem = MENU_ITEMS.find(item => item.id === firstItem.id);
+    if (catalogItem) {
+      resolvedId = Array.isArray(catalogItem.restaurantId)
+        ? catalogItem.restaurantId[0]
+        : catalogItem.restaurantId;
+    }
+  }
+
+  if (!resolvedName && resolvedId) {
+    const restaurant = RESTAURANTS_DATA.find(r => r.id === resolvedId);
+    resolvedName = restaurant?.name ?? null;
+  }
+
+  return { restaurantId: resolvedId, restaurantName: resolvedName };
+};
+
 export const buildOrderObject = (checkoutData) => {
   const {
     cart,
@@ -12,8 +37,9 @@ export const buildOrderObject = (checkoutData) => {
     restaurantId,  // ⭐ THÊM THAM SỐ
   } = checkoutData;
 
-  // ⭐ LẤY restaurantId TỪ CART NẾU KHÔNG CÓ
-  const finalRestaurantId = restaurantId || cart[0]?.restaurantId;
+  // ⭐ LẤY restaurantId TỪ CART/MENU NẾU KHÔNG CÓ
+  const { restaurantId: finalRestaurantId, restaurantName: resolvedRestaurantName } =
+    resolveRestaurantInfo(cart, restaurantId);
 
   console.log('🏗️ Building order with restaurantId:', finalRestaurantId);  // ⭐ DEBUG
 
@@ -53,7 +79,7 @@ export const buildOrderObject = (checkoutData) => {
     
     // ⭐ THÊM restaurantId Ở ĐẦU
     restaurantId: finalRestaurantId,
-    restaurantName: cart[0]?.restaurantName,
+    restaurantName: resolvedRestaurantName || cart[0]?.restaurantName,
     
     // Customer info
     customer: {
@@ -75,7 +101,7 @@ export const buildOrderObject = (checkoutData) => {
       quantity: Number(item.quantity) || 1,
       image: item.image,
       restaurantId: item.restaurantId || finalRestaurantId,
-      restaurantName: item.restaurantName,
+      restaurantName: item.restaurantName || resolvedRestaurantName,
     })),
     
     // Delivery

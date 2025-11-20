@@ -1,3 +1,5 @@
+import { RESTAURANTS_DATA } from '../constants/RestaurantsData';
+
 /**
  * Order management service - User-specific
  */
@@ -34,7 +36,24 @@ export const saveOrder = async (storage, order) => {
     }
 
     // ⚠️ KIỂM TRA TRẠNG THÁI NHÀ HÀNG
-    const restaurants = JSON.parse(storage.getItem('restaurants') || '[]');
+    const restaurantsData = await storage.getItem('restaurants');
+    let restaurants = [];
+
+    if (restaurantsData) {
+      try {
+        restaurants = JSON.parse(restaurantsData);
+      } catch (parseError) {
+        console.warn('Parse restaurants error, fallback to defaults:', parseError);
+      }
+    }
+
+    if (!Array.isArray(restaurants) || restaurants.length === 0) {
+      restaurants = RESTAURANTS_DATA.map(rest => ({
+        id: rest.id,
+        name: rest.name,
+        status: 'active',
+      }));
+    }
     const restaurant = restaurants.find(r => r.id === order.restaurantId);
     
     if (!restaurant) {
@@ -76,7 +95,8 @@ export const saveOrder = async (storage, order) => {
     await storage.setItem(`shippingOrders_${username}`, JSON.stringify(updatedShipping));
 
     // 2️⃣ Lưu vào hệ thống orders (cho restaurant)
-    const ordersData = JSON.parse(storage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
+    const ordersRaw = await storage.getItem('orders');
+    const ordersData = JSON.parse(ordersRaw || '{"dangGiao":[],"daGiao":[]}');
     ordersData.dangGiao.push(newOrder);
     storage.setItem('orders', JSON.stringify(ordersData));
 
@@ -166,7 +186,8 @@ export const confirmDelivery = async (order, storage) => {
     await storage.setItem(`deliveredOrders_${username}`, JSON.stringify(newDelivered));
 
     // 🔄 Đồng bộ vào hệ thống orders chung (cho restaurant / admin / shipper)
-    const ordersData = JSON.parse(storage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
+    const ordersRaw = await storage.getItem('orders');
+    const ordersData = JSON.parse(ordersRaw || '{"dangGiao":[],"daGiao":[]}');
     const globalIndex = ordersData.dangGiao.findIndex(o => String(o.id) === String(order.id));
 
     if (globalIndex !== -1) {

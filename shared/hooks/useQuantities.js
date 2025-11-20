@@ -47,6 +47,8 @@ export const useQuantities = (items = []) => {
         quantity: quantities[item.id] || 0,
         image: item.image,
         description: item.description,
+        restaurantId: item.restaurantId,
+        restaurantName: item.restaurantName,
       }));
   }, [quantities, items]);
 

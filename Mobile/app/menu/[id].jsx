@@ -10,19 +10,27 @@ import colors from '@shared/theme/colors'
 export default function MenuScreen() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
-  const restaurantId = parseInt(id)
+  const currentRestaurantId = parseInt(id)
+
+  // Lấy tên restaurant để hiển thị header
+  const restaurant = RESTAURANTS.find(r => r.id === currentRestaurantId)
+  const restaurantName = restaurant ? restaurant.name : 'Menu'
 
   // ✅ Filter menu theo restaurantId
-  const menuForRestaurant = MENU_ITEMS_RESOLVED.filter((item) => {
-    if (Array.isArray(item.restaurantId)) {
-      return item.restaurantId.includes(restaurantId)
-    }
-    return item.restaurantId === restaurantId
-  })
-  
-  // Lấy tên restaurant để hiển thị header
-  const restaurant = RESTAURANTS.find(r => r.id === restaurantId)
-  const restaurantName = restaurant ? restaurant.name : 'Menu'
+  const menuForRestaurant = MENU_ITEMS_RESOLVED
+    .filter((item) => {
+      if (Array.isArray(item.restaurantId)) {
+        return item.restaurantId.includes(currentRestaurantId)
+      }
+      return item.restaurantId === currentRestaurantId
+    })
+    .map(item => ({
+      ...item,
+      restaurantId: Array.isArray(item.restaurantId)
+        ? currentRestaurantId
+        : item.restaurantId,
+      restaurantName,
+    }))
 
   // ✅ Dùng custom hook
   const { quantities, increase, decrease, totalPrice, cartItems } = useQuantities(menuForRestaurant)
