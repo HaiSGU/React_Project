@@ -1,7 +1,13 @@
 /**
- * Authentication service
- * Works with both Mobile (AsyncStorage) and Web (localStorage)
- */
+* Authentication service
+* Works with both Mobile (AsyncStorage) and Web (localStorage)
+*/
+
+import { 
+  syncUsersToStorage, 
+  createUserOnServer, 
+  updateUserOnServer 
+} from './cloudSyncService';
 
 /**
  * Check if user is logged in
@@ -21,6 +27,7 @@ export const isLoggedIn = async (storage) => {
  */
 export const login = async (storage, username, password) => {
   try {
+    await syncUsersToStorage(storage);
     const registeredUsersStr = await storage.getItem('user');
     
     if (!registeredUsersStr) {
@@ -120,6 +127,7 @@ export const register = async (storage, userData) => {
       };
     }
 
+    await syncUsersToStorage(storage);
     const registeredUsersStr = await storage.getItem('user');
     let registeredUsers = [];
 
@@ -164,15 +172,33 @@ export const register = async (storage, userData) => {
       createdAt: new Date().toISOString(),
       banned: false,
     };
+    
+    let persistedUser = { ...newUser };
+    
+    try {
+      const serverUser = await createUserOnServer(newUser);
+      if (serverUser && serverUser.id != null) {
+        persistedUser = {
+          ...persistedUser,
+          id: serverUser.id,
+        };
+      }
+    } catch (syncError) {
+      console.error('Create remote user failed:', syncError);
+      return {
+        success: false,
+        error: 'Không thể kết nối máy chủ. Vui lòng thử lại!',
+      };
+    }
 
-    registeredUsers.push(newUser);
-  const serializedUsers = JSON.stringify(registeredUsers);
-  await storage.setItem('user', serializedUsers);
-  await storage.setItem('registeredUsers', serializedUsers);
+    registeredUsers.push(persistedUser);
+    const serializedUsers = JSON.stringify(registeredUsers);
+    await storage.setItem('user', serializedUsers);
+    await storage.setItem('registeredUsers', serializedUsers);
 
     return {
       success: true,
-      user: newUser,
+      user: persistedUser,
     };
   } catch (error) {
     console.error('Register error:', error);
@@ -238,6 +264,14 @@ export const updateUserInfo = async (newInfo, storage) => {
       }
     }
 
+    if (updatedUser.id) {
+      try {
+        await updateUserOnServer(updatedUser.id, updatedUser);
+      } catch (syncError) {
+        console.error('Remote update user failed:', syncError);
+      }
+    }
+
     return {
       success: true,
       user: updatedUser,
@@ -300,6 +334,14 @@ export const changePassword = async (storage, oldPassword, newPassword) => {
       }
     }
 
+    if (updatedUser.id) {
+      try {
+        await updateUserOnServer(updatedUser.id, { password: newPassword });
+      } catch (syncError) {
+        console.error('Remote password update failed:', syncError);
+      }
+    }
+
     return {
       success: true,
       message: 'Đổi mật khẩu thành công!',
@@ -357,6 +399,12 @@ export const createDemoUser = async (storage) => {
       gender: 'other',
       createdAt: new Date().toISOString(),
     }];
+    
+    try {
+      await createUserOnServer(demoUser[0]);
+    } catch (error) {
+      console.warn('Remote demo user creation skipped:', error.message);
+    }
     
   const serializedUsers = JSON.stringify(demoUser);
   await storage.setItem('user', serializedUsers);

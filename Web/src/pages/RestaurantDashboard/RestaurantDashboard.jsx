@@ -129,8 +129,8 @@ export default function RestaurantDashboard() {
     }
   }
 
-  const handleUpdateOrderStatus = (orderId, newStatus) => {
-    const result = updateOrderStatus(orderId, newStatus, localStorage)
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    const result = await updateOrderStatus(orderId, newStatus, localStorage)
     if (result.success) {
       // 🔔 Gửi notification cho customer
       const order = orders.find(o => o.id === orderId)
@@ -148,7 +148,7 @@ export default function RestaurantDashboard() {
       loadDashboardData()
       alert(`✅ Đã cập nhật trạng thái đơn hàng thành công!`)
     } else {
-      alert('❌ Lỗi cập nhật trạng thái!')
+      alert(result.error || '❌ Lỗi cập nhật trạng thái!')
     }
   }
 

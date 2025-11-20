@@ -1,84 +1,781 @@
 {
   "users": [
     {
-      "id": 1,
+      "id": "1",
       "username": "dat1",
       "password": "123456",
-      "fullname": "Nguyen Thanh Dat",
+      "fullName": "Nguyen Thanh Dat",
       "phone": "0365986732",
       "address": "Bình Tân, TP.HCM"
     },
     {
-      "id": 2,
+      "id": "2",
       "username": "dat2",
       "password": "123456",
-      "fullname": "Tran Van B",
+      "fullName": "Tran Van B",
       "phone": "0987654321",
       "address": "Quận 1, TP.HCM"
+    },
+    {
+      "id": "1282",
+      "username": "dat78aaa",
+      "password": "dat123123",
+      "fullName": "nguyen thanh dat",
+      "phone": "0365986732",
+      "email": "",
+      "address": "123 btan tphcm",
+      "gender": "male",
+      "createdAt": "2025-11-20T11:13:32.582Z",
+      "banned": false
     }
   ],
-
   "restaurants": [
-    { "id": 1, "name": "KFC", "address": "Quận 1, TP.HCM", "rating": 4.5, "image": "/images/restaurants/KFC.jpg" },
-    { "id": 2, "name": "Lotteria", "address": "Quận 3, TP.HCM", "rating": 4.4, "image": "/images/restaurants/Lotteria.jpg" },
-    { "id": 3, "name": "McDonald's", "address": "Quận 10, TP.HCM", "rating": 4.6, "image": "/images/restaurants/McDonald.jpg" },
-    { "id": 4, "name": "Highlands Coffee", "address": "Quận 5, TP.HCM", "rating": 4.3, "image": "/images/restaurants/Highlands.jpg" },
-    { "id": 5, "name": "The Coffee House", "address": "Quận 7, TP.HCM", "rating": 4.4, "image": "/images/restaurants/CoffeeHouse.jpg" },
-    { "id": 6, "name": "Starbucks", "address": "Quận Bình Thạnh, TP.HCM", "rating": 4.5, "image": "/images/restaurants/Starbucks.jpg" },
-    { "id": 7, "name": "Pizza Hut", "address": "Thủ Đức, TP.HCM", "rating": 4.2, "image": "/images/restaurants/PizzaHut.jpg" },
-    { "id": 8, "name": "Burger King", "address": "Gò Vấp, TP.HCM", "rating": 4.3, "image": "/images/restaurants/BurgerKing.jpg" }
+    {
+      "id": "1",
+      "name": "KFC",
+      "address": "Quận 1, TP.HCM",
+      "rating": 4.5,
+      "image": "/images/restaurants/KFC.jpg"
+    },
+    {
+      "id": "2",
+      "name": "Lotteria",
+      "address": "Quận 3, TP.HCM",
+      "rating": 4.4,
+      "image": "/images/restaurants/Lotteria.jpg"
+    },
+    {
+      "id": "3",
+      "name": "McDonald's",
+      "address": "Quận 10, TP.HCM",
+      "rating": 4.6,
+      "image": "/images/restaurants/McDonald.jpg"
+    },
+    {
+      "id": "4",
+      "name": "Highlands Coffee",
+      "address": "Quận 5, TP.HCM",
+      "rating": 4.3,
+      "image": "/images/restaurants/Highlands.jpg"
+    },
+    {
+      "id": "5",
+      "name": "The Coffee House",
+      "address": "Quận 7, TP.HCM",
+      "rating": 4.4,
+      "image": "/images/restaurants/CoffeeHouse.jpg"
+    },
+    {
+      "id": "6",
+      "name": "Starbucks",
+      "address": "Quận Bình Thạnh, TP.HCM",
+      "rating": 4.5,
+      "image": "/images/restaurants/Starbucks.jpg"
+    },
+    {
+      "id": "7",
+      "name": "Pizza Hut",
+      "address": "Thủ Đức, TP.HCM",
+      "rating": 4.2,
+      "image": "/images/restaurants/PizzaHut.jpg"
+    },
+    {
+      "id": "8",
+      "name": "Burger King",
+      "address": "Gò Vấp, TP.HCM",
+      "rating": 4.3,
+      "image": "/images/restaurants/BurgerKing.jpg"
+    }
   ],
-
   "menus": [
-    { "id": 1, "restaurantId": 1, "name": "Hamburger", "price": 55000, "category": "Đồ ăn", "image": "/images/menu/Hamburger.jpg" },
-    { "id": 2, "restaurantId": 1, "name": "Fried Chicken", "price": 70000, "category": "Đồ ăn", "image": "/images/menu/FriedChicken.jpg" },
-    { "id": 3, "restaurantId": 1, "name": "Khoai tây chiên", "price": 30000, "category": "Đồ ăn nhẹ", "image": "/images/menu/Chips.jpg" },
-
-    { "id": 4, "restaurantId": 2, "name": "Cheese Burger", "price": 60000, "category": "Đồ ăn", "image": "/images/menu/cheeseburger.jpg" },
-    { "id": 5, "restaurantId": 2, "name": "Chicken Bucket", "price": 150000, "category": "Combo", "image": "/images/menu/chickenbucket.jpg" },
-    { "id": 6, "restaurantId": 2, "name": "Coleslaw Salad", "price": 25000, "category": "Đồ ăn nhẹ", "image": "/images/menu/ColeslawSalad.jpg" },
-
-    { "id": 7, "restaurantId": 3, "name": "Burger Zinger", "price": 65000, "category": "Đồ ăn", "image": "/images/menu/zinger.jpg" },
-    { "id": 8, "restaurantId": 3, "name": "French Fries", "price": 40000, "category": "Đồ ăn nhẹ", "image": "/images/menu/fries.jpg" },
-    { "id": 9, "restaurantId": 3, "name": "Hotdog", "price": 40000, "category": "Đồ ăn", "image": "/images/menu/hotdog.jpg" },
-
-    { "id": 10, "restaurantId": 4, "name": "Cà phê sữa đá", "price": 40000, "category": "Đồ uống", "image": "/images/menu/caphe_suada.jpg" },
-    { "id": 11, "restaurantId": 4, "name": "Trà đào cam sả", "price": 45000, "category": "Đồ uống", "image": "/images/menu/tradao.jpg" },
-    { "id": 12, "restaurantId": 4, "name": "Matcha Latte", "price": 50000, "category": "Đồ uống", "image": "/images/menu/matcha.jpg" },
-
-    { "id": 13, "restaurantId": 5, "name": "Latte", "price": 55000, "category": "Đồ uống", "image": "/images/menu/latte.jpg" },
-    { "id": 14, "restaurantId": 5, "name": "Bạc xỉu", "price": 45000, "category": "Đồ uống", "image": "/images/menu/bacxiu.jpg" },
-
-    { "id": 15, "restaurantId": 6, "name": "Trà sữa trân châu", "price": 55000, "category": "Đồ uống", "image": "/images/menu/trasuachantrau.jpg" },
-    { "id": 16, "restaurantId": 6, "name": "Trà sữa Thái xanh", "price": 60000, "category": "Đồ uống", "image": "/images/menu/thaitea.jpg" },
-    { "id": 17, "restaurantId": 6, "name": "Hồng trà sữa", "price": 50000, "category": "Đồ uống", "image": "/images/menu/hongtra.jpg" },
-
-    { "id": 18, "restaurantId": 7, "name": "Coca Cola", "price": 20000, "category": "Đồ uống", "image": "/images/menu/cocacola.jpg" },
-    { "id": 19, "restaurantId": 7, "name": "Pepsi", "price": 20000, "category": "Đồ uống", "image": "/images/menu/pepsi.jpg" },
-    { "id": 20, "restaurantId": 7, "name": "Kem Sundae", "price": 25000, "category": "Tráng miệng", "image": "/images/menu/sundae.jpg" },
-
-    { "id": 21, "restaurantId": 8, "name": "Trà Oolong", "price": 45000, "category": "Đồ uống", "image": "/images/menu/oolong.jpg" },
-    { "id": 22, "restaurantId": 8, "name": "Espresso", "price": 50000, "category": "Đồ uống", "image": "/images/menu/espresso.jpg" }
+    {
+      "id": "1",
+      "restaurantId": 1,
+      "name": "Hamburger",
+      "price": 55000,
+      "category": "Đồ ăn",
+      "image": "/images/menu/Hamburger.jpg"
+    },
+    {
+      "id": "2",
+      "restaurantId": 1,
+      "name": "Fried Chicken",
+      "price": 70000,
+      "category": "Đồ ăn",
+      "image": "/images/menu/FriedChicken.jpg"
+    },
+    {
+      "id": "3",
+      "restaurantId": 1,
+      "name": "Khoai tây chiên",
+      "price": 30000,
+      "category": "Đồ ăn nhẹ",
+      "image": "/images/menu/Chips.jpg"
+    },
+    {
+      "id": "4",
+      "restaurantId": 2,
+      "name": "Cheese Burger",
+      "price": 60000,
+      "category": "Đồ ăn",
+      "image": "/images/menu/cheeseburger.jpg"
+    },
+    {
+      "id": "5",
+      "restaurantId": 2,
+      "name": "Chicken Bucket",
+      "price": 150000,
+      "category": "Combo",
+      "image": "/images/menu/chickenbucket.jpg"
+    },
+    {
+      "id": "6",
+      "restaurantId": 2,
+      "name": "Coleslaw Salad",
+      "price": 25000,
+      "category": "Đồ ăn nhẹ",
+      "image": "/images/menu/ColeslawSalad.jpg"
+    },
+    {
+      "id": "7",
+      "restaurantId": 3,
+      "name": "Burger Zinger",
+      "price": 65000,
+      "category": "Đồ ăn",
+      "image": "/images/menu/zinger.jpg"
+    },
+    {
+      "id": "8",
+      "restaurantId": 3,
+      "name": "French Fries",
+      "price": 40000,
+      "category": "Đồ ăn nhẹ",
+      "image": "/images/menu/fries.jpg"
+    },
+    {
+      "id": "9",
+      "restaurantId": 3,
+      "name": "Hotdog",
+      "price": 40000,
+      "category": "Đồ ăn",
+      "image": "/images/menu/hotdog.jpg"
+    },
+    {
+      "id": "10",
+      "restaurantId": 4,
+      "name": "Cà phê sữa đá",
+      "price": 40000,
+      "category": "Đồ uống",
+      "image": "/images/menu/caphe_suada.jpg"
+    },
+    {
+      "id": "11",
+      "restaurantId": 4,
+      "name": "Trà đào cam sả",
+      "price": 45000,
+      "category": "Đồ uống",
+      "image": "/images/menu/tradao.jpg"
+    },
+    {
+      "id": "12",
+      "restaurantId": 4,
+      "name": "Matcha Latte",
+      "price": 50000,
+      "category": "Đồ uống",
+      "image": "/images/menu/matcha.jpg"
+    },
+    {
+      "id": "13",
+      "restaurantId": 5,
+      "name": "Latte",
+      "price": 55000,
+      "category": "Đồ uống",
+      "image": "/images/menu/latte.jpg"
+    },
+    {
+      "id": "14",
+      "restaurantId": 5,
+      "name": "Bạc xỉu",
+      "price": 45000,
+      "category": "Đồ uống",
+      "image": "/images/menu/bacxiu.jpg"
+    },
+    {
+      "id": "15",
+      "restaurantId": 6,
+      "name": "Trà sữa trân châu",
+      "price": 55000,
+      "category": "Đồ uống",
+      "image": "/images/menu/trasuachantrau.jpg"
+    },
+    {
+      "id": "16",
+      "restaurantId": 6,
+      "name": "Trà sữa Thái xanh",
+      "price": 60000,
+      "category": "Đồ uống",
+      "image": "/images/menu/thaitea.jpg"
+    },
+    {
+      "id": "17",
+      "restaurantId": 6,
+      "name": "Hồng trà sữa",
+      "price": 50000,
+      "category": "Đồ uống",
+      "image": "/images/menu/hongtra.jpg"
+    },
+    {
+      "id": "18",
+      "restaurantId": 7,
+      "name": "Coca Cola",
+      "price": 20000,
+      "category": "Đồ uống",
+      "image": "/images/menu/cocacola.jpg"
+    },
+    {
+      "id": "19",
+      "restaurantId": 7,
+      "name": "Pepsi",
+      "price": 20000,
+      "category": "Đồ uống",
+      "image": "/images/menu/pepsi.jpg"
+    },
+    {
+      "id": "20",
+      "restaurantId": 7,
+      "name": "Kem Sundae",
+      "price": 25000,
+      "category": "Tráng miệng",
+      "image": "/images/menu/sundae.jpg"
+    },
+    {
+      "id": "21",
+      "restaurantId": 8,
+      "name": "Trà Oolong",
+      "price": 45000,
+      "category": "Đồ uống",
+      "image": "/images/menu/oolong.jpg"
+    },
+    {
+      "id": "22",
+      "restaurantId": 8,
+      "name": "Espresso",
+      "price": 50000,
+      "category": "Đồ uống",
+      "image": "/images/menu/espresso.jpg"
+    }
   ],
-
   "orders": [
     {
-      "id": 1,
+      "id": "1",
       "userId": 1,
+      "username": "dat1",
+      "customerName": "Nguyen Thanh Dat",
+      "address": "Bình Tân, TP.HCM",
       "restaurantId": 1,
       "menuId": 2,
+      "items": [
+        {
+          "name": "Fried Chicken",
+          "price": 70000,
+          "quantity": 2
+        }
+      ],
       "quantity": 2,
       "total": 140000,
+      "totalPrice": 140000,
+      "status": "pending",
+      "deliveryMethod": "fast",
+      "paymentMethod": "cash",
+      "createdAt": "2025-10-31T10:00:00",
+      "updatedAt": "2025-10-31T10:00:00",
       "date": "2025-10-31T10:00:00"
     },
     {
-      "id": 2,
+      "id": "2",
       "userId": 2,
+      "username": "dat2",
+      "customerName": "Tran Van B",
+      "address": "Quận 1, TP.HCM",
       "restaurantId": 3,
       "menuId": 7,
+      "items": [
+        {
+          "name": "Burger Zinger",
+          "price": 65000,
+          "quantity": 1
+        }
+      ],
       "quantity": 1,
       "total": 65000,
+      "totalPrice": 65000,
+      "status": "completed",
+      "deliveryMethod": "standard",
+      "paymentMethod": "momo",
+      "createdAt": "2025-10-31T11:30:00",
+      "updatedAt": "2025-10-31T12:00:00",
+      "deliveredAt": "2025-10-31T12:00:00",
       "date": "2025-10-31T11:30:00"
+    },
+    {
+      "id": "385a",
+      "restaurantId": 1,
+      "items": [
+        {
+          "id": 38,
+          "name": "Kem Sundae",
+          "title": "Kem Sundae",
+          "price": 25000,
+          "quantity": 1,
+          "image": "/@fs/D:/Cong_Nghe_Phan_Men_2025_SGU/React_Project/shared/assets/images/menu/sundae.jpg",
+          "description": "Kem vani sundae",
+          "restaurantId": [
+            1,
+            2,
+            7
+          ]
+        }
+      ],
+      "itemsSummary": "Kem Sundae x1",
+      "subtotal": 25000,
+      "shippingFee": 25000,
+      "itemDiscount": 0,
+      "shippingDiscount": 0,
+      "total": 50000,
+      "user": {
+        "fullName": "nguyen thanh dat",
+        "phone": "0365986732",
+        "address": "123 btan tphcm"
+      },
+      "deliveryMethod": {
+        "key": "fast",
+        "label": "Nhanh",
+        "fee": 25000,
+        "time": 30,
+        "icon": "🏃",
+        "description": "Giao trong 30 phút"
+      },
+      "paymentMethod": {
+        "key": "cash",
+        "label": "Tiền mặt",
+        "icon": "💵",
+        "description": "Thanh toán khi nhận hàng"
+      },
+      "discount": null,
+      "driver": {
+        "id": 4,
+        "name": "Nguyễn Thành Việt",
+        "rating": 4.6,
+        "vehicle": "Exciter 150",
+        "imageName": "Viet.jpg",
+        "image": "/@fs/D:/Cong_Nghe_Phan_Men_2025_SGU/React_Project/shared/assets/images/driver/Viet.jpg",
+        "phone": "0901000004",
+        "status": "active",
+        "currentOrders": [],
+        "createdAt": "2025-11-19T10:35:23.008Z"
+      },
+      "status": "completed",
+      "createdAt": "2025-11-20T11:24:16.407Z",
+      "updatedAt": "2025-11-20T11:26:07.244Z",
+      "date": "2025-11-20T11:24:16.407Z",
+      "username": "dat78aaa",
+      "userId": "1282",
+      "customerName": "nguyen thanh dat",
+      "address": "123 btan tphcm",
+      "totalPrice": 50000,
+      "deliveredAt": "2025-11-20T11:26:07.244Z"
+    },
+    {
+      "id": "b964",
+      "restaurantId": 4,
+      "items": [
+        {
+          "id": 40,
+          "name": "Espresso",
+          "title": "Espresso",
+          "price": 40000,
+          "quantity": 1,
+          "image": "/@fs/D:/Cong_Nghe_Phan_Men_2025_SGU/React_Project/shared/assets/images/menu/espresso.jpg",
+          "description": "Espresso Ý đậm đà",
+          "restaurantId": [
+            4,
+            5,
+            9
+          ]
+        }
+      ],
+      "itemsSummary": "Espresso x1",
+      "subtotal": 40000,
+      "shippingFee": 25000,
+      "itemDiscount": 0,
+      "shippingDiscount": 0,
+      "total": 65000,
+      "user": {
+        "fullName": "nguyen thanh dat",
+        "phone": "0365986732",
+        "address": "123 btan tphcm"
+      },
+      "deliveryMethod": {
+        "key": "fast",
+        "label": "Nhanh",
+        "fee": 25000,
+        "time": 30,
+        "icon": "🏃",
+        "description": "Giao trong 30 phút"
+      },
+      "paymentMethod": {
+        "key": "cash",
+        "label": "Tiền mặt",
+        "icon": "💵",
+        "description": "Thanh toán khi nhận hàng"
+      },
+      "discount": null,
+      "driver": {
+        "id": 1,
+        "name": "Nguyễn Thành Đạt",
+        "rating": 4.9,
+        "vehicle": "SH 150i",
+        "imageName": "Dat.jpg",
+        "image": "/@fs/D:/Cong_Nghe_Phan_Men_2025_SGU/React_Project/shared/assets/images/driver/Dat.jpg",
+        "phone": "0901000001",
+        "status": "active",
+        "currentOrders": [],
+        "createdAt": "2025-11-19T10:35:23.008Z"
+      },
+      "status": "completed",
+      "createdAt": "2025-11-20T11:26:16.702Z",
+      "updatedAt": "2025-11-20T11:28:11.833Z",
+      "date": "2025-11-20T11:26:16.702Z",
+      "username": "dat78aaa",
+      "userId": "1282",
+      "customerName": "nguyen thanh dat",
+      "address": "123 btan tphcm",
+      "totalPrice": 65000,
+      "deliveredAt": "2025-11-20T11:28:11.833Z"
+    },
+    {
+      "id": "afd4",
+      "restaurantId": 2,
+      "items": [
+        {
+          "id": 9,
+          "name": "Chicken Bucket",
+          "title": "Chicken Bucket",
+          "price": 150000,
+          "quantity": 1,
+          "image": "/@fs/D:/Cong_Nghe_Phan_Men_2025_SGU/React_Project/shared/assets/images/menu/chickenbucket.jpg",
+          "description": "Gà rán combo gia đình",
+          "restaurantId": 2
+        }
+      ],
+      "itemsSummary": "Chicken Bucket x1",
+      "subtotal": 150000,
+      "shippingFee": 25000,
+      "itemDiscount": 15000,
+      "shippingDiscount": 0,
+      "total": 160000,
+      "user": {
+        "fullName": "nguyen thanh dat",
+        "phone": "0365986732",
+        "address": "123 btan tphcm"
+      },
+      "deliveryMethod": {
+        "key": "fast",
+        "label": "Nhanh",
+        "fee": 25000,
+        "time": 30,
+        "icon": "🏃",
+        "description": "Giao trong 30 phút"
+      },
+      "paymentMethod": {
+        "key": "cash",
+        "label": "Tiền mặt",
+        "icon": "💵",
+        "description": "Thanh toán khi nhận hàng"
+      },
+      "discount": {
+        "type": "discount10",
+        "label": "GIẢM 10%",
+        "restaurants": [
+          1,
+          3
+        ]
+      },
+      "driver": {
+        "id": 1,
+        "name": "Nguyễn Thành Đạt",
+        "rating": 4.9,
+        "vehicle": "SH 150i",
+        "imageName": "Dat.jpg",
+        "image": "/@fs/D:/Cong_Nghe_Phan_Men_2025_SGU/React_Project/shared/assets/images/driver/Dat.jpg",
+        "phone": "0901000001",
+        "status": "active",
+        "currentOrders": [],
+        "createdAt": "2025-11-19T10:35:23.008Z"
+      },
+      "status": "completed",
+      "createdAt": "2025-11-20T11:28:02.805Z",
+      "updatedAt": "2025-11-20T11:30:13.281Z",
+      "date": "2025-11-20T11:28:02.805Z",
+      "username": "dat78aaa",
+      "userId": "1282",
+      "customerName": "nguyen thanh dat",
+      "address": "123 btan tphcm",
+      "totalPrice": 160000,
+      "deliveredAt": "2025-11-20T11:30:13.281Z"
+    },
+    {
+      "id": "1763638170824",
+      "createdAt": "2025-11-20T11:29:30.866Z",
+      "date": "2025-11-20T11:29:30.866Z",
+      "status": "completed",
+      "restaurantId": 2,
+      "restaurantName": "KFC",
+      "customer": {
+        "fullName": "nguyen thanh dat",
+        "phone": "0365986732",
+        "address": "123 btan tphcm"
+      },
+      "customerName": "nguyen thanh dat",
+      "phone": "0365986732",
+      "address": "123 btan tphcm",
+      "items": [
+        {
+          "id": 10,
+          "title": "Coleslaw Salad",
+          "price": 25000,
+          "quantity": 1,
+          "image": 68,
+          "restaurantId": 2,
+          "restaurantName": "KFC"
+        },
+        {
+          "id": 38,
+          "title": "Kem Sundae",
+          "price": 25000,
+          "quantity": 1,
+          "image": 96,
+          "restaurantId": 2,
+          "restaurantName": "KFC"
+        }
+      ],
+      "delivery": {
+        "method": "fast",
+        "fee": 25000,
+        "driver": {
+          "id": 1,
+          "name": "Nguyễn Thành Đạt",
+          "vehicle": "SH 150i",
+          "rating": 4.9
+        }
+      },
+      "payment": {
+        "method": "cash",
+        "status": "pending"
+      },
+      "paymentMethod": "cash",
+      "deliveryMethod": "fast",
+      "discount": null,
+      "pricing": {
+        "subtotal": 50000,
+        "shippingFee": 25000,
+        "itemDiscount": 0,
+        "shippingDiscount": 0,
+        "total": 75000
+      },
+      "originalPrice": 50000,
+      "shippingFee": 25000,
+      "updatedAt": "2025-11-20T11:55:09.158Z",
+      "username": "dat78aaa",
+      "userId": "1282",
+      "deliveredAt": "2025-11-20T11:55:09.158Z"
+    },
+    {
+      "id": "1763638531976",
+      "createdAt": "2025-11-20T11:35:31.983Z",
+      "date": "2025-11-20T11:35:31.983Z",
+      "status": "completed",
+      "restaurantId": 2,
+      "restaurantName": "KFC",
+      "customer": {
+        "fullName": "nguyen thanh dat",
+        "phone": "0365986732",
+        "address": "123 btan tphcm"
+      },
+      "customerName": "nguyen thanh dat",
+      "phone": "0365986732",
+      "address": "123 btan tphcm",
+      "items": [
+        {
+          "id": 50,
+          "title": "Burger Zinger",
+          "price": 65000,
+          "quantity": 1,
+          "image": 107,
+          "restaurantId": 2,
+          "restaurantName": "KFC"
+        }
+      ],
+      "delivery": {
+        "method": "fast",
+        "fee": 25000,
+        "driver": {
+          "id": 1,
+          "name": "Nguyễn Thành Đạt",
+          "vehicle": "SH 150i",
+          "rating": 4.9
+        }
+      },
+      "payment": {
+        "method": "cash",
+        "status": "pending"
+      },
+      "paymentMethod": "cash",
+      "deliveryMethod": "fast",
+      "discount": null,
+      "pricing": {
+        "subtotal": 65000,
+        "shippingFee": 25000,
+        "itemDiscount": 0,
+        "shippingDiscount": 0,
+        "total": 90000
+      },
+      "originalPrice": 65000,
+      "shippingFee": 25000,
+      "updatedAt": "2025-11-20T11:55:09.858Z",
+      "username": "dat78aaa",
+      "userId": "1282",
+      "deliveredAt": "2025-11-20T11:55:09.858Z"
+    },
+    {
+      "id": "bb11",
+      "restaurantId": 2,
+      "items": [
+        {
+          "id": 36,
+          "name": "Coca Cola",
+          "title": "Coca Cola",
+          "price": 20000,
+          "quantity": 3,
+          "image": "/@fs/D:/Cong_Nghe_Phan_Men_2025_SGU/React_Project/shared/assets/images/menu/cocacola.jpg",
+          "description": "Nước ngọt có ga",
+          "restaurantId": [
+            1,
+            2,
+            7
+          ]
+        }
+      ],
+      "itemsSummary": "Coca Cola x3",
+      "subtotal": 60000,
+      "shippingFee": 40000,
+      "itemDiscount": 0,
+      "shippingDiscount": 0,
+      "total": 100000,
+      "user": {
+        "fullName": "nguyen thanh dat",
+        "phone": "0365986732",
+        "address": "123 btan tphcm"
+      },
+      "deliveryMethod": {
+        "key": "express",
+        "label": "Siêu tốc",
+        "fee": 40000,
+        "time": 20,
+        "icon": "🚀",
+        "description": "Giao trong 20 phút"
+      },
+      "paymentMethod": {
+        "key": "cash",
+        "label": "Tiền mặt",
+        "icon": "💵",
+        "description": "Thanh toán khi nhận hàng"
+      },
+      "discount": null,
+      "driver": {
+        "id": 2,
+        "name": "Nguyễn Nhật Hải",
+        "rating": 4.7,
+        "vehicle": "Yamaha Sirius",
+        "imageName": "Hai.jpg",
+        "image": "/@fs/D:/Cong_Nghe_Phan_Men_2025_SGU/React_Project/shared/assets/images/driver/Hai.jpg",
+        "phone": "0901000002",
+        "status": "active",
+        "currentOrders": [],
+        "createdAt": "2025-11-19T10:35:23.008Z"
+      },
+      "quantity": 3,
+      "status": "completed",
+      "createdAt": "2025-11-20T11:52:39.648Z",
+      "updatedAt": "2025-11-20T11:53:08.917Z",
+      "date": "2025-11-20T11:52:39.648Z",
+      "username": "dat78aaa",
+      "userId": "1282",
+      "customerName": "nguyen thanh dat",
+      "address": "123 btan tphcm",
+      "totalPrice": 100000,
+      "deliveredAt": "2025-11-20T11:53:08.917Z"
+    },
+    {
+      "id": 1763639743108,
+      "createdAt": "2025-11-20T11:55:43.128Z",
+      "date": "2025-11-20T11:55:43.128Z",
+      "status": "pending",
+      "restaurantId": 2,
+      "restaurantName": "KFC",
+      "customer": {
+        "fullName": "nguyen thanh dat",
+        "phone": "0365986732",
+        "address": "123 btan tphcm"
+      },
+      "customerName": "nguyen thanh dat",
+      "phone": "0365986732",
+      "address": "123 btan tphcm",
+      "items": [
+        {
+          "id": 10,
+          "title": "Coleslaw Salad",
+          "price": 25000,
+          "quantity": 1,
+          "image": 68,
+          "restaurantId": 2,
+          "restaurantName": "KFC",
+          "name": "Coleslaw Salad"
+        }
+      ],
+      "delivery": {
+        "method": "fast",
+        "fee": 25000,
+        "driver": {
+          "id": 4,
+          "name": "Nguyễn Thành Việt",
+          "vehicle": "Exciter 150",
+          "rating": 4.6
+        }
+      },
+      "payment": {
+        "method": "cash",
+        "status": "pending"
+      },
+      "paymentMethod": "cash",
+      "deliveryMethod": "fast",
+      "discount": null,
+      "pricing": {
+        "subtotal": 25000,
+        "shippingFee": 25000,
+        "itemDiscount": 0,
+        "shippingDiscount": 0,
+        "total": 50000
+      },
+      "totalPrice": 50000,
+      "originalPrice": 25000,
+      "shippingFee": 25000,
+      "quantity": 1,
+      "itemsSummary": "Coleslaw Salad x1",
+      "updatedAt": "2025-11-20T11:55:43.128Z",
+      "username": "dat78aaa",
+      "userId": "1282",
+      "total": 50000
     }
   ]
 }

@@ -1,6 +1,8 @@
+import { updateOrderOnServer, syncOrdersToStorage } from './cloudSyncService';
+
 /**
- * Lấy tất cả đơn hàng của nhà hàng
- */
+* Lấy tất cả đơn hàng của nhà hàng
+*/
 export const getRestaurantOrders = (restaurantId, storage) => {
   try {
     // Đọc từ cấu trúc mới: {dangGiao: [], daGiao: []}
@@ -50,48 +52,38 @@ export const calculateRevenue = (orders) => {
 /**
  * Cập nhật trạng thái đơn hàng
  */
-export const updateOrderStatus = (orderId, newStatus, storage) => {
+export const updateOrderStatus = async (orderId, newStatus, storage = localStorage) => {
   try {
-    // Đọc từ cấu trúc mới: {dangGiao: [], daGiao: []}
-    const ordersData = JSON.parse(storage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
-    
-    let updated = false;
-    let updatedOrder = null;
-    
-    // Tìm và cập nhật order
-    if (newStatus === 'processing') {
-      // Pending → Processing: vẫn ở dangGiao
-      ordersData.dangGiao = ordersData.dangGiao.map(order => {
-        if (String(order.id) === String(orderId)) {
-          updatedOrder = { ...order, status: newStatus, updatedAt: new Date().toISOString() };
-          updated = true;
-          return updatedOrder;
-        }
-        return order;
-      });
-    } else if (newStatus === 'delivered') {
-      // Processing → Delivered: chuyển từ dangGiao sang daGiao
-      const orderIndex = ordersData.dangGiao.findIndex(o => String(o.id) === String(orderId));
-      if (orderIndex !== -1) {
-        updatedOrder = { 
-          ...ordersData.dangGiao[orderIndex], 
-          status: newStatus, 
-          updatedAt: new Date().toISOString(),
-          deliveredAt: new Date().toISOString()
-        };
-        ordersData.dangGiao.splice(orderIndex, 1);
-        ordersData.daGiao.push(updatedOrder);
-        updated = true;
-      }
+    const timestamp = new Date().toISOString();
+    const payload = {
+      status: newStatus,
+      updatedAt: timestamp,
+    };
+
+    if (newStatus === 'delivered') {
+      payload.deliveredAt = timestamp;
     }
-    
-    if (updated) {
-      storage.setItem('orders', JSON.stringify(ordersData));
-      console.log('✅ Order status updated:', orderId, '→', newStatus);
-      return { success: true, order: updatedOrder };
+
+    await updateOrderOnServer(orderId, payload);
+    const syncResult = await syncOrdersToStorage(storage);
+
+    if (!syncResult.success) {
+      throw new Error(syncResult.error || 'Không thể đồng bộ dữ liệu đơn hàng!');
     }
-    
-    return { success: false, error: 'Order not found' };
+
+    const allOrders = [
+      ...(syncResult.orders.dangGiao || []),
+      ...(syncResult.orders.daGiao || []),
+    ];
+
+    const updatedOrder = allOrders.find(order => String(order.id) === String(orderId));
+
+    if (!updatedOrder) {
+      return { success: false, error: 'Order not found' };
+    }
+
+    console.log('✅ Order status updated via cloud sync:', orderId, '→', newStatus);
+    return { success: true, order: updatedOrder };
   } catch (error) {
     console.error('Error updating order status:', error);
     return { success: false, error: error.message };

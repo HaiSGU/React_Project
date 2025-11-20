@@ -1,5 +1,7 @@
 // src/api/api.js
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
+  || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL)
+  || "http://localhost:3000";
 
 /**
  * LOGIN - giả lập bằng json-server: query users theo username + password

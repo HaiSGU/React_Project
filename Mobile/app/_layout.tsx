@@ -1,14 +1,32 @@
+import { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { Appearance } from 'react-native';
+import { Appearance, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from "../constants/Colors";
+import { configureCloudSync, syncUsersToStorage } from '@shared/services/cloudSyncService';
 
 // Import LocationProvider
 import { LocationProvider } from '@shared/context/LocationContext';
+
+const defaultBaseUrl = Platform.select({
+  android: 'http://10.0.2.2:3000',
+  ios: 'http://localhost:3000',
+  default: 'http://localhost:3000',
+});
+
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  process.env.EXPO_PUBLIC_API_URL ||
+  defaultBaseUrl;
+
+configureCloudSync({
+  baseUrl: API_BASE_URL,
+});
 
 export default function RootLayout() {
   const colorScheme = Appearance.getColorScheme()
@@ -17,6 +35,12 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('@shared/assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  useEffect(() => {
+    syncUsersToStorage(AsyncStorage).catch((error) =>
+      console.error('Initial user sync failed:', error)
+    );
+  }, []);
 
   if (!loaded) {
     // Async font loading only occurs in development.

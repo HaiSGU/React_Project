@@ -2,11 +2,11 @@
 # FoodFast Monorepo                                                             #
 ################################################################################
 
-FoodFast is a client-only demo platform for restaurant discovery, ordering, and
-delivery tracking. The repository hosts both the customer-facing mobile & web
-apps plus the shared business logic that powers them. There is **no custom
-backend**; all persistence happens locally on the device via AsyncStorage or
-`localStorage`, while external geo capabilities rely on public APIs.
+FoodFast is a cross-platform demo platform for restaurant discovery, ordering,
+and delivery tracking. The repository hosts both the customer-facing mobile &
+web apps plus the shared business logic that powers them. A lightweight
+`json-server` backend (`Web/db.json`) now centralizes users and orders so data
+syncs across devices, while geo capabilities still rely on public APIs.
 
 --------------------------------------------------------------------------------
 Table of Contents
@@ -38,9 +38,9 @@ At a Glance
 |--------------------|-----------------------------------------------------------------------|
 | Platforms          | **Mobile:** React Native + Expo Router. **Web:** React + Vite SPA.    |
 | Shared code        | Hooks, services, constants, assets, and utils reused across clients.   |
-| Data persistence   | Local-only (AsyncStorage / localStorage). Suitable for demos & POCs.   |
+| Data persistence   | Shared JSON server (db.json) + local caches (AsyncStorage/localStorage).|
 | Connectivity       | Weather + geocoding via OpenWeatherMap & OpenStreetMap Nominatim APIs. |
-| Auth               | Client-side login/register flows with demo data.                      |
+| Auth               | Client-side login/register hitting json-server for multi-device sync. |
 | Ordering           | Menu browsing, cart management, checkout validation, order history.    |
 | Operations         | Restaurant dashboard, admin oversight, shipper management.            |
 
@@ -130,16 +130,20 @@ UI Components (Mobile/Web) → Shared Hooks → Shared Services → Persistence 
 Data & Persistence
 --------------------------------------------------------------------------------
 - **Storage strategy:**
-  - Mobile uses `@react-native-async-storage/async-storage`.
-  - Web uses the browser `localStorage`.
-- **Key namespaces:**
+  - `json-server` (`Web/db.json`) is the shared source of truth for users and orders.
+  - Mobile caches responses via `@react-native-async-storage/async-storage`.
+  - Web mirrors server data into `localStorage` for offline-friendly dashboards.
+- **Sync layer:** `shared/services/cloudSyncService.js` normalizes fetches, pushes
+  mutations (register/order/status updates), and polls the server so both
+  platforms and dashboards stay in sync.
+- **Key namespaces (local caches):**
   - `user`, `userInfo`, `isLoggedIn` for session state.
   - `pendingCheckout` stores a temporary cart when redirecting to login.
   - `activeCheckoutSnapshot` preserves checkout state during map selection.
   - `restaurant_menu_{restaurantId}` keeps owner-added dishes.
-  - `orders`, `shippingOrders_{username}`, `deliveredOrders_{username}` track order state.
+  - `orders`, `shippingOrders_{username}`, `deliveredOrders_{username}` mirror remote order state per user.
 - **Shipper management:** `shippers` key holds driver status updated by the admin UI; checkout filters to `status === 'active'` only.
-- **Important:** Clearing storage resets all demo data. There is no remote sync or multi-device support.
+- **Data reset:** Clearing storage now only wipes local caches; restart json-server or reset `db.json` to clear shared data.
 
 --------------------------------------------------------------------------------
 Environment & Tooling
@@ -150,6 +154,9 @@ Environment & Tooling
 - **Android tooling:** Android Studio or an emulator for native builds (optional).
 - **Browsers:** Any Chromium/Firefox/Safari for web development; Vite dev server defaults to port 5173.
 - **Linting:** Expo ESLint config for Mobile, custom ESLint via Vite for Web.
+- **API base URLs:** 
+  - Web reads `VITE_API_BASE_URL` (and optional `VITE_ORDER_POLL_MS`) for json-server.
+  - Mobile reads `EXPO_PUBLIC_API_BASE_URL` (falls back to `10.0.2.2` on Android emulators).
 
 --------------------------------------------------------------------------------
 Setup Instructions
@@ -193,6 +200,16 @@ npm run dev
 npm run build
 npm run preview
 ```
+
+### Shared JSON Server
+```powershell
+# From repo root
+npx json-server --watch Web/db.json --port 3000
+```
+
+- Keep this server running so both clients sync users & orders.
+- Override the base URL via `VITE_API_BASE_URL` (Web) or
+  `EXPO_PUBLIC_API_BASE_URL` (Mobile) if your dev machine uses a custom host/IP.
 
 --------------------------------------------------------------------------------
 Shared Module Usage
@@ -257,7 +274,7 @@ Roadmap & Ideas
 --------------------------------------------------------------------------------
 - Extract API keys and base URLs into environment-specific config.
 - Add automated unit tests for shared validators and helpers.
-- Persist data to a lightweight backend (Firebase/Supabase) for multi-device sync.
+- Harden the json-server backend or migrate to Firebase/Supabase for auth & orders.
 - Implement push notifications or WebSockets for real-time order updates.
 - Add analytics dashboards for consumer behavior and sales trends.
 

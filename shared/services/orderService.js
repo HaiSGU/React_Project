@@ -1,4 +1,10 @@
 import { RESTAURANTS_DATA } from '../constants/RestaurantsData';
+import { 
+  createOrderOnServer,
+  updateOrderOnServer,
+  syncOrdersForUser,
+  normalizeOrder,
+} from './cloudSyncService';
 
 /**
  * Order management service - User-specific
@@ -21,6 +27,27 @@ const getCurrentUsername = async (storage) => {
   }
 };
 
+const parseJSON = (value, fallback) => {
+  try {
+    return value ? JSON.parse(value) : fallback;
+  } catch (error) {
+    console.warn('JSON parse error:', error);
+    return fallback;
+  }
+};
+
+const getCurrentUserProfile = async (storage) => {
+  try {
+    const userInfo = await storage.getItem('userInfo');
+    return userInfo ? JSON.parse(userInfo) : null;
+  } catch (error) {
+    console.error('Get user profile error:', error);
+    return null;
+  }
+};
+
+const shouldSyncRemote = (options = {}) => options.syncRemote !== false;
+
 /**
  *  LƯU ĐƠN HÀNG MỚI - THEO USER
  */
@@ -35,6 +62,7 @@ export const saveOrder = async (storage, order) => {
       };
     }
 
+    const userProfile = await getCurrentUserProfile(storage);
     // ⚠️ KIỂM TRA TRẠNG THÁI NHÀ HÀNG
     const restaurantsData = await storage.getItem('restaurants');
     let restaurants = [];
@@ -77,34 +105,70 @@ export const saveOrder = async (storage, order) => {
       };
     }
 
-    const newOrder = {
+    const timestamp = new Date().toISOString();
+    const items = Array.isArray(order.items) ? order.items.map(item => ({
+      ...item,
+      name: item.name || item.title || item.productName || item.label || 'Món ăn',
+      quantity: Number(item.quantity) || 1,
+      price: Number(item.price) || 0,
+    })) : [];
+    const quantity = Number(order.quantity) || items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const totalPrice = Number(order.totalPrice ?? order.total ?? order.pricing?.total ?? order.subtotal ?? 0);
+    const total = Number(order.total ?? totalPrice);
+    const itemsSummary = items.length
+      ? items.map(item => `${item.name || 'Món'} x${item.quantity || 1}`).join(', ')
+      : order.itemsSummary || 'Không có thông tin';
+
+    const baseOrder = {
       ...order,
-      id: Date.now().toString(),
+      items,
+      quantity,
+      itemsSummary,
       status: 'pending',
-      createdAt: new Date().toISOString(),
-      date: new Date().toISOString(), // ⭐ Thêm field date cho ownerOrderService
-      username, // Thêm username vào order
-      customerName: order.user?.fullName || username, // ⭐ Thêm customerName
-      address: order.user?.address || 'Không có địa chỉ', // ⭐ Thêm address
-      totalPrice: order.total, // ⭐ Thêm totalPrice cho backward compatibility
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      date: timestamp,
+      username,
+      userId: userProfile?.id ?? order.userId ?? null,
+      customerName: order.user?.fullName || userProfile?.fullName || username,
+      address: order.user?.address || userProfile?.address || 'Không có địa chỉ',
+      totalPrice,
+      total,
+      total: totalPrice,
     };
 
+    let remoteOrder;
+    try {
+      remoteOrder = await createOrderOnServer(baseOrder);
+    } catch (syncError) {
+      console.error('Create remote order failed:', syncError);
+      return {
+        success: false,
+        error: 'Không thể kết nối máy chủ. Vui lòng thử lại!',
+      };
+    }
+
+    const normalizedOrder = normalizeOrder({
+      ...baseOrder,
+      ...remoteOrder,
+    });
+
     // 1️⃣ Lưu theo username (cho user)
-    const shippingOrders = await getShippingOrders(storage);
-    const updatedShipping = [...shippingOrders, newOrder];
+    const shippingOrders = await getShippingOrders(storage, { syncRemote: false });
+    const updatedShipping = [...shippingOrders, normalizedOrder];
     await storage.setItem(`shippingOrders_${username}`, JSON.stringify(updatedShipping));
 
     // 2️⃣ Lưu vào hệ thống orders (cho restaurant)
     const ordersRaw = await storage.getItem('orders');
-    const ordersData = JSON.parse(ordersRaw || '{"dangGiao":[],"daGiao":[]}');
-    ordersData.dangGiao.push(newOrder);
-    storage.setItem('orders', JSON.stringify(ordersData));
+    const ordersData = parseJSON(ordersRaw, { dangGiao: [], daGiao: [] });
+    ordersData.dangGiao.push(normalizedOrder);
+    await storage.setItem('orders', JSON.stringify(ordersData));
 
-    console.log('✅ Order saved to both systems:', newOrder);
+    console.log('✅ Order saved to both systems:', normalizedOrder);
 
     return {
       success: true,
-      order: newOrder,
+      order: normalizedOrder,
       message: 'Đặt hàng thành công!',
     };
   } catch (error) {
@@ -119,7 +183,7 @@ export const saveOrder = async (storage, order) => {
 /**
  * Get shipping orders - THEO USER
  */
-export const getShippingOrders = async (storage) => {
+export const getShippingOrders = async (storage, options = {}) => {
   try {
     const username = await getCurrentUsername(storage);
     
@@ -127,8 +191,12 @@ export const getShippingOrders = async (storage) => {
       return [];
     }
 
+    if (shouldSyncRemote(options)) {
+      await syncOrdersForUser(storage, username);
+    }
+
     const shipping = await storage.getItem(`shippingOrders_${username}`);
-    return shipping ? JSON.parse(shipping) : [];
+    return parseJSON(shipping, []);
   } catch (error) {
     console.error('Get shipping orders error:', error);
     return [];
@@ -138,7 +206,7 @@ export const getShippingOrders = async (storage) => {
 /**
  * Get delivered orders - THEO USER
  */
-export const getDeliveredOrders = async (storage) => {
+export const getDeliveredOrders = async (storage, options = {}) => {
   try {
     const username = await getCurrentUsername(storage);
     
@@ -146,8 +214,12 @@ export const getDeliveredOrders = async (storage) => {
       return [];
     }
 
+    if (shouldSyncRemote(options)) {
+      await syncOrdersForUser(storage, username);
+    }
+
     const delivered = await storage.getItem(`deliveredOrders_${username}`);
-    return delivered ? JSON.parse(delivered) : [];
+    return parseJSON(delivered, []);
   } catch (error) {
     console.error('Get delivered orders error:', error);
     return [];
@@ -168,9 +240,32 @@ export const confirmDelivery = async (order, storage) => {
       };
     }
 
+    if (!order?.id) {
+      return {
+        success: false,
+        error: 'Không tìm thấy mã đơn hàng',
+      };
+    }
+
+    const timestamp = new Date().toISOString();
+
+    try {
+      await updateOrderOnServer(order.id, {
+        status: 'completed',
+        deliveredAt: timestamp,
+        updatedAt: timestamp,
+      });
+    } catch (syncError) {
+      console.error('Remote confirm delivery failed:', syncError);
+      return {
+        success: false,
+        error: 'Không thể đồng bộ đơn hàng với máy chủ!',
+      };
+    }
+
     // Get current orders
-    const shippingOrders = await getShippingOrders(storage);
-    const deliveredOrders = await getDeliveredOrders(storage);
+    const shippingOrders = await getShippingOrders(storage, { syncRemote: false });
+    const deliveredOrders = await getDeliveredOrders(storage, { syncRemote: false });
 
     // Remove from shipping
     const newShipping = shippingOrders.filter(o => o.id !== order.id);
@@ -180,14 +275,15 @@ export const confirmDelivery = async (order, storage) => {
     const deliveredOrder = {
       ...order,
       status: 'completed',
-      deliveredAt: new Date().toISOString(),
+      deliveredAt: timestamp,
+      updatedAt: timestamp,
     };
     const newDelivered = [...deliveredOrders, deliveredOrder];
     await storage.setItem(`deliveredOrders_${username}`, JSON.stringify(newDelivered));
 
     // 🔄 Đồng bộ vào hệ thống orders chung (cho restaurant / admin / shipper)
     const ordersRaw = await storage.getItem('orders');
-    const ordersData = JSON.parse(ordersRaw || '{"dangGiao":[],"daGiao":[]}');
+    const ordersData = parseJSON(ordersRaw, { dangGiao: [], daGiao: [] });
     const globalIndex = ordersData.dangGiao.findIndex(o => String(o.id) === String(order.id));
 
     if (globalIndex !== -1) {
@@ -202,7 +298,7 @@ export const confirmDelivery = async (order, storage) => {
 
       ordersData.dangGiao.splice(globalIndex, 1);
       ordersData.daGiao.push(completedOrder);
-      storage.setItem('orders', JSON.stringify(ordersData));
+      await storage.setItem('orders', JSON.stringify(ordersData));
     } else {
       // Nếu đã ở daGiao thì cập nhật trạng thái cho chắc
       ordersData.daGiao = ordersData.daGiao.map(o => {
@@ -211,14 +307,16 @@ export const confirmDelivery = async (order, storage) => {
             ...o,
             ...deliveredOrder,
             status: 'completed',
-            updatedAt: new Date().toISOString(),
-            deliveredAt: new Date().toISOString(),
+            updatedAt: timestamp,
+            deliveredAt: timestamp,
           };
         }
         return o;
       });
-      storage.setItem('orders', JSON.stringify(ordersData));
+      await storage.setItem('orders', JSON.stringify(ordersData));
     }
+
+    await syncOrdersForUser(storage, username);
 
     return { 
       success: true,
@@ -274,15 +372,37 @@ export const updateOrderStatus = async (storage, orderId, status) => {
       return { success: false, error: 'Vui lòng đăng nhập' };
     }
 
-    const shippingOrders = await getShippingOrders(storage);
-    const deliveredOrders = await getDeliveredOrders(storage);
+    if (!orderId) {
+      return { success: false, error: 'Thiếu mã đơn hàng' };
+    }
+
+    const timestamp = new Date().toISOString();
+
+    try {
+      await updateOrderOnServer(orderId, { status, updatedAt: timestamp });
+    } catch (syncError) {
+      console.error('Remote update order status failed:', syncError);
+      return { success: false, error: 'Không thể cập nhật đơn hàng trên máy chủ!' };
+    }
+
+    const shippingOrders = await getShippingOrders(storage, { syncRemote: false });
+    const deliveredOrders = await getDeliveredOrders(storage, { syncRemote: false });
+    const ordersRaw = await storage.getItem('orders');
+    const ordersData = parseJSON(ordersRaw, { dangGiao: [], daGiao: [] });
     
     // Find in shipping
     const shippingIndex = shippingOrders.findIndex(o => o.id === orderId);
     if (shippingIndex !== -1) {
       shippingOrders[shippingIndex].status = status;
-      shippingOrders[shippingIndex].updatedAt = new Date().toISOString();
+      shippingOrders[shippingIndex].updatedAt = timestamp;
       await storage.setItem(`shippingOrders_${username}`, JSON.stringify(shippingOrders));
+      ordersData.dangGiao = ordersData.dangGiao.map(order => 
+        String(order.id) === String(orderId)
+          ? { ...order, status, updatedAt: timestamp }
+          : order
+      );
+      await storage.setItem('orders', JSON.stringify(ordersData));
+      await syncOrdersForUser(storage, username);
       return { success: true, order: shippingOrders[shippingIndex] };
     }
     
@@ -290,8 +410,15 @@ export const updateOrderStatus = async (storage, orderId, status) => {
     const deliveredIndex = deliveredOrders.findIndex(o => o.id === orderId);
     if (deliveredIndex !== -1) {
       deliveredOrders[deliveredIndex].status = status;
-      deliveredOrders[deliveredIndex].updatedAt = new Date().toISOString();
+      deliveredOrders[deliveredIndex].updatedAt = timestamp;
       await storage.setItem(`deliveredOrders_${username}`, JSON.stringify(deliveredOrders));
+      ordersData.daGiao = ordersData.daGiao.map(order =>
+        String(order.id) === String(orderId)
+          ? { ...order, status, updatedAt: timestamp }
+          : order
+      );
+      await storage.setItem('orders', JSON.stringify(ordersData));
+      await syncOrdersForUser(storage, username);
       return { success: true, order: deliveredOrders[deliveredIndex] };
     }
     

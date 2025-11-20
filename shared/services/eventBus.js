@@ -6,6 +6,11 @@
  * Sử dụng CustomEvent API của browser
  */
 
+const hasWindow =
+  typeof window !== 'undefined' && typeof window.addEventListener === 'function';
+const hasLocalStorage =
+  typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function';
+
 class EventBus {
   constructor() {
     this.listeners = new Map();
@@ -35,11 +40,16 @@ class EventBus {
 
   // Phát event
   emit(eventName, data) {
-    // Trigger localStorage event để sync across tabs
-    const event = new CustomEvent('app-event', {
-      detail: { eventName, data, timestamp: Date.now() }
-    });
-    window.dispatchEvent(event);
+    if (hasWindow && typeof CustomEvent === 'function') {
+      try {
+        const event = new CustomEvent('app-event', {
+          detail: { eventName, data, timestamp: Date.now() }
+        });
+        window.dispatchEvent(event);
+      } catch (error) {
+        console.warn('CustomEvent dispatch failed:', error);
+      }
+    }
 
     // Trigger local listeners
     if (this.listeners.has(eventName)) {
@@ -52,15 +62,16 @@ class EventBus {
       });
     }
 
-    // Store event in localStorage for cross-tab sync
-    try {
-      localStorage.setItem('lastEvent', JSON.stringify({
-        eventName,
-        data,
-        timestamp: Date.now()
-      }));
-    } catch (e) {
-      console.warn('Failed to store event in localStorage:', e);
+    if (hasLocalStorage) {
+      try {
+        localStorage.setItem('lastEvent', JSON.stringify({
+          eventName,
+          data,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.warn('Failed to store event in localStorage:', e);
+      }
     }
   }
 
@@ -73,8 +84,8 @@ class EventBus {
 // Singleton instance
 const eventBus = new EventBus();
 
-// Listen to storage events (cross-tab communication)
-if (typeof window !== 'undefined') {
+// Listen to storage events (cross-tab communication) - browser only
+if (hasWindow) {
   window.addEventListener('storage', (e) => {
     if (e.key === 'lastEvent' && e.newValue) {
       try {
