@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔍 Debug Orders</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Courier New', monospace;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: #4ec9b0;
+      margin-bottom: 20px;
+    }
+    
+    .order-card {
+      background: #252526;
+      border: 1px solid #3e3e42;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+    
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #3e3e42;
+    }
+    
+    .order-id {
+      color: #569cd6;
+      font-weight: bold;
+    }
+    
+    .order-status {
+      color: #4ec9b0;
+      font-weight: bold;
+    }
+    
+    .field {
+      margin: 8px 0;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .field-name {
+      color: #9cdcfe;
+      min-width: 150px;
+    }
+    
+    .field-value {
+      color: #ce9178;
+    }
+    
+    .driver-info {
+      background: #2d2d30;
+      padding: 10px;
+      margin: 10px 0;
+      border-left: 3px solid #4ec9b0;
+    }
+    
+    .warning {
+      background: #433922;
+      border: 1px solid #d7ba7d;
+      border-radius: 4px;
+      padding: 10px;
+      margin: 10px 0;
+      color: #d7ba7d;
+    }
+    
+    .success {
+      background: #1e3a1e;
+      border: 1px solid #4ec9b0;
+      border-radius: 4px;
+      padding: 10px;
+      margin: 10px 0;
+      color: #4ec9b0;
+    }
+    
+    .stats {
+      background: #252526;
+      border: 1px solid #3e3e42;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .stat-item {
+      background: #2d2d30;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    
+    .stat-label {
+      color: #858585;
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+    
+    .stat-value {
+      color: #4ec9b0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Debug Orders & Driver Data</h1>
+    <div id="stats" class="stats"></div>
+    <div id="orders"></div>
+  </div>
+  
+  <script>
+    const ordersData = JSON.parse(localStorage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
+    const allOrders = [...ordersData.dangGiao, ...ordersData.daGiao];
+    
+    // Calculate stats
+    const statsHtml = `
+      <h2 style="color: #4ec9b0; margin-bottom: 15px;">📊 Thống kê</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Tổng đơn hàng</div>
+          <div class="stat-value">${allOrders.length}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Đang giao</div>
+          <div class="stat-value">${ordersData.dangGiao.length}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Đã giao</div>
+          <div class="stat-value">${ordersData.daGiao.length}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Orders có driver</div>
+          <div class="stat-value">${allOrders.filter(o => o.driver || o.delivery?.driver).length}</div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 15px; padding: 10px; background: #2d2d30; border-radius: 4px;">
+        <div style="color: #9cdcfe; margin-bottom: 5px;">Unique statuses:</div>
+        <div style="color: #ce9178;">${[...new Set(allOrders.map(o => o.status))].join(', ')}</div>
+      </div>
+    `;
+    
+    document.getElementById('stats').innerHTML = statsHtml;
+    
+    // Display orders
+    const ordersHtml = allOrders.map((order, index) => {
+      const driver = order.driver || order.delivery?.driver;
+      const hasDriver = !!driver;
+      const total = order.total || order.totalPrice || 0;
+      
+      return `
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-id">Order #${order.id || index + 1}</div>
+            <div class="order-status">Status: "${order.status}"</div>
+          </div>
+          
+          <div class="field">
+            <span class="field-name">Created:</span>
+            <span class="field-value">${order.createdAt || order.date || 'N/A'}</span>
+          </div>
+          
+          <div class="field">
+            <span class="field-name">Total Price:</span>
+            <span class="field-value">${total.toLocaleString()}đ</span>
+          </div>
+          
+          <div class="field">
+            <span class="field-name">order.total:</span>
+            <span class="field-value">${order.total || 'undefined'}</span>
+          </div>
+          
+          <div class="field">
+            <span class="field-name">order.totalPrice:</span>
+            <span class="field-value">${order.totalPrice || 'undefined'}</span>
+          </div>
+          
+          ${hasDriver ? `
+            <div class="driver-info">
+              <div style="color: #4ec9b0; font-weight: bold; margin-bottom: 10px;">✅ Driver Info Found</div>
+              <div class="field">
+                <span class="field-name">Location:</span>
+                <span class="field-value">${order.driver ? 'order.driver' : 'order.delivery.driver'}</span>
+              </div>
+              <div class="field">
+                <span class="field-name">Driver ID:</span>
+                <span class="field-value">${driver.id || 'undefined'}</span>
+              </div>
+              <div class="field">
+                <span class="field-name">Driver Name:</span>
+                <span class="field-value">${driver.name || 'undefined'}</span>
+              </div>
+              <div class="field">
+                <span class="field-name">Vehicle:</span>
+                <span class="field-value">${driver.vehicle || 'undefined'}</span>
+              </div>
+            </div>
+          ` : `
+            <div class="warning">⚠️ NO DRIVER INFO</div>
+          `}
+          
+          ${(order.status === 'delivered' || order.status === 'completed') && hasDriver && total > 0 ? `
+            <div class="success">
+              ✅ This order SHOULD be counted<br>
+              Commission (10%): ${Math.round(total * 0.1).toLocaleString()}đ
+            </div>
+          ` : `
+            <div class="warning">
+              ⚠️ This order will NOT be counted because:<br>
+              ${!hasDriver ? '• No driver info<br>' : ''}
+              ${order.status !== 'delivered' && order.status !== 'completed' ? `• Status is "${order.status}" (not "delivered" or "completed")<br>` : ''}
+              ${total <= 0 ? '• Total is 0<br>' : ''}
+            </div>
+          `}
+        </div>
+      `;
+    }).join('');
+    
+    document.getElementById('orders').innerHTML = ordersHtml;
+  </script>
+</body>
+</html>

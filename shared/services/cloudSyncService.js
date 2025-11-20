@@ -86,11 +86,11 @@ export const normalizeOrder = (order) => {
     status,
     items: Array.isArray(order.items)
       ? order.items.map(item => ({
-          ...item,
-          name: item.name || item.title || item.productName || 'Món ăn',
-          quantity: Number(item.quantity) || 1,
-          price: Number(item.price) || 0,
-        }))
+        ...item,
+        name: item.name || item.title || item.productName || 'Món ăn',
+        quantity: Number(item.quantity) || 1,
+        price: Number(item.price) || 0,
+      }))
       : [],
     total: order.total ?? order.totalPrice ?? 0,
     totalPrice: order.totalPrice ?? order.total ?? 0,
@@ -262,18 +262,62 @@ export const syncOrdersForUser = async (storage, username) => {
       (order) => order.status === 'completed' || order.status === 'delivered'
     );
 
+    // ⭐ Kiểm tra timestamp để tránh ghi đè dữ liệu mới bằng dữ liệu cũ
+    const existingShippingRaw = await getStorageItem(storage, `shippingOrders_${username}`);
+    const existingDeliveredRaw = await getStorageItem(storage, `deliveredOrders_${username}`);
+
+    const existingShipping = existingShippingRaw ? JSON.parse(existingShippingRaw) : [];
+    const existingDelivered = existingDeliveredRaw ? JSON.parse(existingDeliveredRaw) : [];
+
+    // Merge: Giữ lại dữ liệu local nếu mới hơn
+    const mergedShipping = mergeOrders(existingShipping, shipping);
+    const mergedDelivered = mergeOrders(existingDelivered, delivered);
+
     await toPromise(
-      setStorageItem(storage, `shippingOrders_${username}`, JSON.stringify(shipping))
+      setStorageItem(storage, `shippingOrders_${username}`, JSON.stringify(mergedShipping))
     );
     await toPromise(
-      setStorageItem(storage, `deliveredOrders_${username}`, JSON.stringify(delivered))
+      setStorageItem(storage, `deliveredOrders_${username}`, JSON.stringify(mergedDelivered))
     );
 
-    return { success: true, shipping, delivered };
+    return { success: true, shipping: mergedShipping, delivered: mergedDelivered };
   } catch (error) {
     console.error('Sync user orders failed:', error);
     return { success: false, error: error.message };
   }
+};
+
+// Helper: Merge orders, giữ lại bản mới nhất dựa trên updatedAt
+const mergeOrders = (localOrders, remoteOrders) => {
+  const orderMap = new Map();
+
+  // Thêm local orders vào map
+  localOrders.forEach(order => {
+    orderMap.set(String(order.id), order);
+  });
+
+  // Merge với remote orders, chỉ ghi đè nếu remote mới hơn
+  remoteOrders.forEach(remoteOrder => {
+    const orderId = String(remoteOrder.id);
+    const localOrder = orderMap.get(orderId);
+
+    if (!localOrder) {
+      // Đơn hàng mới từ server
+      orderMap.set(orderId, remoteOrder);
+    } else {
+      // So sánh timestamp
+      const localTime = new Date(localOrder.updatedAt || localOrder.createdAt).getTime();
+      const remoteTime = new Date(remoteOrder.updatedAt || remoteOrder.createdAt).getTime();
+
+      // Chỉ ghi đè nếu remote mới hơn
+      if (remoteTime > localTime) {
+        orderMap.set(orderId, remoteOrder);
+      }
+      // Nếu local mới hơn hoặc bằng, giữ nguyên local
+    }
+  });
+
+  return Array.from(orderMap.values());
 };
 
 export const startOrderPolling = (storage, options = {}) => {
@@ -285,10 +329,22 @@ export const startOrderPolling = (storage, options = {}) => {
     orderPollerId = null;
   }
 
-  const runSync = () => {
-    syncOrdersToStorage(storage).catch((error) =>
-      console.error('Order polling sync failed:', error)
-    );
+  const runSync = async () => {
+    try {
+      // ⭐ Lấy username hiện tại
+      const userInfo = await getStorageItem(storage, 'userInfo');
+      if (userInfo) {
+        const user = JSON.parse(userInfo);
+        if (user.username) {
+          // Sync vào key user-specific
+          await syncOrdersForUser(storage, user.username);
+        }
+      }
+      // Vẫn sync global để backward compatibility
+      await syncOrdersToStorage(storage);
+    } catch (error) {
+      console.error('Order polling sync failed:', error);
+    }
   };
 
   runSync();

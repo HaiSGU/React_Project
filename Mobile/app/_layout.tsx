@@ -13,10 +13,16 @@ import { configureCloudSync, syncUsersToStorage } from '@shared/services/cloudSy
 // Import LocationProvider
 import { LocationProvider } from '@shared/context/LocationContext';
 
+// Địa chỉ IP thực của máy tính trong mạng local
+// Thay đổi IP này nếu địa chỉ IP máy tính thay đổi
+const LOCAL_IP = '192.168.31.160';
+
 const defaultBaseUrl = Platform.select({
-  android: 'http://10.0.2.2:3000',
-  ios: 'http://localhost:3000',
-  default: 'http://localhost:3000',
+  // Sử dụng IP thực cho cả Android và iOS khi chạy trên thiết bị thật
+  // Nếu chạy trên emulator, có thể dùng: http://10.0.2.2:3000 (Android) hoặc http://localhost:3000 (iOS)
+  android: `http://${LOCAL_IP}:3000`,
+  ios: `http://${LOCAL_IP}:3000`,
+  default: `http://${LOCAL_IP}:3000`,
 });
 
 const API_BASE_URL =
@@ -52,22 +58,22 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <StatusBar style="auto" />
         <Stack screenOptions={{
-          headerStyle: { backgroundColor: theme.headerBackground }, 
-          headerTintColor: theme.text, 
+          headerStyle: { backgroundColor: theme.headerBackground },
+          headerTintColor: theme.text,
           headerShadowVisible: false
         }}>
-          <Stack.Screen name="index" options={{ headerShown: false, title: 'Home' }} /> 
-          <Stack.Screen name="menu" options={{ headerShown: false, title: 'Menu', headerTitle: 'FoodFast Menu' }} /> 
-          <Stack.Screen name="contact" options={{ headerShown: false, title: 'Contact', headerTitle: 'Contact Us' }} /> 
+          <Stack.Screen name="index" options={{ headerShown: false, title: 'Home' }} />
+          <Stack.Screen name="menu" options={{ headerShown: false, title: 'Menu', headerTitle: 'FoodFast Menu' }} />
+          <Stack.Screen name="contact" options={{ headerShown: false, title: 'Contact', headerTitle: 'Contact Us' }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
-          
+
           {/* Thêm các màn hình mới */}
           <Stack.Screen name="login" options={{ title: 'Đăng nhập' }} />
           <Stack.Screen name="register" options={{ title: 'Đăng ký' }} />
           <Stack.Screen name="checkout" options={{ title: 'Thanh toán' }} />
           <Stack.Screen name="map-select" options={{ title: 'Chọn vị trí giao hàng' }} />
           <Stack.Screen name="order-detail" options={{ title: 'Chi tiết đơn hàng' }} />
-          
+
           <Stack.Screen name="+not-found" />
         </Stack>
       </SafeAreaProvider>

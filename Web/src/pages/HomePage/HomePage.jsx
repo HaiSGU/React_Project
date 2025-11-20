@@ -19,35 +19,52 @@ export default function HomePage() {
   const [restaurantsData, setRestaurantsData] = useState(() => getRestaurantsWithStatus());
 
   // Search functionality - tìm nhà hàng theo tên, địa chỉ, category VÀ món ăn
-  const { 
-    query, 
-    setQuery, 
-    filteredRestaurants, 
-    noResults 
+  const {
+    query,
+    setQuery,
+    filteredRestaurants,
+    noResults
   } = useRestaurantSearch(restaurantsData, MENU_ITEMS_WEB); // Dùng MENU_ITEMS_WEB với ảnh đã resolve
 
   // Hiển thị kết quả search hoặc featured restaurants
-  const displayRestaurants = query.trim() 
-    ? filteredRestaurants 
+  const displayRestaurants = query.trim()
+    ? filteredRestaurants
     : restaurantsData.filter(r => r.isFeatured);
 
-  // Check login status
+  // Check login status & Fetch restaurants
   useEffect(() => {
     const loadLoginStatus = async () => {
       const loggedInStatus = await isLoggedIn(localStorage);
       setLoggedIn(loggedInStatus);
-      
+
       if (loggedInStatus) {
         const user = await getCurrentUser(localStorage);
         setUserInfo(user);
       }
     };
     loadLoginStatus();
-    // Đồng bộ restaurant status lần đầu
-    setRestaurantsData(getRestaurantsWithStatus());
+
+    // ⭐ Fetch restaurants từ API
+    const fetchRestaurants = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/restaurants');
+        if (res.ok) {
+          const data = await res.json();
+          setRestaurantsData(data);
+        } else {
+          console.error('Failed to fetch restaurants');
+          setRestaurantsData(getRestaurantsWithStatus()); // Fallback
+        }
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        setRestaurantsData(getRestaurantsWithStatus()); // Fallback
+      }
+    };
+
+    fetchRestaurants();
 
     const unsubscribe = eventBus.on(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, () => {
-      setRestaurantsData(getRestaurantsWithStatus());
+      fetchRestaurants();
     });
 
     return () => {
@@ -57,7 +74,11 @@ export default function HomePage() {
 
   // Cập nhật khi storage thay đổi (từ tab khác)
   useEventListener(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, () => {
-    setRestaurantsData(getRestaurantsWithStatus());
+    // Fetch lại từ API khi có sự kiện thay đổi
+    fetch('http://localhost:3000/restaurants')
+      .then(res => res.json())
+      .then(data => setRestaurantsData(data))
+      .catch(err => console.error(err));
   });
 
   const handleLogout = async () => {
@@ -92,32 +113,32 @@ export default function HomePage() {
             <div className="hero-text">
               <span className="hero-icon">🔥</span>
               <span>
-                {loggedIn 
-                  ? `Xin chào ${userInfo?.username || 'bạn'}, hôm nay ăn gì nè?` 
+                {loggedIn
+                  ? `Xin chào ${userInfo?.username || 'bạn'}, hôm nay ăn gì nè?`
                   : 'Chào mừng bạn đến với FoodFast'}
               </span>
             </div>
-            <button 
-              className="btn-logout" 
+            <button
+              className="btn-logout"
               onClick={loggedIn ? handleLogout : handleLogin}
             >
               {loggedIn ? 'Đăng xuất' : 'Đăng nhập'}
             </button>
           </div>
         </div>
-        
+
         {/* Search */}
         <div className="container">
           <div className="search-wrap">
             <span className="material-icons-outlined search-icon">search</span>
-            <input 
-              className="search-input" 
+            <input
+              className="search-input"
               placeholder="Tìm nhà hàng, món ăn..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             {query && (
-              <button 
+              <button
                 className="search-clear"
                 onClick={() => setQuery('')}
               >
@@ -134,8 +155,8 @@ export default function HomePage() {
           <div className="container">
             <div className="search-result-header">
               <p className="search-result-text">
-                {noResults 
-                  ? 'Không tìm thấy kết quả' 
+                {noResults
+                  ? 'Không tìm thấy kết quả'
                   : `Tìm thấy ${filteredRestaurants.length} nhà hàng`}
               </p>
             </div>
@@ -150,8 +171,8 @@ export default function HomePage() {
             <h2 className="section-title">Danh mục</h2>
             <div className="categories-grid">
               {CATEGORIES.filter(c => c.key !== 'all').map(cat => (
-                <div 
-                  key={cat.id} 
+                <div
+                  key={cat.id}
                   className="category-item"
                   onClick={() => handleCategoryClick(cat.key)}
                 >
@@ -173,8 +194,8 @@ export default function HomePage() {
             <h2 className="section-title">Chương trình giảm giá</h2>
             <div className="promos-grid">
               {DISCOUNTS.map(p => (
-                <div 
-                  key={p.type} 
+                <div
+                  key={p.type}
                   className="promo-badge"
                   onClick={() => handleDiscountClick(p.type)}
                 >
@@ -210,8 +231,8 @@ export default function HomePage() {
                 }
 
                 return (
-                  <div 
-                    key={r.id} 
+                  <div
+                    key={r.id}
                     className={`restaurant-card ${!isActive ? 'is-disabled' : ''}`}
                     onClick={() => isActive && handleRestaurantClick(r.id)}
                     role="button"

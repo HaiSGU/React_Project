@@ -94,7 +94,7 @@ export const getAdminOverview = (storage = localStorage) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
     const dateStr = d.toISOString().slice(0, 10);
-    
+
     const dayOrders = allOrders.filter(o => {
       const orderDate = new Date(o.createdAt).toISOString().slice(0, 10);
       return orderDate === dateStr;
@@ -154,16 +154,16 @@ export const updateRestaurantStatus = (storage, restaurantId, status) => {
   try {
     const restaurants = readRestaurants(storage);
     const restaurant = restaurants.find(r => String(r.id) === String(restaurantId));
-    
+
     if (!restaurant) {
       return { success: false, error: 'Restaurant not found' };
     }
 
-  restaurant.status = status; // 'active' | 'pending' | 'suspended'
+    restaurant.status = status; // 'active' | 'pending' | 'suspended'
     restaurant.updatedAt = new Date().toISOString();
-    
+
     storage.setItem('restaurants', JSON.stringify(restaurants));
-    
+
     return { success: true, restaurant };
   } catch (error) {
     return { success: false, error: error.message };
@@ -184,7 +184,7 @@ export const updateUserStatus = (storage, username, banned) => {
   try {
     const users = readUsers(storage);
     const user = users.find(u => u.username === username);
-    
+
     if (!user) {
       return { success: false, error: 'User not found' };
     }
@@ -207,7 +207,7 @@ export const updateUserStatus = (storage, username, banned) => {
     } catch (syncError) {
       console.error('Failed to sync current user after status change:', syncError);
     }
-    
+
     return { success: true, user };
   } catch (error) {
     return { success: false, error: error.message };
@@ -237,10 +237,10 @@ export const createReport = (storage, report) => {
       status: 'pending',
       ...report
     };
-    
+
     reports.unshift(newReport);
     storage.setItem('reports', JSON.stringify(reports));
-    
+
     return { success: true, report: newReport };
   } catch (error) {
     return { success: false, error: error.message };

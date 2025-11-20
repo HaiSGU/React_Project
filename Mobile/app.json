@@ -4,12 +4,12 @@
     "slug": "Foodfastapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "../shared/assets/images/restaurant/foodfastlogo.jpg",
+    "icon": "../shared/assets/images/foodfastlogo.jpg",
     "scheme": "foodfastapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "../shared/assets/images/restaurant/foodfastlogo.jpg",
+      "image": "../shared/assets/images/foodfastlogo.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -28,7 +28,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "../shared/assets/images/restaurant/foodfastlogo.jpg",
+        "foregroundImage": "../shared/assets/images/foodfastlogo.jpg",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -46,14 +46,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "../shared/assets/images/restaurant/foodfastlogo.jpg"
+      "favicon": "../shared/assets/images/foodfastlogo.jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "../shared/assets/images/restaurant/foodfastlogo.jpg",
+          "image": "../shared/assets/images/foodfastlogo.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"

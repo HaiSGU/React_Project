@@ -1,737 +1,634 @@
 import { useEffect, useState } from 'react';
-import { 
-  getAdminOverview, 
-  getRestaurants, 
-  updateRestaurantStatus,
-  getUsers,
-  updateUserStatus 
+import {
+    getAdminOverview,
+    getRestaurants,
+    updateRestaurantStatus,
+    getUsers,
+    updateUserStatus
 } from '../../../../shared/services/adminMetricsService';
 import { logoutAdmin, getAdminSession } from '../../../../shared/services/adminAuthService';
-import { useSystemMetrics, useRealtimeOrders, useEventListener } from '@shared/hooks/useRealtime';
-import { getAllShippers, updateShipperStatus, getShipperStats, initShippers } from '@shared/services/shipperService';
+import { useRealtimeOrders, useEventListener } from '@shared/hooks/useRealtime';
+import { updateShipperStatus, getShipperStats, initShippers } from '@shared/services/shipperService';
 import initAdminData from '@shared/services/initAdminData';
 import NotificationBell from '../../components/NotificationBell/NotificationBell';
 import AdminStatCard from '../../components/Admin/AdminStatCard';
-import AdminRevenueCard from '../../components/Admin/AdminRevenueCard';
-import AdminBarChart from '../../components/Admin/AdminBarChart';
 import '../../components/Admin/Admin.css';
+import './AdminDashboard.css';
 import eventBus, { EVENT_TYPES } from '@shared/services/eventBus';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview'); // overview | restaurants | users | shippers
-  const [restaurants, setRestaurants] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [shippers, setShippers] = useState([]);
-  const [shipperStats, setShipperStats] = useState(null);
-  const [toast, setToast] = useState(null); // 🔥 Toast notification
-  const [animatingRow, setAnimatingRow] = useState(null); // 🔥 Animation
-  const session = getAdminSession(sessionStorage);
-  
-  // 🔥 Real-time hooks
-  const { metrics } = useSystemMetrics();
-  const { orders, lastUpdate } = useRealtimeOrders();
+    const [stats, setStats] = useState(null);
+    const [activeTab, setActiveTab] = useState('overview');
+    const [restaurants, setRestaurants] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [shippers, setShippers] = useState([]);
+    const [toast, setToast] = useState(null);
+    const [animatingRow, setAnimatingRow] = useState(null);
 
-  // 🔥 Auto-refresh khi có order mới
-  useEffect(() => {
-    if (lastUpdate) {
-      console.log('🔔 New order detected, refreshing shipper stats...');
-      refresh();
-    }
-  }, [lastUpdate]);
+    // Restaurant CRUD states
+    const [isRestaurantModalOpen, setIsRestaurantModalOpen] = useState(false);
+    const [restaurantMode, setRestaurantMode] = useState('add');
+    const [editingRestaurantId, setEditingRestaurantId] = useState(null);
+    const [restaurantForm, setRestaurantForm] = useState({
+        name: '',
+        address: '',
+        category: 'fastfood',
+        rating: 4.5,
+        image: '/images/restaurants/default.jpg',
+        status: 'active',
+        isFeatured: false
+    });
 
-  // 🔥 Auto-refresh khi chuyển tab Shippers
-  useEffect(() => {
-    if (activeTab === 'shippers') {
-      console.log('🔄 Shippers tab opened, refreshing stats...');
-      refresh();
-    }
-  }, [activeTab]);
+    // Menu CRUD states
+    const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+    const [currentRestaurant, setCurrentRestaurant] = useState(null);
+    const [menuItems, setMenuItems] = useState([]);
+    const [isMenuItemModalOpen, setIsMenuItemModalOpen] = useState(false);
+    const [menuItemMode, setMenuItemMode] = useState('add');
+    const [editingMenuItemId, setEditingMenuItemId] = useState(null);
+    const [menuItemForm, setMenuItemForm] = useState({
+        name: '',
+        price: '',
+        category: 'Đồ ăn',
+        image: '/images/menu/default.jpg'
+    });
 
-  // 🔥 Auto-refresh mỗi 30 giây
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refresh();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    const session = getAdminSession(sessionStorage);
+    const { lastUpdate } = useRealtimeOrders();
 
-  const refresh = () => {
-  // Chỉ init khi thiếu dữ liệu để tránh ghi đè trạng thái do các dashboard khác cập nhật
-  initAdminData(localStorage, false);
-    initShippers(localStorage);
-    
-    const overview = getAdminOverview(localStorage);
-    setStats(overview);
-    setRestaurants(getRestaurants(localStorage));
-    setUsers(getUsers(localStorage));
-    
-    // ⭐ Lấy shipper stats với dữ liệu THỰC
-    const shipperStatsData = getShipperStats(localStorage);
-    setShipperStats(shipperStatsData);
-    setShippers(shipperStatsData.shippers || []); // Dùng shippers từ stats (có dữ liệu thực)
-  };
-  
-  useEffect(() => { refresh(); }, []);
+    const refresh = async () => {
+        initAdminData(localStorage, false);
+        initShippers(localStorage);
+        const overview = getAdminOverview(localStorage);
+        setStats(overview);
 
-  // Lắng nghe sự kiện thay đổi trạng thái nhà hàng (từ Restaurant Dashboard)
-  useEventListener(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, () => {
-    console.log('🔁 Restaurant status changed event received → refreshing admin data');
-    refresh();
-  });
+        try {
+            const res = await fetch('http://localhost:3000/restaurants');
+            if (res.ok) {
+                const data = await res.json();
+                setRestaurants(data);
+                localStorage.setItem('restaurants', JSON.stringify(data));
+            } else {
+                setRestaurants(getRestaurants(localStorage));
+            }
+        } catch (e) {
+            setRestaurants(getRestaurants(localStorage));
+        }
 
-  // 🔥 Show toast notification
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+        setUsers(getUsers(localStorage));
+        const shipperStatsData = getShipperStats(localStorage);
+        setShippers(shipperStatsData.shippers || []);
+    };
 
-  const handleRestaurantStatusChange = (restaurantId, newStatus) => {
-    console.log('🔧 Changing restaurant status:', { restaurantId, newStatus });
-    setAnimatingRow(`restaurant-${restaurantId}`);
-    
-    const result = updateRestaurantStatus(localStorage, restaurantId, newStatus);
-    console.log('📊 Update result:', result);
-    
-    if (result.success) {
-      const statusText = newStatus === 'active' ? 'kích hoạt' : newStatus === 'suspended' ? 'tạm ngưng' : 'cập nhật';
-      showToast(`✅ Đã ${statusText} nhà hàng!`);
-      eventBus.emit(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, { restaurantId, status: newStatus });
-      refresh();
-    } else {
-      showToast(`❌ Lỗi: ${result.error}`, 'error');
-    }
-    
-    setTimeout(() => setAnimatingRow(null), 500);
-  };
+    useEffect(() => {
+        if (lastUpdate) refresh();
+    }, [lastUpdate]);
 
-  const handleUserStatusChange = (username, banned) => {
-    setAnimatingRow(`user-${username}`);
-    
-    const result = updateUserStatus(localStorage, username, banned);
-    if (result.success) {
-      showToast(`✅ Đã ${banned ? 'khóa' : 'mở khóa'} tài khoản!`);
-      refresh();
-    } else {
-      showToast(`❌ Lỗi: ${result.error}`, 'error');
-    }
-    
-    setTimeout(() => setAnimatingRow(null), 500);
-  };
+    useEffect(() => {
+        refresh();
+    }, []);
 
-  const handleShipperStatusChange = (shipperId, newStatus) => {
-    setAnimatingRow(`shipper-${shipperId}`);
-    
-    const result = updateShipperStatus(localStorage, shipperId, newStatus);
-    if (result.success) {
-      const statusText = {
-        'active': 'kích hoạt',
-        'offline': 'đưa vào nghỉ',
-        'suspended': 'tạm ngưng'
-      };
-      showToast(`✅ Đã ${statusText[newStatus] || 'cập nhật'} tài xế!`);
-      refresh();
-    } else {
-      showToast(`❌ Lỗi: ${result.error}`, 'error');
-    }
-    
-    setTimeout(() => setAnimatingRow(null), 500);
-  };
+    useEventListener(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, refresh);
 
-  if (!stats) return <div style={{ padding:24 }}>Loading…</div>;
+    const showToast = (msg, type = 'success') => {
+        setToast({ message: msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
-  return (
-    <div style={{ padding:24 }}>
-      <header style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <div>
-          <h2>👑 Admin Dashboard - Quản lý hệ thống</h2>
-          {lastUpdate && (
-            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-              📡 Cập nhật lúc: {lastUpdate.toLocaleTimeString('vi-VN')}
-            </div>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <NotificationBell role="admin" />
-          <button onClick={refresh} style={{ marginRight:8 }}>Làm mới</button>
-          <span style={{ marginRight:12 }}>Xin chào, {session?.email}</span>
-          <button onClick={() => { logoutAdmin(sessionStorage); location.href = '/admin/login'; }}>
-            Đăng xuất
-          </button>
-        </div>
-      </header>
+    // Restaurant CRUD handlers
+    const openRestaurantModal = (mode, restaurant = null) => {
+        setRestaurantMode(mode);
+        if (mode === 'edit' && restaurant) {
+            setEditingRestaurantId(restaurant.id);
+            setRestaurantForm(restaurant);
+        } else {
+            setEditingRestaurantId(null);
+            setRestaurantForm({
+                name: '',
+                address: '',
+                category: 'fastfood',
+                rating: 4.5,
+                image: '/images/restaurants/default.jpg',
+                status: 'active',
+                isFeatured: false
+            });
+        }
+        setIsRestaurantModalOpen(true);
+    };
 
-      {/* Tabs */}
-      <div style={{ 
-        display: 'flex', 
-        gap: 12, 
-        marginTop: 16,
-        borderBottom: '2px solid #e5e7eb'
-      }}>
-        <button
-          onClick={() => setActiveTab('overview')}
-          style={{
-            padding: '12px 24px',
-            border: 'none',
-            background: activeTab === 'overview' ? '#4a90e2' : 'transparent',
-            color: activeTab === 'overview' ? 'white' : '#666',
-            fontWeight: 600,
-            cursor: 'pointer',
-            borderRadius: '8px 8px 0 0',
-            marginBottom: '-2px'
-          }}
-        >
-          📊 Tổng quan
-        </button>
-        <button
-          onClick={() => setActiveTab('restaurants')}
-          style={{
-            padding: '12px 24px',
-            border: 'none',
-            background: activeTab === 'restaurants' ? '#4a90e2' : 'transparent',
-            color: activeTab === 'restaurants' ? 'white' : '#666',
-            fontWeight: 600,
-            cursor: 'pointer',
-            borderRadius: '8px 8px 0 0',
-            marginBottom: '-2px'
-          }}
-        >
-          🏪 Nhà hàng ({stats.restaurants.total})
-        </button>
-        <button
-          onClick={() => setActiveTab('users')}
-          style={{
-            padding: '12px 24px',
-            border: 'none',
-            background: activeTab === 'users' ? '#4a90e2' : 'transparent',
-            color: activeTab === 'users' ? 'white' : '#666',
-            fontWeight: 600,
-            cursor: 'pointer',
-            borderRadius: '8px 8px 0 0',
-            marginBottom: '-2px'
-          }}
-        >
-          👥 Người dùng ({stats.users.total})
-        </button>
-        <button
-          onClick={() => setActiveTab('shippers')}
-          style={{
-            padding: '12px 24px',
-            border: 'none',
-            background: activeTab === 'shippers' ? '#4a90e2' : 'transparent',
-            color: activeTab === 'shippers' ? 'white' : '#666',
-            fontWeight: 600,
-            cursor: 'pointer',
-            borderRadius: '8px 8px 0 0',
-            marginBottom: '-2px'
-          }}
-        >
-          🏍️ Tài xế ({shipperStats?.total || 0})
-        </button>
-      </div>
+    const handleSubmitRestaurant = async (e) => {
+        e.preventDefault();
+        try {
+            const url = restaurantMode === 'add'
+                ? 'http://localhost:3000/restaurants'
+                : `http://localhost:3000/restaurants/${editingRestaurantId}`;
+            const method = restaurantMode === 'add' ? 'POST' : 'PUT';
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <>
-          {/* System Stats */}
-          <section className="ad-grid ad-grid-4" style={{ marginTop:16 }}>
-            <AdminStatCard title="🏪 Nhà hàng" value={stats.restaurants.total} subtitle={`${stats.restaurants.active} hoạt động`} />
-            <AdminStatCard title="👥 Người dùng" value={stats.users.total} subtitle={`${stats.users.active} hoạt động`} />
-            <AdminStatCard title="📦 Đơn hàng" value={stats.orders.total} subtitle={`${stats.orders.shipping} đang giao`} />
-            <AdminStatCard title="💰 Phí Platform" value={`${(stats.platform.commission / 1000).toFixed(0)}K`} subtitle="10% mỗi đơn" />
-          </section>
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...restaurantForm, rating: parseFloat(restaurantForm.rating) })
+            });
 
-          {/* Chart */}
-          <section className="ad-grid ad-grid-2" style={{ marginTop:16 }}>
-            <div className="ad-card">
-              <h3>📈 Đơn hàng 7 ngày qua</h3>
-              <div style={{ marginTop: 16 }}>
-                {stats.dailySeries.map(day => (
-                  <div key={day.date} style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between',
-                    padding: '8px 0',
-                    borderBottom: '1px solid #f0f0f0'
-                  }}>
-                    <span>{day.label}</span>
-                    <span style={{ fontWeight: 600 }}>{day.count} đơn</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            if (res.ok) {
+                showToast(`✅ ${restaurantMode === 'add' ? 'Thêm' : 'Cập nhật'} nhà hàng thành công!`);
+                setIsRestaurantModalOpen(false);
+                eventBus.emit(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, { action: restaurantMode });
+                refresh();
+            } else {
+                throw new Error('API error');
+            }
+        } catch (e) {
+            showToast('❌ Lỗi khi lưu nhà hàng', 'error');
+        }
+    };
 
-            <div className="ad-card">
-              <h3>🏆 Top nhà hàng</h3>
-              <table style={{ width:'100%', borderCollapse:'collapse', marginTop: 16 }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-                    <th style={{ textAlign:'left', padding:8 }}>ID</th>
-                    <th style={{ textAlign:'right', padding:8 }}>Đơn hàng</th>
-                    <th style={{ textAlign:'right', padding:8 }}>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.topRestaurants.map(r => (
-                    <tr key={r.restaurantId} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                      <td style={{ padding:8 }}>#{r.restaurantId}</td>
-                      <td style={{ padding:8, textAlign:'right' }}>{r.orderCount}</td>
-                      <td style={{ padding:8, textAlign:'right', color: '#4a90e2', fontWeight: 600 }}>
-                        {r.totalRevenue.toLocaleString()} đ
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </>
-      )}
+    const handleDeleteRestaurant = async (id) => {
+        if (!confirm('Bạn có chắc muốn xóa nhà hàng này? Tất cả menu của nhà hàng cũng sẽ bị xóa.')) return;
+        try {
+            // Bước 1: Fetch tất cả menu items của nhà hàng
+            const menuRes = await fetch(`http://localhost:3000/menus?restaurantId=${id}`);
+            if (menuRes.ok) {
+                const menuItems = await menuRes.json();
 
-      {/* Restaurants Tab */}
-      {activeTab === 'restaurants' && (
-        <section className="ad-card" style={{ marginTop:16 }}>
-          <h3>🏪 Quản lý nhà hàng</h3>
-          <div style={{ marginTop: 16 }}>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(3, 1fr)', 
-              gap: 12,
-              marginBottom: 16 
-            }}>
-              <div style={{ padding: 16, background: '#f0f9ff', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Hoạt động</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#10b981' }}>
-                  {stats.restaurants.active}
-                </div>
-              </div>
-              <div style={{ padding: 16, background: '#fffbeb', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Chờ duyệt</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#f59e0b' }}>
-                  {stats.restaurants.pending}
-                </div>
-              </div>
-              <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Tạm ngưng</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#ef4444' }}>
-                  {stats.restaurants.suspended}
-                </div>
-              </div>
-            </div>
+                // Bước 2: Xóa từng menu item
+                for (const item of menuItems) {
+                    await fetch(`http://localhost:3000/menus/${item.id}`, { method: 'DELETE' });
+                }
 
-            <table style={{ width:'100%', borderCollapse:'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-                  <th style={{ textAlign:'left', padding:12 }}>ID</th>
-                  <th style={{ textAlign:'left', padding:12 }}>Tên nhà hàng</th>
-                  <th style={{ textAlign:'left', padding:12 }}>Danh mục</th>
-                  <th style={{ textAlign:'left', padding:12 }}>Địa chỉ</th>
-                  <th style={{ textAlign:'center', padding:12 }}>⭐ Rating</th>
-                  <th style={{ textAlign:'center', padding:12 }}>Trạng thái</th>
-                  <th style={{ textAlign:'center', padding:12 }}>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {restaurants.map(restaurant => (
-                  <tr 
-                    key={restaurant.id} 
-                    style={{ borderBottom: '1px solid #f0f0f0' }}
-                    data-animating={animatingRow === `restaurant-${restaurant.id}`}
-                  >
-                    <td style={{ padding:12, fontWeight: 600 }}>#{restaurant.id}</td>
-                    <td style={{ padding:12, fontWeight: 600 }}>
-                      {restaurant.name}
-                      {restaurant.isFeatured && (
-                        <span style={{ 
-                          marginLeft: 8, 
-                          fontSize: 11, 
-                          padding: '2px 6px', 
-                          background: '#fef3c7', 
-                          color: '#92400e',
-                          borderRadius: 4,
-                          fontWeight: 600
-                        }}>
-                          ⭐ Nổi bật
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding:12, fontSize: 13, color: '#666' }}>
-                      {restaurant.category}
-                    </td>
-                    <td style={{ padding:12, fontSize: 13, color: '#666' }}>
-                      {restaurant.address}
-                    </td>
-                    <td style={{ padding:12, textAlign:'center', fontWeight: 600 }}>
-                      {restaurant.rating} ⭐
-                    </td>
-                    <td style={{ padding:12, textAlign:'center' }}>
-                      <span style={{
-                        padding: '4px 12px',
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        background: restaurant.status === 'active' ? '#d1fae5' : 
-                                   restaurant.status === 'pending' ? '#fef3c7' : '#fee2e2',
-                        color: restaurant.status === 'active' ? '#065f46' : 
-                               restaurant.status === 'pending' ? '#92400e' : '#991b1b'
-                      }}>
-                        {restaurant.status === 'active' ? '✓ Hoạt động' :
-                         restaurant.status === 'pending' ? '⏳ Chờ duyệt' : '⛔ Tạm ngưng'}
-                      </span>
-                    </td>
-                    <td style={{ padding:12, textAlign:'center' }}>
-                      {restaurant.status === 'pending' && (
-                        <button 
-                          onClick={() => handleRestaurantStatusChange(restaurant.id, 'active')}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 6,
-                            cursor: 'pointer',
-                            marginRight: 8
-                          }}
-                        >
-                          ✓ Duyệt
-                        </button>
-                      )}
-                      {restaurant.status === 'active' && (
-                        <button 
-                          onClick={() => handleRestaurantStatusChange(restaurant.id, 'suspended')}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 6,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          ⛔ Tạm ngưng
-                        </button>
-                      )}
-                      {restaurant.status === 'suspended' && (
-                        <button 
-                          onClick={() => handleRestaurantStatusChange(restaurant.id, 'active')}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 6,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          ✓ Kích hoạt
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+                showToast(`🗑️ Đã xóa ${menuItems.length} món ăn`);
+            }
 
-      {/* Users Tab */}
-      {activeTab === 'users' && (
-        <section className="ad-card" style={{ marginTop:16 }}>
-          <h3>👥 Quản lý người dùng</h3>
-          <div style={{ marginTop: 16 }}>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(2, 1fr)', 
-              gap: 12,
-              marginBottom: 16 
-            }}>
-              <div style={{ padding: 16, background: '#f0f9ff', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Hoạt động</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#10b981' }}>
-                  {stats.users.active}
-                </div>
-              </div>
-              <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Đã khóa</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#ef4444' }}>
-                  {stats.users.banned}
-                </div>
-              </div>
-            </div>
+            // Bước 3: Xóa nhà hàng
+            const res = await fetch(`http://localhost:3000/restaurants/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast('✅ Xóa nhà hàng thành công');
+                eventBus.emit(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, { action: 'delete', restaurantId: id });
+                refresh();
+            } else {
+                throw new Error('Delete failed');
+            }
+        } catch (e) {
+            showToast('❌ Lỗi khi xóa nhà hàng', 'error');
+        }
+    };
 
-            <table style={{ width:'100%', borderCollapse:'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-                  <th style={{ textAlign:'left', padding:12 }}>Username</th>
-                  <th style={{ textAlign:'left', padding:12 }}>Họ tên</th>
-                  <th style={{ textAlign:'left', padding:12 }}>Số điện thoại</th>
-                  <th style={{ textAlign:'center', padding:12 }}>Trạng thái</th>
-                  <th style={{ textAlign:'center', padding:12 }}>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.slice(0, 20).map(user => (
-                  <tr 
-                    key={user.username} 
-                    style={{ borderBottom: '1px solid #f0f0f0' }}
-                    data-animating={animatingRow === `user-${user.username}`}
-                  >
-                    <td style={{ padding:12, fontWeight: 600 }}>{user.username}</td>
-                    <td style={{ padding:12 }}>{user.fullName || 'N/A'}</td>
-                    <td style={{ padding:12 }}>{user.phone || 'N/A'}</td>
-                    <td style={{ padding:12, textAlign:'center' }}>
-                      <span style={{
-                        padding: '4px 12px',
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        background: user.banned ? '#fee2e2' : '#d1fae5',
-                        color: user.banned ? '#991b1b' : '#065f46'
-                      }}>
-                        {user.banned ? '🔒 Đã khóa' : '✓ Hoạt động'}
-                      </span>
-                    </td>
-                    <td style={{ padding:12, textAlign:'center' }}>
-                      {user.banned ? (
-                        <button 
-                          onClick={() => handleUserStatusChange(user.username, false)}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 6,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          🔓 Mở khóa
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleUserStatusChange(user.username, true)}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 6,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          🔒 Khóa
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+    const handleRestaurantStatusChange = async (restaurantId, newStatus) => {
+        setAnimatingRow(`restaurant-${restaurantId}`);
+        try {
+            const res = await fetch(`http://localhost:3000/restaurants/${restaurantId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            if (!res.ok) throw new Error('API error');
+            showToast('✅ Đã cập nhật trạng thái nhà hàng!');
+            eventBus.emit(EVENT_TYPES.RESTAURANT_STATUS_CHANGED, { restaurantId, status: newStatus });
+            refresh();
+        } catch (e) {
+            showToast(`❌ Lỗi: ${e.message}`, 'error');
+        }
+        setTimeout(() => setAnimatingRow(null), 500);
+    };
 
-      {/* Shippers Tab */}
-      {activeTab === 'shippers' && (
-        <section className="ad-card" style={{ marginTop:16 }}>
-          <div>
-            <h3>🏍️ Quản lý Tài xế</h3>
-            
-            {/* Stats */}
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(4, 1fr)', 
-              gap: 12,
-              marginBottom: 16,
-              marginTop: 16 
-            }}>
-              <div style={{ padding: 16, background: '#f0f9ff', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Đang hoạt động</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#10b981' }}>
-                  {shipperStats?.active || 0}
-                </div>
-              </div>
-              <div style={{ padding: 16, background: '#fff7ed', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Đang giao hàng</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#f59e0b' }}>
-                  {shipperStats?.busy || 0}
-                </div>
-              </div>
-              <div style={{ padding: 16, background: '#f9fafb', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Nghỉ</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#6b7280' }}>
-                  {shipperStats?.offline || 0}
-                </div>
-              </div>
-              <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8 }}>
-                <div style={{ fontSize: 12, color: '#666' }}>Tạm ngưng</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#ef4444' }}>
-                  {shipperStats?.suspended || 0}
-                </div>
-              </div>
-            </div>
+    // Menu CRUD handlers
+    const handleOpenMenu = async (restaurant) => {
+        setCurrentRestaurant(restaurant);
+        try {
+            const res = await fetch(`http://localhost:3000/menus?restaurantId=${restaurant.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setMenuItems(data);
+                setIsMenuModalOpen(true);
+            } else {
+                showToast('❌ Không thể tải menu', 'error');
+            }
+        } catch (e) {
+            showToast('❌ Lỗi kết nối', 'error');
+        }
+    };
 
-            <table style={{ width:'100%', borderCollapse:'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-                  <th style={{ textAlign:'left', padding:12 }}>ID</th>
-                  <th style={{ textAlign:'left', padding:12 }}>Tên tài xế</th>
-                  <th style={{ textAlign:'left', padding:12 }}>Phương tiện</th>
-                  <th style={{ textAlign:'center', padding:12 }}>⭐ Rating</th>
-                  <th style={{ textAlign:'center', padding:12 }}>Số điện thoại</th>
-                  <th style={{ textAlign:'center', padding:12 }}>Tổng giao</th>
-                  <th style={{ textAlign:'center', padding:12 }}>Thu nhập</th>
-                  <th style={{ textAlign:'center', padding:12 }}>Trạng thái</th>
-                  <th style={{ textAlign:'center', padding:12 }}>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shippers.length === 0 ? (
-                  <tr>
-                    <td colSpan="9" style={{ padding: 32, textAlign: 'center', color: '#999' }}>
-                      Chưa có dữ liệu shipper. Hệ thống sẽ tự động khởi tạo khi có đơn hàng đầu tiên.
-                    </td>
-                  </tr>
-                ) : (
-                  shippers.map(shipper => (
-                  <tr 
-                    key={shipper.id} 
-                    style={{ borderBottom: '1px solid #f0f0f0' }}
-                    data-animating={animatingRow === `shipper-${shipper.id}`}
-                  >
-                    <td style={{ padding:12, fontWeight: 600 }}>#{shipper.id}</td>
-                    <td style={{ padding:12, fontWeight: 600 }}>{shipper.name}</td>
-                    <td style={{ padding:12, fontSize: 13, color: '#666' }}>
-                      🏍️ {shipper.vehicle}
-                    </td>
-                    <td style={{ padding:12, textAlign:'center', fontWeight: 600 }}>
-                      {shipper.rating} ⭐
-                    </td>
-                    <td style={{ padding:12, textAlign:'center', fontSize: 13 }}>
-                      {shipper.phone}
-                    </td>
-                    <td style={{ padding:12, textAlign:'center', fontWeight: 600 }}>
-                      {shipper.totalAssigned || 0} đơn
-                      {shipper.totalAssigned > 0 && shipper.totalDeliveries !== shipper.totalAssigned && (
-                        <div style={{ fontSize: 11, color: '#666', fontWeight: 400 }}>
-                          ({shipper.totalDeliveries || 0} đã giao)
+    const openMenuItemModal = (mode, item = null) => {
+        setMenuItemMode(mode);
+        if (mode === 'edit' && item) {
+            setEditingMenuItemId(item.id);
+            setMenuItemForm(item);
+        } else {
+            setEditingMenuItemId(null);
+            setMenuItemForm({
+                name: '',
+                price: '',
+                category: 'Đồ ăn',
+                image: '/images/menu/default.jpg'
+            });
+        }
+        setIsMenuItemModalOpen(true);
+    };
+
+    const handleSubmitMenuItem = async (e) => {
+        e.preventDefault();
+        try {
+            const url = menuItemMode === 'add'
+                ? 'http://localhost:3000/menus'
+                : `http://localhost:3000/menus/${editingMenuItemId}`;
+            const method = menuItemMode === 'add' ? 'POST' : 'PUT';
+
+            const body = {
+                ...menuItemForm,
+                price: Number(menuItemForm.price),
+                restaurantId: currentRestaurant.id
+            };
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                showToast(`✅ ${menuItemMode === 'add' ? 'Thêm' : 'Cập nhật'} món ăn thành công!`);
+                setIsMenuItemModalOpen(false);
+
+                // Broadcast event
+                eventBus.emit(EVENT_TYPES.MENU_UPDATED, {
+                    restaurantId: currentRestaurant.id,
+                    action: menuItemMode
+                });
+
+                const r = await fetch(`http://localhost:3000/menus?restaurantId=${currentRestaurant.id}`);
+                const data = await r.json();
+                setMenuItems(data);
+            } else {
+                throw new Error('Save failed');
+            }
+        } catch (e) {
+            showToast('❌ Lỗi khi lưu món ăn', 'error');
+        }
+    };
+
+    const handleDeleteMenuItem = async (id) => {
+        if (!confirm('Bạn có chắc muốn xóa món ăn này?')) return;
+        try {
+            const res = await fetch(`http://localhost:3000/menus/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast('✅ Xóa món ăn thành công');
+
+                // Broadcast event
+                eventBus.emit(EVENT_TYPES.MENU_UPDATED, {
+                    restaurantId: currentRestaurant.id,
+                    action: 'delete'
+                });
+
+                setMenuItems(menuItems.filter(i => i.id !== id));
+            } else {
+                throw new Error('Delete failed');
+            }
+        } catch (e) {
+            showToast('❌ Lỗi khi xóa món ăn', 'error');
+        }
+    };
+
+    const handleUserStatusChange = (username, banned) => {
+        setAnimatingRow(`user-${username}`);
+        const result = updateUserStatus(localStorage, username, banned);
+        if (result.success) {
+            showToast(`✅ ${banned ? 'Khóa' : 'Mở khóa'} tài khoản!`);
+            refresh();
+        } else {
+            showToast(`❌ ${result.error}`, 'error');
+        }
+        setTimeout(() => setAnimatingRow(null), 500);
+    };
+
+    const handleShipperStatusChange = (shipperId, newStatus) => {
+        setAnimatingRow(`shipper-${shipperId}`);
+        const result = updateShipperStatus(localStorage, shipperId, newStatus);
+        if (result.success) {
+            showToast('✅ Cập nhật tài xế!');
+            refresh();
+        } else {
+            showToast(`❌ ${result.error}`, 'error');
+        }
+        setTimeout(() => setAnimatingRow(null), 500);
+    };
+
+    if (!stats) return <div style={{ padding: 24 }}>Loading…</div>;
+
+    return (
+        <div className="admin-dashboard">
+            <header className="admin-header">
+                <div>
+                    <h2>👑 Admin Dashboard</h2>
+                    {lastUpdate && (
+                        <div style={{ fontSize: 12, color: '#666' }}>
+                            Cập nhật: {lastUpdate.toLocaleTimeString()}
                         </div>
-                      )}
-                    </td>
-                    <td style={{ padding:12, textAlign:'center', fontWeight: 600, color: '#10b981' }}>
-                      {((shipper.earnings || 0) / 1000).toFixed(1)}K
-                    </td>
-                    <td style={{ padding:12, textAlign:'center' }}>
-                      <span style={{
-                        padding: '4px 12px',
-                        borderRadius: 6,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        background: shipper.status === 'active' ? '#d1fae5' : 
-                                   shipper.status === 'busy' ? '#fef3c7' : 
-                                   shipper.status === 'offline' ? '#f3f4f6' : '#fee2e2',
-                        color: shipper.status === 'active' ? '#065f46' : 
-                               shipper.status === 'busy' ? '#92400e' : 
-                               shipper.status === 'offline' ? '#374151' : '#991b1b'
-                      }}>
-                        {shipper.status === 'active' ? '✓ Sẵn sàng' :
-                         shipper.status === 'busy' ? '🚚 Đang giao' : 
-                         shipper.status === 'offline' ? '💤 Nghỉ' : '⛔ Tạm ngưng'}
-                      </span>
-                    </td>
-                    <td style={{ padding:12, textAlign:'center' }}>
-                      <div style={{ display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
-                        {shipper.status !== 'active' && shipper.status !== 'busy' && (
-                          <button 
-                            onClick={() => handleShipperStatusChange(shipper.id, 'active')}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#10b981',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: 6,
-                              cursor: 'pointer',
-                              fontSize: 12
-                            }}
-                          >
-                            ✓ Kích hoạt
-                          </button>
-                        )}
-                        {shipper.status !== 'suspended' && (
-                          <button 
-                            onClick={() => handleShipperStatusChange(shipper.id, 'suspended')}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#ef4444',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: 6,
-                              cursor: 'pointer',
-                              fontSize: 12
-                            }}
-                          >
-                            ⛔ Tạm ngưng
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+                    )}
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <NotificationBell role="admin" />
+                    <button onClick={refresh} className="btn-refresh">Làm mới</button>
+                    <span>{session?.email}</span>
+                    <button onClick={() => { logoutAdmin(sessionStorage); location.href = '/admin/login'; }} className="btn-logout">
+                        Đăng xuất
+                    </button>
+                </div>
+            </header>
 
-      {/* 🔥 Toast Notification */}
-      {toast && (
-        <div style={{
-          position: 'fixed',
-          top: 80,
-          right: 24,
-          padding: '16px 24px',
-          background: toast.type === 'error' ? '#fee2e2' : '#d1fae5',
-          color: toast.type === 'error' ? '#991b1b' : '#065f46',
-          borderRadius: 8,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 9999,
-          fontWeight: 600,
-          animation: 'slideIn 0.3s ease-out',
-        }}>
-          {toast.message}
+            <div className="admin-tabs">
+                {['overview', 'restaurants', 'users', 'shippers'].map((tab) => (
+                    <button key={tab} onClick={() => setActiveTab(tab)} className={`tab-button ${activeTab === tab ? 'active' : ''}`}>
+                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                ))}
+            </div>
+
+            {activeTab === 'overview' && (
+                <section className="admin-section">
+                    <div className="stats-grid">
+                        <AdminStatCard title="🏪 Nhà hàng" value={stats.restaurants.total} subtitle={`${stats.restaurants.active} hoạt động`} />
+                        <AdminStatCard title="👥 Người dùng" value={stats.users.total} subtitle={`${stats.users.active} hoạt động`} />
+                        <AdminStatCard title="📦 Đơn hàng" value={stats.orders.total} subtitle={`${stats.orders.shipping} đang giao`} />
+                        <AdminStatCard title="💰 Phí nền tảng" value={`${(stats.platform.commission / 1000).toFixed(0)}K`} subtitle="10% mỗi đơn" />
+                    </div>
+                </section>
+            )}
+
+            {activeTab === 'restaurants' && (
+                <section className="admin-section">
+                    <button onClick={() => openRestaurantModal('add')} className="btn-add">+ Thêm nhà hàng</button>
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên nhà hàng</th>
+                                <th>Danh mục</th>
+                                <th>Địa chỉ</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {restaurants.map((r) => (
+                                <tr key={r.id} className={animatingRow === `restaurant-${r.id}` ? 'animating' : ''}>
+                                    <td>#{r.id}</td>
+                                    <td>{r.name} {r.isFeatured && '⭐'}</td>
+                                    <td>{r.category}</td>
+                                    <td>{r.address}</td>
+                                    <td>
+                                        <span className={`status-badge status-${r.status}`}>{r.status}</span>
+                                    </td>
+                                    <td>
+                                        <button onClick={() => handleOpenMenu(r)} className="btn-action">🍽️ Menu</button>
+                                        <button onClick={() => openRestaurantModal('edit', r)} className="btn-action">✏️ Sửa</button>
+                                        <button onClick={() => handleRestaurantStatusChange(r.id, r.status === 'active' ? 'suspended' : 'active')} className="btn-action">
+                                            {r.status === 'active' ? '⛔ Tạm ngưng' : '✅ Kích hoạt'}
+                                        </button>
+                                        <button onClick={() => handleDeleteRestaurant(r.id)} className="btn-action btn-danger">🗑️ Xóa</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+            )}
+
+            {activeTab === 'users' && (
+                <section className="admin-section">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.map((u) => (
+                                <tr key={u.username} className={animatingRow === `user-${u.username}` ? 'animating' : ''}>
+                                    <td>{u.username}</td>
+                                    <td>{u.email}</td>
+                                    <td>
+                                        <span className={`status-badge ${u.banned ? 'status-suspended' : 'status-active'}`}>
+                                            {u.banned ? '⛔ Khóa' : '✓ Hoạt động'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button onClick={() => handleUserStatusChange(u.username, !u.banned)} className="btn-action">
+                                            {u.banned ? '🔓 Mở khóa' : '🔒 Khóa'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+            )}
+
+            {activeTab === 'shippers' && (
+                <section className="admin-section">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên tài xế</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {shippers.map((s) => (
+                                <tr key={s.id} className={animatingRow === `shipper-${s.id}` ? 'animating' : ''}>
+                                    <td>#{s.id}</td>
+                                    <td>{s.name}</td>
+                                    <td>
+                                        <span className={`status-badge status-${s.status}`}>{s.status}</span>
+                                    </td>
+                                    <td>
+                                        <button onClick={() => handleShipperStatusChange(s.id, s.status === 'active' ? 'suspended' : 'active')} className="btn-action">
+                                            {s.status === 'active' ? '⛔ Tạm ngưng' : '✅ Kích hoạt'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+            )}
+
+            {/* Restaurant Modal */}
+            {isRestaurantModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsRestaurantModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>{restaurantMode === 'add' ? 'Thêm nhà hàng mới' : 'Sửa nhà hàng'}</h3>
+                        <form onSubmit={handleSubmitRestaurant}>
+                            <input placeholder="Tên nhà hàng" value={restaurantForm.name} onChange={(e) => setRestaurantForm({ ...restaurantForm, name: e.target.value })} required />
+                            <input placeholder="Địa chỉ" value={restaurantForm.address} onChange={(e) => setRestaurantForm({ ...restaurantForm, address: e.target.value })} required />
+                            <select value={restaurantForm.category} onChange={(e) => setRestaurantForm({ ...restaurantForm, category: e.target.value })}>
+                                <option value="fastfood">Fast Food</option>
+                                <option value="coffee">Coffee</option>
+                                <option value="vietnamese">Vietnamese</option>
+                            </select>
+                            <input type="number" step="0.1" placeholder="Rating" value={restaurantForm.rating} onChange={(e) => setRestaurantForm({ ...restaurantForm, rating: e.target.value })} />
+
+                            <div style={{ marginBottom: 10 }}>
+                                <label style={{ display: 'block', marginBottom: 5, fontWeight: 500 }}>Hình ảnh:</label>
+                                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                    <input
+                                        placeholder="URL hình ảnh hoặc chọn file..."
+                                        value={restaurantForm.image}
+                                        onChange={(e) => setRestaurantForm({ ...restaurantForm, image: e.target.value })}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <label className="btn-secondary" style={{ cursor: 'pointer', padding: '8px 12px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        📁 Chọn ảnh
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            hidden
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setRestaurantForm({ ...restaurantForm, image: reader.result });
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                                {restaurantForm.image && (
+                                    <img
+                                        src={restaurantForm.image}
+                                        alt="Preview"
+                                        style={{ width: '100%', height: 150, objectFit: 'cover', marginTop: 10, borderRadius: 8, border: '1px solid #ddd' }}
+                                        onError={(e) => e.target.style.display = 'none'}
+                                    />
+                                )}
+                            </div>
+
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 8 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={restaurantForm.isFeatured || false}
+                                    onChange={(e) => setRestaurantForm({ ...restaurantForm, isFeatured: e.target.checked })}
+                                    style={{ width: 20, height: 20, cursor: 'pointer' }}
+                                />
+                                <span style={{ fontSize: 14, fontWeight: 500 }}>⭐ Hiển thị trên trang chủ (Featured)</span>
+                            </label>
+
+                            <div className="modal-actions">
+                                <button type="submit" className="btn-primary">Lưu</button>
+                                <button type="button" onClick={() => setIsRestaurantModalOpen(false)} className="btn-secondary">Hủy</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Menu Modal */}
+            {isMenuModalOpen && currentRestaurant && (
+                <div className="modal-overlay" onClick={() => setIsMenuModalOpen(false)}>
+                    <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
+                        <h3>Menu: {currentRestaurant.name}</h3>
+                        <button onClick={() => openMenuItemModal('add')} className="btn-add">+ Thêm món mới</button>
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Tên món</th>
+                                    <th>Giá</th>
+                                    <th>Danh mục</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {menuItems.map((item) => (
+                                    <tr key={item.id}>
+                                        <td>{item.name}</td>
+                                        <td>{item.price.toLocaleString()} đ</td>
+                                        <td>{item.category}</td>
+                                        <td>
+                                            <button onClick={() => openMenuItemModal('edit', item)} className="btn-action">✏️ Sửa</button>
+                                            <button onClick={() => handleDeleteMenuItem(item.id)} className="btn-action btn-danger">🗑️ Xóa</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <button onClick={() => setIsMenuModalOpen(false)} className="btn-secondary">Đóng</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Menu Item Modal */}
+            {isMenuItemModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsMenuItemModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>{menuItemMode === 'add' ? 'Thêm món mới' : 'Sửa món ăn'}</h3>
+                        <form onSubmit={handleSubmitMenuItem}>
+                            <input placeholder="Tên món" value={menuItemForm.name} onChange={(e) => setMenuItemForm({ ...menuItemForm, name: e.target.value })} required />
+                            <input type="number" placeholder="Giá" value={menuItemForm.price} onChange={(e) => setMenuItemForm({ ...menuItemForm, price: e.target.value })} required />
+                            <select value={menuItemForm.category} onChange={(e) => setMenuItemForm({ ...menuItemForm, category: e.target.value })}>
+                                <option value="Đồ ăn">Đồ ăn</option>
+                                <option value="Đồ uống">Đồ uống</option>
+                                <option value="Tráng miệng">Tráng miệng</option>
+                            </select>
+
+                            <div style={{ marginBottom: 10 }}>
+                                <label style={{ display: 'block', marginBottom: 5, fontWeight: 500 }}>Hình ảnh:</label>
+                                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                    <input
+                                        placeholder="URL hình ảnh hoặc chọn file..."
+                                        value={menuItemForm.image}
+                                        onChange={(e) => setMenuItemForm({ ...menuItemForm, image: e.target.value })}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <label className="btn-secondary" style={{ cursor: 'pointer', padding: '8px 12px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        📁 Chọn ảnh
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            hidden
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setMenuItemForm({ ...menuItemForm, image: reader.result });
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                                {menuItemForm.image && (
+                                    <img
+                                        src={menuItemForm.image}
+                                        alt="Preview"
+                                        style={{ width: '100%', height: 150, objectFit: 'cover', marginTop: 10, borderRadius: 8, border: '1px solid #ddd' }}
+                                        onError={(e) => e.target.style.display = 'none'}
+                                    />
+                                )}
+                            </div>
+
+                            <div className="modal-actions">
+                                <button type="submit" className="btn-primary">Lưu</button>
+                                <button type="button" onClick={() => setIsMenuItemModalOpen(false)} className="btn-secondary">Hủy</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {toast && (
+                <div className={`toast toast-${toast.type}`}>
+                    {toast.message}
+                </div>
+            )}
         </div>
-      )}
-
-      <style>{`
-        @keyframes slideIn {
-          from {
-            transform: translateX(400px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        
-        tr[data-animating="true"] {
-          animation: highlight 0.5s ease-out;
-        }
-        
-        @keyframes highlight {
-          0% { background-color: #fef3c7; }
-          100% { background-color: transparent; }
-        }
-        
-        button:hover {
-          opacity: 0.9;
-          transform: scale(1.05);
-        }
-        
-        button:active {
-          transform: scale(0.98);
-        }
-      `}</style>
-    </div>
-  );
+    );
 }

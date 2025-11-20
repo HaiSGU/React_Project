@@ -1,55 +1,99 @@
-import { View, Text, FlatList, Image, StyleSheet, Pressable } from 'react-native'
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
+import { View, Text, FlatList, Image, StyleSheet, Pressable, Platform } from 'react-native'
+import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import React, { useState, useEffect } from 'react'
 
-import { MENU_ITEMS_RESOLVED } from '@shared/constants/MenuItemsList' // ← DÙNG RESOLVED (có require())
-import { RESTAURANTS } from '@shared/constants/RestaurantsList'
 import { useQuantities } from '@shared/hooks/useQuantities'
 import colors from '@shared/theme/colors'
+
+// Cấu hình API URL
+const LOCAL_IP = '192.168.31.160';
+const BASE_URL = Platform.select({
+  android: `http://${LOCAL_IP}:3000`,
+  ios: `http://${LOCAL_IP}:3000`,
+  default: `http://${LOCAL_IP}:3000`,
+});
 
 export default function MenuScreen() {
   const router = useRouter()
   const { id } = useLocalSearchParams()
-  const currentRestaurantId = parseInt(id)
+  const currentRestaurantId = id; // ID từ params là string hoặc number tùy API
 
-  // Lấy tên restaurant để hiển thị header
-  const restaurant = RESTAURANTS.find(r => r.id === currentRestaurantId)
-  const restaurantName = restaurant ? restaurant.name : 'Menu'
+  const [menuItems, setMenuItems] = useState([]);
+  const [restaurantName, setRestaurantName] = useState('Menu');
 
-  // ✅ Filter menu theo restaurantId
-  const menuForRestaurant = MENU_ITEMS_RESOLVED
-    .filter((item) => {
-      if (Array.isArray(item.restaurantId)) {
-        return item.restaurantId.includes(currentRestaurantId)
-      }
-      return item.restaurantId === currentRestaurantId
-    })
-    .map(item => ({
-      ...item,
-      restaurantId: Array.isArray(item.restaurantId)
-        ? currentRestaurantId
-        : item.restaurantId,
-      restaurantName,
-    }))
+  // Fetch menu data với Polling
+  useFocusEffect(
+    React.useCallback(() => {
+      let isActive = true;
 
-  // ✅ Dùng custom hook
-  const { quantities, increase, decrease, totalPrice, cartItems } = useQuantities(menuForRestaurant)
+      const fetchMenu = async () => {
+        try {
+          // Fetch restaurant info để lấy tên
+          const resInfo = await fetch(`${BASE_URL}/restaurants/${currentRestaurantId}`);
+          if (resInfo.ok && isActive) {
+            const info = await resInfo.json();
+            setRestaurantName(info.name);
+          }
+
+          // Fetch menu items
+          const res = await fetch(`${BASE_URL}/menus?restaurantId=${currentRestaurantId}`);
+          if (res.ok && isActive) {
+            const data = await res.json();
+            const mappedData = data.map(item => {
+              let imageSource = item.image;
+              if (typeof item.image === 'string') {
+                if (item.image.startsWith('http') || item.image.startsWith('data:')) {
+                  imageSource = { uri: item.image };
+                } else {
+                  imageSource = { uri: `${BASE_URL}${item.image}` };
+                }
+              }
+              // Map fields cho khớp với UI cũ
+              return {
+                ...item,
+                title: item.name,
+                description: item.description || 'Món ngon mỗi ngày',
+                image: imageSource,
+                rating: item.rating || 4.5,
+                sold: item.sold || 100
+              };
+            });
+            setMenuItems(mappedData);
+          }
+        } catch (error) {
+          console.error('Error fetching menu:', error);
+        }
+      };
+
+      fetchMenu();
+      const intervalId = setInterval(fetchMenu, 2000); // Fetch mỗi 2 giây (nhanh hơn)
+
+      return () => {
+        isActive = false;
+        clearInterval(intervalId);
+      };
+    }, [currentRestaurantId])
+  );
+
+  // ✅ Dùng custom hook với dữ liệu từ API
+  const { quantities, increase, decrease, totalPrice, cartItems } = useQuantities(menuItems)
 
   const separatorComp = <View style={styles.separator} />
   const footerComp = <Text style={styles.footerText}>End of Menu</Text>
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f8f8' }} edges={['bottom']}>
-      <Stack.Screen 
+      <Stack.Screen
         options={{
           title: restaurantName,
           headerShown: true,
           headerBackTitle: '',
-        }} 
+        }}
       />
       <View style={{ flex: 1 }}>
         <FlatList
-          data={menuForRestaurant}
+          data={menuItems}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
@@ -58,14 +102,14 @@ export default function MenuScreen() {
           ListFooterComponentStyle={styles.footerComp}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Menu đang cập nhật...</Text>
+              <Text style={styles.emptyText}>Đang tải menu...</Text>
             </View>
           }
           renderItem={({ item }) => (
             <View style={styles.card}>
               {item.image && (
                 <Image
-                  source={item.image} // ← ĐÃ LÀ require(), không cần { uri: ... }
+                  source={item.image}
                   style={styles.menuImage}
                   resizeMode="cover"
                 />
@@ -77,15 +121,15 @@ export default function MenuScreen() {
                 </Text>
                 <View style={styles.rowBetween}>
                   <Text style={styles.priceText}>
-                    {item.price.toLocaleString()} đ
+                    {Number(item.price).toLocaleString()} đ
                   </Text>
                   <Text style={styles.ratingText}>
-                    ⭐ {item.rating || 4.5} | Đã bán: {item.sold || 100}
+                    ⭐ {item.rating} | Đã bán: {item.sold}
                   </Text>
                 </View>
                 <View style={styles.actionRow}>
-                  <Pressable 
-                    onPress={() => decrease(item.id)} 
+                  <Pressable
+                    onPress={() => decrease(item.id)}
                     style={styles.qtyButton}
                   >
                     <Text style={styles.qtyText}>-</Text>
@@ -93,8 +137,8 @@ export default function MenuScreen() {
                   <Text style={styles.qtyNumber}>
                     {quantities[item.id] || 0}
                   </Text>
-                  <Pressable 
-                    onPress={() => increase(item.id)} 
+                  <Pressable
+                    onPress={() => increase(item.id)}
                     style={styles.qtyButton}
                   >
                     <Text style={styles.qtyText}>+</Text>

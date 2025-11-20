@@ -1,66 +1,63 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MENU_ITEMS_WEB } from "@shared/constants/MenuItemsListWeb";
-import { RESTAURANTS } from "@shared/constants/RestaurantsListWeb";
 import { isLoggedIn } from "@shared/services/authService";
 import { useQuantities } from "@shared/hooks/useQuantities";
-import { getRestaurantMenu } from "@shared/services/ownerMenuService";
 import MenuItem from "../../components/MenuItem";
+import eventBus, { EVENT_TYPES } from "@shared/services/eventBus";
 import "./MenuPage.css";
 
 export default function MenuPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const restaurantId = parseInt(id);
+  const restaurantId = id;
 
-  // Lấy thông tin nhà hàng
-  const restaurant = RESTAURANTS.find(r => r.id === restaurantId);
-  const restaurantName = restaurant ? restaurant.name : 'Menu';
+  const [restaurant, setRestaurant] = useState(null);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const staticMenu = useMemo(() => {
-    return MENU_ITEMS_WEB.filter((item) => {
-      if (Array.isArray(item.restaurantId)) {
-        return item.restaurantId.includes(restaurantId);
+  const fetchData = async () => {
+    try {
+      const resInfo = await fetch(`http://localhost:3000/restaurants/${restaurantId}`);
+      if (resInfo.ok) {
+        const info = await resInfo.json();
+        setRestaurant(info);
       }
-      return item.restaurantId === restaurantId;
-    });
-  }, [restaurantId]);
 
-  const [menuItems, setMenuItems] = useState(staticMenu);
+      const resMenu = await fetch(`http://localhost:3000/menus?restaurantId=${restaurantId}`);
+      if (resMenu.ok) {
+        const data = await resMenu.json();
+        const processedData = data.map(item => ({
+          ...item,
+          image: item.image && typeof item.image === 'string'
+            ? (item.image.startsWith('http') || item.image.startsWith('data:')
+              ? item.image
+              : `http://localhost:3000${item.image}`)
+            : item.image
+        }));
+        setMenuItems(processedData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch menu data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (Number.isNaN(restaurantId)) {
-      setMenuItems(staticMenu);
-      return;
-    }
+    fetchData();
+    const interval = setInterval(fetchData, 2000);
+    const unsubscribe = eventBus.on(EVENT_TYPES.MENU_UPDATED, (data) => {
+      if (data.restaurantId === restaurantId || data.restaurantId === Number(restaurantId)) {
+        fetchData();
+      }
+    });
 
-    if (typeof window === "undefined") {
-      setMenuItems(staticMenu);
-      return;
-    }
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
+  }, [restaurantId]);
 
-    try {
-      const { customMenu = [] } = getRestaurantMenu(restaurantId, window.localStorage);
-      const normalizedCustom = customMenu
-        .filter((item) => item && item.isAvailable !== false)
-        .map((item) => ({
-          ...item,
-          name: item.name || item.title || "Món mới",
-          title: item.title || item.name,
-          price: Number(item.price) || 0,
-          description: item.description || "",
-          rating: item.rating || 0,
-          sold: item.sold || 0,
-        }));
-
-      setMenuItems([...staticMenu, ...normalizedCustom]);
-    } catch (error) {
-      console.error("Failed to load custom menu:", error);
-      setMenuItems(staticMenu);
-    }
-  }, [restaurantId, staticMenu]);
-
-  // Dùng custom hook từ shared
   const { quantities, increase, decrease, totalPrice, cartItems } = useQuantities(menuItems);
 
   const handleCheckout = async () => {
@@ -95,14 +92,17 @@ export default function MenuPage() {
     });
   };
 
+  if (loading) {
+    return <div className="menu-page"><div className="loading">Đang tải menu...</div></div>;
+  }
+
   return (
     <div className="menu-page">
-      {/* HEADER */}
       <header className="menu-header">
-        <h1>{restaurantName}</h1>
+        <h1>{restaurant ? restaurant.name : 'Menu'}</h1>
+        {restaurant && <p className="restaurant-address">{restaurant.address}</p>}
       </header>
 
-      {/* MENU LIST */}
       <div className="menu-content">
         {menuItems.length > 0 ? (
           <div className="menu-list">
@@ -112,8 +112,8 @@ export default function MenuPage() {
                 id={item.id}
                 name={item.name}
                 price={item.price}
-                rating={item.rating}
-                sold={item.sold}
+                rating={item.rating || 4.5}
+                sold={item.sold || 0}
                 image={item.image}
                 description={item.description}
                 quantity={quantities[item.id] || 0}
@@ -131,7 +131,6 @@ export default function MenuPage() {
         )}
       </div>
 
-      {/* CART BAR */}
       {totalPrice > 0 && (
         <div className="cart-bar">
           <div className="cart-info">

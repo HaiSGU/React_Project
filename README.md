@@ -183,8 +183,39 @@ npx expo start -c
 
 # Clean native Android build artifacts (if needed)
 cd android
-.\u0067radlew clean
+.\gradlew clean
 ```
+
+**⚠️ QUAN TRỌNG: Chạy trên điện thoại thật**
+
+Nếu bạn muốn chạy app trên **điện thoại thật** (không phải emulator):
+
+1. **Tìm địa chỉ IP của máy tính:**
+   ```powershell
+   ipconfig  # Windows
+   ifconfig  # Mac/Linux
+   ```
+   Ghi lại địa chỉ IPv4 (ví dụ: 192.168.31.160)
+
+2. **Cập nhật IP trong `Mobile/app/_layout.tsx`:**
+   ```typescript
+   const LOCAL_IP = 'ĐỊA_CHỈ_IP_CỦA_BẠN';
+   ```
+
+3. **Cấu hình Firewall (chỉ Windows):**
+   ```powershell
+   # Chạy PowerShell với quyền Administrator
+   .\setup-firewall.ps1
+   ```
+
+4. **Đảm bảo điện thoại và máy tính cùng mạng WiFi**
+
+5. **Quét QR code bằng Expo Go app**
+
+📖 **Xem hướng dẫn chi tiết:**
+- `MOBILE_FIX_SUMMARY.md` - Tóm tắt vấn đề và giải pháp
+- `MOBILE_SETUP_GUIDE.md` - Hướng dẫn đầy đủ
+- `MOBILE_CHECKLIST.md` - Checklist từng bước
 
 ### Web (Vite)
 ```powershell

@@ -10,10 +10,27 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. **Cấu hình Network (Quan trọng!)**
+
+   Nếu chạy trên **điện thoại thật**:
+   - Tìm địa chỉ IP máy tính: `ipconfig` (Windows) hoặc `ifconfig` (Mac/Linux)
+   - Cập nhật `LOCAL_IP` trong file `app/_layout.tsx` với địa chỉ IP của bạn
+   - Đảm bảo điện thoại và máy tính cùng mạng WiFi
+   - Chạy script cấu hình firewall (chỉ Windows): `.\setup-firewall.ps1` (với quyền Admin)
+
+   Nếu chạy trên **emulator/simulator**:
+   - Android Emulator: Sử dụng `http://10.0.2.2:3000`
+   - iOS Simulator: Sử dụng `http://localhost:3000`
+
+3. Start the app
 
    ```bash
    npx expo start
+   ```
+
+   Hoặc với cache clear:
+   ```bash
+   npx expo start -c
    ```
 
 In the output, you'll find options to open the app in a

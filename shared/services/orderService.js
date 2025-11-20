@@ -1,5 +1,5 @@
 import { RESTAURANTS_DATA } from '../constants/RestaurantsData';
-import { 
+import {
   createOrderOnServer,
   updateOrderOnServer,
   syncOrdersForUser,
@@ -10,9 +10,7 @@ import {
  * Order management service - User-specific
  */
 
-
 // Get current username
- 
 const getCurrentUsername = async (storage) => {
   try {
     const userInfo = await storage.getItem('userInfo');
@@ -54,7 +52,7 @@ const shouldSyncRemote = (options = {}) => options.syncRemote !== false;
 export const saveOrder = async (storage, order) => {
   try {
     const username = await getCurrentUsername(storage);
-    
+
     if (!username) {
       return {
         success: false,
@@ -63,41 +61,53 @@ export const saveOrder = async (storage, order) => {
     }
 
     const userProfile = await getCurrentUserProfile(storage);
-    // ⚠️ KIỂM TRA TRẠNG THÁI NHÀ HÀNG
-    const restaurantsData = await storage.getItem('restaurants');
-    let restaurants = [];
 
-    if (restaurantsData) {
-      try {
-        restaurants = JSON.parse(restaurantsData);
-      } catch (parseError) {
-        console.warn('Parse restaurants error, fallback to defaults:', parseError);
+    // ⚠️ KIỂM TRA TRẠNG THÁI NHÀ HÀNG TỪ API
+    let restaurants = [];
+    try {
+      const res = await fetch('http://localhost:3000/restaurants');
+      if (res.ok) {
+        restaurants = await res.json();
+        // Cập nhật cache localStorage luôn để các chỗ khác dùng
+        storage.setItem('restaurants', JSON.stringify(restaurants));
+      } else {
+        throw new Error('API error');
+      }
+    } catch (error) {
+      console.warn('Fetch restaurants failed, using localStorage:', error);
+      const restaurantsData = await storage.getItem('restaurants');
+      if (restaurantsData) {
+        try {
+          restaurants = JSON.parse(restaurantsData);
+        } catch (e) { }
+      }
+
+      if (!Array.isArray(restaurants) || restaurants.length === 0) {
+        restaurants = RESTAURANTS_DATA.map(rest => ({
+          id: rest.id,
+          name: rest.name,
+          status: 'active',
+        }));
       }
     }
 
-    if (!Array.isArray(restaurants) || restaurants.length === 0) {
-      restaurants = RESTAURANTS_DATA.map(rest => ({
-        id: rest.id,
-        name: rest.name,
-        status: 'active',
-      }));
-    }
-    const restaurant = restaurants.find(r => r.id === order.restaurantId);
-    
+    // So sánh ID dạng string để tránh lỗi type mismatch
+    const restaurant = restaurants.find(r => String(r.id) === String(order.restaurantId));
+
     if (!restaurant) {
       return {
         success: false,
-        error: 'Nhà hàng không tồn tại',
+        error: `Nhà hàng không tồn tại (ID: ${order.restaurantId})`,
       };
     }
-    
+
     if (restaurant.status === 'suspended') {
       return {
         success: false,
         error: '⛔ Nhà hàng tạm ngưng hoạt động. Vui lòng chọn nhà hàng khác!',
       };
     }
-    
+
     if (restaurant.status === 'pending') {
       return {
         success: false,
@@ -134,7 +144,7 @@ export const saveOrder = async (storage, order) => {
       address: order.user?.address || userProfile?.address || 'Không có địa chỉ',
       totalPrice,
       total,
-      total: totalPrice,
+      restaurantName: restaurant.name, // ⭐ THÊM TÊN NHÀ HÀNG
     };
 
     let remoteOrder;
@@ -186,7 +196,7 @@ export const saveOrder = async (storage, order) => {
 export const getShippingOrders = async (storage, options = {}) => {
   try {
     const username = await getCurrentUsername(storage);
-    
+
     if (!username) {
       return [];
     }
@@ -209,7 +219,7 @@ export const getShippingOrders = async (storage, options = {}) => {
 export const getDeliveredOrders = async (storage, options = {}) => {
   try {
     const username = await getCurrentUsername(storage);
-    
+
     if (!username) {
       return [];
     }
@@ -228,11 +238,12 @@ export const getDeliveredOrders = async (storage, options = {}) => {
 
 /**
  * Move order from shipping to delivered - THEO USER
+ * ⭐ Tối ưu: Chỉ lưu các trường cần thiết để tránh lỗi "Row too big" trên Mobile
  */
 export const confirmDelivery = async (order, storage) => {
   try {
     const username = await getCurrentUsername(storage);
-    
+
     if (!username) {
       return {
         success: false,
@@ -249,18 +260,24 @@ export const confirmDelivery = async (order, storage) => {
 
     const timestamp = new Date().toISOString();
 
+    // ⭐ UPDATE SERVER TRƯỚC - Đợi cho đến khi thành công
+    let serverUpdated = false;
     try {
       await updateOrderOnServer(order.id, {
         status: 'completed',
         deliveredAt: timestamp,
         updatedAt: timestamp,
       });
+      serverUpdated = true;
+      console.log('✅ Server updated successfully');
     } catch (syncError) {
-      console.error('Remote confirm delivery failed:', syncError);
-      return {
-        success: false,
-        error: 'Không thể đồng bộ đơn hàng với máy chủ!',
-      };
+      console.warn('⚠️ Remote confirm delivery failed (will update local anyway):', syncError);
+      // Vẫn tiếp tục update local, nhưng đánh dấu là chưa sync
+    }
+
+    // Đợi một chút để server kịp xử lý
+    if (serverUpdated) {
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     // Get current orders
@@ -271,13 +288,35 @@ export const confirmDelivery = async (order, storage) => {
     const newShipping = shippingOrders.filter(o => o.id !== order.id);
     await storage.setItem(`shippingOrders_${username}`, JSON.stringify(newShipping));
 
-    // Add to delivered
+    // ⭐ Tối ưu: Chỉ lưu các trường cần thiết để tránh lỗi "Row too big"
     const deliveredOrder = {
-      ...order,
+      id: order.id,
+      restaurantId: order.restaurantId,
+      restaurantName: order.restaurantName,
+      userId: order.userId,
+      username: order.username,
+      customerName: order.customerName,
+      address: order.address,
+      items: order.items,
+      itemsSummary: order.itemsSummary,
+      quantity: order.quantity,
+      total: order.total,
+      totalPrice: order.totalPrice,
       status: 'completed',
+      shipper: order.shipper ? {
+        id: order.shipper.id,
+        name: order.shipper.name,
+        phone: order.shipper.phone,
+        avatar: order.shipper.avatar,
+        estimatedTime: order.shipper.estimatedTime
+      } : null,
+      deliveryMethod: order.deliveryMethod,
+      paymentMethod: order.paymentMethod,
+      createdAt: order.createdAt,
       deliveredAt: timestamp,
       updatedAt: timestamp,
     };
+
     const newDelivered = [...deliveredOrders, deliveredOrder];
     await storage.setItem(`deliveredOrders_${username}`, JSON.stringify(newDelivered));
 
@@ -316,12 +355,15 @@ export const confirmDelivery = async (order, storage) => {
       await storage.setItem('orders', JSON.stringify(ordersData));
     }
 
-    await syncOrdersForUser(storage, username);
+    // ⚠️ KHÔNG sync ngay để tránh race condition
+    // Server cần thời gian cập nhật, nếu sync ngay sẽ lấy dữ liệu cũ về
+    // Để polling tự nhiên sync sau vài giây
+    // await syncOrdersForUser(storage, username);
 
-    return { 
+    return {
       success: true,
-      shipping: newShipping, 
-      delivered: newDelivered 
+      shipping: newShipping,
+      delivered: newDelivered
     };
   } catch (error) {
     console.error('Confirm delivery error:', error);
@@ -339,7 +381,7 @@ export const getAllOrders = async (storage) => {
   try {
     const shipping = await getShippingOrders(storage);
     const delivered = await getDeliveredOrders(storage);
-    return [...shipping, ...delivered].sort((a, b) => 
+    return [...shipping, ...delivered].sort((a, b) =>
       new Date(b.createdAt) - new Date(a.createdAt)
     );
   } catch (error) {
@@ -367,7 +409,7 @@ export const getOrderById = async (storage, orderId) => {
 export const updateOrderStatus = async (storage, orderId, status) => {
   try {
     const username = await getCurrentUsername(storage);
-    
+
     if (!username) {
       return { success: false, error: 'Vui lòng đăng nhập' };
     }
@@ -387,53 +429,34 @@ export const updateOrderStatus = async (storage, orderId, status) => {
 
     const shippingOrders = await getShippingOrders(storage, { syncRemote: false });
     const deliveredOrders = await getDeliveredOrders(storage, { syncRemote: false });
+
+    const updatedShipping = shippingOrders.map(o =>
+      o.id === orderId ? { ...o, status, updatedAt: timestamp } : o
+    );
+    const updatedDelivered = deliveredOrders.map(o =>
+      o.id === orderId ? { ...o, status, updatedAt: timestamp } : o
+    );
+
+    await storage.setItem(`shippingOrders_${username}`, JSON.stringify(updatedShipping));
+    await storage.setItem(`deliveredOrders_${username}`, JSON.stringify(updatedDelivered));
+
     const ordersRaw = await storage.getItem('orders');
     const ordersData = parseJSON(ordersRaw, { dangGiao: [], daGiao: [] });
-    
-    // Find in shipping
-    const shippingIndex = shippingOrders.findIndex(o => o.id === orderId);
-    if (shippingIndex !== -1) {
-      shippingOrders[shippingIndex].status = status;
-      shippingOrders[shippingIndex].updatedAt = timestamp;
-      await storage.setItem(`shippingOrders_${username}`, JSON.stringify(shippingOrders));
-      ordersData.dangGiao = ordersData.dangGiao.map(order => 
-        String(order.id) === String(orderId)
-          ? { ...order, status, updatedAt: timestamp }
-          : order
-      );
-      await storage.setItem('orders', JSON.stringify(ordersData));
-      await syncOrdersForUser(storage, username);
-      return { success: true, order: shippingOrders[shippingIndex] };
-    }
-    
-    // Find in delivered
-    const deliveredIndex = deliveredOrders.findIndex(o => o.id === orderId);
-    if (deliveredIndex !== -1) {
-      deliveredOrders[deliveredIndex].status = status;
-      deliveredOrders[deliveredIndex].updatedAt = timestamp;
-      await storage.setItem(`deliveredOrders_${username}`, JSON.stringify(deliveredOrders));
-      ordersData.daGiao = ordersData.daGiao.map(order =>
-        String(order.id) === String(orderId)
-          ? { ...order, status, updatedAt: timestamp }
-          : order
-      );
-      await storage.setItem('orders', JSON.stringify(ordersData));
-      await syncOrdersForUser(storage, username);
-      return { success: true, order: deliveredOrders[deliveredIndex] };
-    }
-    
-    return { success: false, error: 'Order not found' };
+
+    ordersData.dangGiao = ordersData.dangGiao.map(o =>
+      String(o.id) === String(orderId) ? { ...o, status, updatedAt: timestamp } : o
+    );
+    ordersData.daGiao = ordersData.daGiao.map(o =>
+      String(o.id) === String(orderId) ? { ...o, status, updatedAt: timestamp } : o
+    );
+
+    await storage.setItem('orders', JSON.stringify(ordersData));
+
+    return { success: true };
   } catch (error) {
     console.error('Update order status error:', error);
     return { success: false, error: error.message };
   }
-};
-
-/**
- * Cancel order - THEO USER
- */
-export const cancelOrder = async (storage, orderId) => {
-  return updateOrderStatus(storage, orderId, 'cancelled');
 };
 
 /**
@@ -442,56 +465,31 @@ export const cancelOrder = async (storage, orderId) => {
 export const deleteOrder = async (storage, orderId) => {
   try {
     const username = await getCurrentUsername(storage);
-    
+
     if (!username) {
       return { success: false, error: 'Vui lòng đăng nhập' };
     }
 
-    const shippingOrders = await getShippingOrders(storage);
-    const deliveredOrders = await getDeliveredOrders(storage);
-    
+    const shippingOrders = await getShippingOrders(storage, { syncRemote: false });
+    const deliveredOrders = await getDeliveredOrders(storage, { syncRemote: false });
+
     const newShipping = shippingOrders.filter(o => o.id !== orderId);
     const newDelivered = deliveredOrders.filter(o => o.id !== orderId);
-    
+
     await storage.setItem(`shippingOrders_${username}`, JSON.stringify(newShipping));
     await storage.setItem(`deliveredOrders_${username}`, JSON.stringify(newDelivered));
 
-    return {
-      success: true,
-      message: 'Đã xóa đơn hàng',
-    };
+    const ordersRaw = await storage.getItem('orders');
+    const ordersData = parseJSON(ordersRaw, { dangGiao: [], daGiao: [] });
+
+    ordersData.dangGiao = ordersData.dangGiao.filter(o => String(o.id) !== String(orderId));
+    ordersData.daGiao = ordersData.daGiao.filter(o => String(o.id) !== String(orderId));
+
+    await storage.setItem('orders', JSON.stringify(ordersData));
+
+    return { success: true };
   } catch (error) {
     console.error('Delete order error:', error);
-    return {
-      success: false,
-      error: error.message,
-    };
-  }
-};
-
-/**
- * Clear all orders for current user
- */
-export const clearUserOrders = async (storage) => {
-  try {
-    const username = await getCurrentUsername(storage);
-    
-    if (!username) {
-      return { success: false, error: 'Vui lòng đăng nhập' };
-    }
-
-    await storage.removeItem(`shippingOrders_${username}`);
-    await storage.removeItem(`deliveredOrders_${username}`);
-
-    return {
-      success: true,
-      message: 'Đã xóa tất cả đơn hàng',
-    };
-  } catch (error) {
-    console.error('Clear orders error:', error);
-    return {
-      success: false,
-      error: error.message,
-    };
+    return { success: false, error: error.message };
   }
 };

@@ -1,5 +1,5 @@
 import 'react-native-reanimated';
-import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, FlatList, ImageBackground, Image, Pressable, ScrollView, Platform } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { Link, useRouter, useFocusEffect, useLocalSearchParams, Stack } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -15,22 +15,70 @@ import SearchBar from '../../components/SearchBar'
 import ShipperImg from "@shared/assets/images/shipperimage.jpeg"
 import colors from '@shared/theme/colors'
 
+// Cấu hình API URL (giống _layout.tsx)
+const LOCAL_IP = '192.168.31.160';
+const BASE_URL = Platform.select({
+  android: `http://${LOCAL_IP}:3000`,
+  ios: `http://${LOCAL_IP}:3000`,
+  default: `http://${LOCAL_IP}:3000`,
+});
+
 const App = () => {
   const router = useRouter()
   const [loggedIn, setLoggedIn] = useState(false)
   const [userInfo, setUserInfo] = useState(null)
+  const [restaurants, setRestaurants] = useState(RESTAURANTS) // Mặc định dùng static data
   const params = useLocalSearchParams()
 
+  // Fetch data từ API với Polling (Auto-sync)
+  useFocusEffect(
+    React.useCallback(() => {
+      let isActive = true;
+
+      const fetchRestaurants = async () => {
+        try {
+          // console.log('Fetching restaurants...'); // Comment out to avoid log spam
+          const res = await fetch(`${BASE_URL}/restaurants`);
+          if (res.ok && isActive) {
+            const data = await res.json();
+            const mappedData = data.map(r => {
+              let imageSource = r.image;
+              if (typeof r.image === 'string') {
+                if (r.image.startsWith('http') || r.image.startsWith('data:')) {
+                  imageSource = { uri: r.image };
+                } else {
+                  imageSource = { uri: `${BASE_URL}${r.image}` };
+                }
+              }
+              return { ...r, image: imageSource };
+            });
+            setRestaurants(mappedData);
+          }
+        } catch (error) {
+          console.error('Error fetching restaurants:', error);
+        }
+      };
+
+      fetchRestaurants(); // Fetch ngay lập tức
+      const intervalId = setInterval(fetchRestaurants, 2000); // Fetch mỗi 2 giây (nhanh hơn)
+
+      return () => {
+        isActive = false;
+        clearInterval(intervalId);
+      };
+    }, [])
+  );
+
   // Search functionality - tìm nhà hàng theo tên, địa chỉ, category VÀ món ăn
-  const { 
-    query, 
-    setQuery, 
-    filteredRestaurants, 
-    noResults 
-  } = useRestaurantSearch(RESTAURANTS, MENU_ITEMS)
+  const {
+    query,
+    setQuery,
+    filteredRestaurants,
+    noResults
+  } = useRestaurantSearch(restaurants, MENU_ITEMS)
 
   // Hiển thị kết quả search hoặc featured restaurants
-  const displayRestaurants = query.trim() ? filteredRestaurants : RESTAURANTS.filter(r => r.isFeatured)
+  const displayRestaurants = query.trim() ? filteredRestaurants : restaurants.filter(r => r.isFeatured)
 
   useFocusEffect(
     React.useCallback(() => {
@@ -38,7 +86,7 @@ const App = () => {
         //  Dùng shared service
         const loggedInStatus = await isLoggedIn(AsyncStorage)
         setLoggedIn(loggedInStatus)
-        
+
         if (loggedInStatus) {
           const user = await getCurrentUser(AsyncStorage)
           setUserInfo(user)
@@ -60,18 +108,39 @@ const App = () => {
     router.push('/login')
   }
 
-  const renderRestaurant = ({ item }) => (
-    <View style={style.restaurantCard}>
-      <Image source={item.image} style={style.restaurantImage} />
-      <Text style={style.restaurantName}>{item.name}</Text>
-      <Text style={style.restaurantRating}>⭐ {item.rating}</Text>
-      <Link href={`/menu/${item.id}`} asChild>
-        <Pressable style={style.menuButton}>
-          <Text style={style.menuButtonText}>Menu</Text>
-        </Pressable>
-      </Link>
-    </View>
-  )
+  const renderRestaurant = ({ item }) => {
+    const isActive = item.status === 'active';
+    // Nếu không active, hiển thị label trạng thái
+    let statusLabel = null;
+    if (!isActive) {
+      if (item.status === 'suspended') statusLabel = 'Tạm ngưng';
+      else if (item.status === 'pending') statusLabel = 'Chờ duyệt';
+      else statusLabel = 'Đóng cửa';
+    }
+
+    return (
+      <View style={[style.restaurantCard, !isActive && { opacity: 0.7 }]}>
+        <View>
+          <Image source={item.image} style={style.restaurantImage} />
+          {!isActive && (
+            <View style={style.statusOverlay}>
+              <Text style={style.statusText}>{statusLabel}</Text>
+            </View>
+          )}
+        </View>
+        <Text style={style.restaurantName}>{item.name}</Text>
+        <Text style={style.restaurantRating}>⭐ {item.rating}</Text>
+        <Link href={isActive ? `/menu/${item.id}` : '#'} asChild>
+          <Pressable
+            style={[style.menuButton, !isActive && { backgroundColor: '#ccc' }]}
+            disabled={!isActive}
+          >
+            <Text style={style.menuButtonText}>{isActive ? 'Menu' : 'Đóng'}</Text>
+          </Pressable>
+        </Link>
+      </View>
+    );
+  }
 
   const renderCategory = ({ item }) => (
     <Link href={`/category/${item.key}`} asChild>
@@ -92,11 +161,11 @@ const App = () => {
 
   return (
     <SafeAreaView style={style.container} edges={['top']}>
-      <Stack.Screen 
+      <Stack.Screen
         options={{
           title: 'Home',
           headerShown: false,
-        }} 
+        }}
       />
       {/* Thanh chào + đăng nhập/đăng xuất */}
       <View style={style.headerBar}>
@@ -125,8 +194,8 @@ const App = () => {
           {query.trim() !== '' && (
             <View style={style.searchResultHeader}>
               <Text style={style.searchResultText}>
-                {noResults 
-                  ? 'Không tìm thấy kết quả' 
+                {noResults
+                  ? 'Không tìm thấy kết quả'
                   : `Tìm thấy ${filteredRestaurants.length} nhà hàng`}
               </Text>
             </View>
@@ -307,5 +376,22 @@ const style = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
+  },
+  statusOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  statusText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+    textAlign: 'center',
   },
 })

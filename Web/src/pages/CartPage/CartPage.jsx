@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { 
-  getShippingOrders, 
+import {
+  getShippingOrders,
   getDeliveredOrders,
   confirmDelivery
 } from "@shared/services/orderService";
@@ -11,30 +11,37 @@ import "./CartPage.css";
 export default function CartPage() {
   const [activeTab, setActiveTab] = useState("dangGiao");
   const [orders, setOrders] = useState({ dangGiao: [], daGiao: [] });
-  
+
   // 🔥 Real-time orders hook
   const { orders: realtimeOrders, lastUpdate } = useRealtimeOrders();
 
-  // ✅ Đọc từ orderService khi component mount
+  // ✅ Đọc từ orderService khi component mount + Polling mỗi 5s
   useEffect(() => {
-    loadOrders();
+    loadOrders({ syncRemote: false });
+
+    // 🔄 Polling: Tự động refresh mỗi 5 giây để đồng bộ với server
+    // (Khi Mobile đặt hàng, polling sẽ sync vào localStorage, sau đó refresh UI)
+    const intervalId = setInterval(() => {
+      loadOrders({ syncRemote: false });
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
-  
+
   // 🔥 Listen to order status changes
   useEventListener(EVENT_TYPES.ORDER_CONFIRMED, () => {
-    loadOrders();
-    // Show toast notification
+    loadOrders({ syncRemote: false }); // Không sync để tránh ghi đè
     console.log('📦 Đơn hàng của bạn đã được xác nhận!');
   });
-  
+
   useEventListener(EVENT_TYPES.ORDER_SHIPPING, () => {
-    loadOrders();
+    loadOrders({ syncRemote: false }); // Không sync để tránh ghi đè
     console.log('🚚 Đơn hàng đang được giao!');
   });
 
-  const loadOrders = async () => {
-    const shipping = await getShippingOrders(localStorage);
-    const delivered = await getDeliveredOrders(localStorage);
+  const loadOrders = async (options = {}) => {
+    const shipping = await getShippingOrders(localStorage, options);
+    const delivered = await getDeliveredOrders(localStorage, options);
     setOrders({ dangGiao: shipping, daGiao: delivered });
   };
 
@@ -44,7 +51,7 @@ export default function CartPage() {
     if (!order) return;
 
     const result = await confirmDelivery(order, localStorage);
-    
+
     if (result.success) {
       setOrders({
         dangGiao: result.shipping,
@@ -112,6 +119,11 @@ export default function CartPage() {
                   <div style={{ fontSize: "12px", color: "#64748b" }}>
                     Đơn hàng #{order.id}
                   </div>
+                  {order.restaurantName && (
+                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#1a202c", marginTop: "4px" }}>
+                      🏪 {order.restaurantName}
+                    </div>
+                  )}
                   <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>
                     {new Date(order.createdAt).toLocaleString('vi-VN')}
                   </div>

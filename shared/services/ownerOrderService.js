@@ -5,21 +5,46 @@ import { updateOrderOnServer, syncOrdersToStorage } from './cloudSyncService';
 */
 export const getRestaurantOrders = (restaurantId, storage) => {
   try {
-    // Đọc từ cấu trúc mới: {dangGiao: [], daGiao: []}
+    const allOrders = [];
+
+    // 1. Đọc từ key global 'orders'
     const ordersData = JSON.parse(storage.getItem('orders') || '{"dangGiao":[],"daGiao":[]}');
-    const allOrders = [...ordersData.dangGiao, ...ordersData.daGiao];
-    
-    console.log('🔍 All orders:', allOrders);
+    allOrders.push(...ordersData.dangGiao, ...ordersData.daGiao);
+
+    // 2. Đọc từ tất cả user-specific keys
+    // Duyệt qua tất cả keys trong localStorage
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+
+      // Tìm các key có pattern shippingOrders_* hoặc deliveredOrders_*
+      if (key && (key.startsWith('shippingOrders_') || key.startsWith('deliveredOrders_'))) {
+        try {
+          const userOrders = JSON.parse(storage.getItem(key) || '[]');
+          if (Array.isArray(userOrders)) {
+            allOrders.push(...userOrders);
+          }
+        } catch (e) {
+          console.warn('Failed to parse', key, e);
+        }
+      }
+    }
+
+    // 3. Loại bỏ trùng lặp dựa trên order.id
+    const uniqueOrders = Array.from(
+      new Map(allOrders.map(order => [String(order.id), order])).values()
+    );
+
+    console.log('🔍 Total unique orders:', uniqueOrders.length);
     console.log('🔍 Looking for restaurantId:', restaurantId);
-    
-    // Lọc đơn hàng theo restaurantId (hỗ trợ cả string và number)
-    const filtered = allOrders.filter(order => {
+
+    // 4. Lọc đơn hàng theo restaurantId
+    const filtered = uniqueOrders.filter(order => {
       return String(order.restaurantId) === String(restaurantId);
     });
-    
+
     console.log('✅ Filtered orders for restaurant', restaurantId, ':', filtered);
     return filtered;
-    
+
   } catch (error) {
     console.error('Error getting restaurant orders:', error);
     return [];
@@ -32,7 +57,7 @@ export const getRestaurantOrders = (restaurantId, storage) => {
 export const getTodayOrders = (restaurantId, storage) => {
   const orders = getRestaurantOrders(restaurantId, storage)
   const today = new Date().toDateString()
-  
+
   return orders.filter(order => {
     const orderDate = new Date(order.date || order.createdAt).toDateString()
     return orderDate === today
@@ -105,7 +130,7 @@ const COMMISSION_CONFIG = {
  */
 export const calculateRevenueBreakdown = (orders) => {
   const totalRevenue = calculateRevenue(orders)
-  
+
   return {
     total: totalRevenue,
     restaurant: Math.round(totalRevenue * COMMISSION_CONFIG.restaurant),
@@ -127,28 +152,28 @@ export const calculateRevenueBreakdown = (orders) => {
 export const getRestaurantStats = (restaurantId, storage) => {
   const allOrders = getRestaurantOrders(restaurantId, storage)
   const todayOrders = getTodayOrders(restaurantId, storage)
-  
+
   const todayRevenueBreakdown = calculateRevenueBreakdown(todayOrders)
   const totalRevenueBreakdown = calculateRevenueBreakdown(allOrders)
-  
+
   return {
     totalOrders: allOrders.length,
     todayOrders: todayOrders.length,
-    
+
     todayRevenue: {
       total: todayRevenueBreakdown.total,
       app: todayRevenueBreakdown.app,
       restaurant: todayRevenueBreakdown.restaurant,
       percentages: todayRevenueBreakdown.percentages,
     },
-    
+
     totalRevenue: {
       total: totalRevenueBreakdown.total,
       app: totalRevenueBreakdown.app,
       restaurant: totalRevenueBreakdown.restaurant,
       percentages: totalRevenueBreakdown.percentages,
     },
-    
+
     pendingOrders: allOrders.filter(o => o.status === 'pending').length,
     processingOrders: allOrders.filter(o => o.status === 'processing').length,
     deliveredOrders: allOrders.filter(o => o.status === 'delivered').length,
@@ -161,26 +186,26 @@ export const getRestaurantStats = (restaurantId, storage) => {
 export const getChartData = (restaurantId, storage) => {
   const allOrders = getRestaurantOrders(restaurantId, storage)
   const chartData = []
-  
+
   for (let i = 6; i >= 0; i--) {
     const date = new Date()
     date.setDate(date.getDate() - i)
     const dateStr = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
-    
+
     const dayOrders = allOrders.filter(order => {
       const orderDate = new Date(order.date || order.createdAt)
       return orderDate.toDateString() === date.toDateString()
     })
-    
+
     const revenue = calculateRevenue(dayOrders) / 1000
-    
+
     chartData.push({
       date: dateStr,
       orders: dayOrders.length,
       revenue: Math.round(revenue)
     })
   }
-  
+
   return chartData
 }
 
@@ -190,28 +215,28 @@ export const getChartData = (restaurantId, storage) => {
 export const getOrdersByDateFilter = (restaurantId, dateFilter, storage) => {
   const allOrders = getRestaurantOrders(restaurantId, storage)
   const now = new Date()
-  
-  switch(dateFilter) {
+
+  switch (dateFilter) {
     case 'today':
       return allOrders.filter(o => {
         const orderDate = new Date(o.date || o.createdAt)
         return orderDate.toDateString() === now.toDateString()
       })
-    
+
     case 'week':
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
       return allOrders.filter(o => {
         const orderDate = new Date(o.date || o.createdAt)
         return orderDate >= weekAgo
       })
-    
+
     case 'month':
       return allOrders.filter(o => {
         const orderDate = new Date(o.date || o.createdAt)
-        return orderDate.getMonth() === now.getMonth() && 
-               orderDate.getFullYear() === now.getFullYear()
+        return orderDate.getMonth() === now.getMonth() &&
+          orderDate.getFullYear() === now.getFullYear()
       })
-    
+
     default:
       return allOrders
   }
