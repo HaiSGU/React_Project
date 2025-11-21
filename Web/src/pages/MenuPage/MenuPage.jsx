@@ -28,11 +28,7 @@ export default function MenuPage() {
         const data = await resMenu.json();
         const processedData = data.map(item => ({
           ...item,
-          image: item.image && typeof item.image === 'string'
-            ? (item.image.startsWith('http') || item.image.startsWith('data:')
-              ? item.image
-              : `http://localhost:3000${item.image}`)
-            : item.image
+          image: item.image
         }));
         setMenuItems(processedData);
       }
