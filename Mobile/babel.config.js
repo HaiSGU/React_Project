@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = function (api) {
   api.cache(true);
   return {
@@ -9,7 +11,7 @@ module.exports = function (api) {
           root: ['./'],
           alias: {
             '@': './',
-            '@shared': '../shared',
+            '@shared': path.resolve(__dirname, '../shared'),
           },
         },
       ],

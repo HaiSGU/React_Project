@@ -1,8 +1,10 @@
-import { updateOrderOnServer, syncOrdersToStorage } from './cloudSyncService';
+/**
+ * Service quản lý đơn hàng cho restaurant owner
+ */
 
 /**
-* Lấy tất cả đơn hàng của nhà hàng
-*/
+ * Lấy tất cả đơn hàng của nhà hàng
+ */
 export const getRestaurantOrders = (restaurantId, storage) => {
   try {
     const allOrders = [];
@@ -12,11 +14,9 @@ export const getRestaurantOrders = (restaurantId, storage) => {
     allOrders.push(...ordersData.dangGiao, ...ordersData.daGiao);
 
     // 2. Đọc từ tất cả user-specific keys
-    // Duyệt qua tất cả keys trong localStorage
     for (let i = 0; i < storage.length; i++) {
       const key = storage.key(i);
 
-      // Tìm các key có pattern shippingOrders_* hoặc deliveredOrders_*
       if (key && (key.startsWith('shippingOrders_') || key.startsWith('deliveredOrders_'))) {
         try {
           const userOrders = JSON.parse(storage.getItem(key) || '[]');
@@ -34,15 +34,11 @@ export const getRestaurantOrders = (restaurantId, storage) => {
       new Map(allOrders.map(order => [String(order.id), order])).values()
     );
 
-    console.log('🔍 Total unique orders:', uniqueOrders.length);
-    console.log('🔍 Looking for restaurantId:', restaurantId);
-
     // 4. Lọc đơn hàng theo restaurantId
     const filtered = uniqueOrders.filter(order => {
       return String(order.restaurantId) === String(restaurantId);
     });
 
-    console.log('✅ Filtered orders for restaurant', restaurantId, ':', filtered);
     return filtered;
 
   } catch (error) {
@@ -69,7 +65,6 @@ export const getTodayOrders = (restaurantId, storage) => {
  */
 export const calculateRevenue = (orders) => {
   return orders.reduce((total, order) => {
-    // Hỗ trợ cả 2 field: total (mới) và totalPrice (cũ)
     return total + (order.total || order.totalPrice || 0)
   }, 0)
 }
@@ -77,6 +72,8 @@ export const calculateRevenue = (orders) => {
 /**
  * Cập nhật trạng thái đơn hàng
  */
+import { updateOrderOnServer, syncOrdersToStorage } from './cloudSyncService';
+
 export const updateOrderStatus = async (orderId, newStatus, storage = localStorage) => {
   try {
     const timestamp = new Date().toISOString();
@@ -119,10 +116,10 @@ export const updateOrderStatus = async (orderId, newStatus, storage = localStora
  * Cấu hình phí hoa hồng
  */
 const COMMISSION_CONFIG = {
-  restaurant: 0.80,  // Nhà hàng nhận 80%
-  app: 0.20,         // App lấy 20% (Platform 10% + Shipper 10%)
-  platform: 0.10,    // Platform phí 10%
-  shipper: 0.10      // Shipper phí 10%
+  restaurant: 0.80,
+  app: 0.20,
+  platform: 0.10,
+  shipper: 0.10
 }
 
 /**
@@ -136,7 +133,7 @@ export const calculateRevenueBreakdown = (orders) => {
     restaurant: Math.round(totalRevenue * COMMISSION_CONFIG.restaurant),
     platform: Math.round(totalRevenue * COMMISSION_CONFIG.platform),
     shipper: Math.round(totalRevenue * COMMISSION_CONFIG.shipper),
-    app: Math.round(totalRevenue * COMMISSION_CONFIG.app), // Tổng app = platform + shipper
+    app: Math.round(totalRevenue * COMMISSION_CONFIG.app),
     percentages: {
       restaurant: COMMISSION_CONFIG.restaurant * 100,
       platform: COMMISSION_CONFIG.platform * 100,

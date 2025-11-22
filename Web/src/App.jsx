@@ -8,6 +8,7 @@ import MapSelectPage from './pages/MapSelectPage/MapSelectPage'
 import RestaurantDashboard from './pages/RestaurantDashboard/RestaurantDashboard'
 import CategoryPage from './pages/CategoryPage/CategoryPage'
 import CartPage from './pages/CartPage/CartPage'
+import OrderTrackingPage from './pages/OrderTrackingPage/OrderTrackingPage'
 import ProtectedOwnerRoute from './components/ProtectedOwnerRoute'
 import AccountPage from './pages/AccountPage/AccountPage'
 import ContactPage from './pages/ContactPage/ContactPage'
@@ -32,6 +33,7 @@ function App() {
         <Route path="/map-select" element={<MapSelectPage />} />
         <Route path="/category/:id" element={<CategoryPage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/order-tracking" element={<OrderTrackingPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/change-password" element={<ChangePasswordPage />} />
         <Route path="/contact" element={<ContactPage />} />

@@ -4,6 +4,7 @@ import {
   updateOrderOnServer,
   syncOrdersForUser,
   normalizeOrder,
+  getCloudSyncConfig,
 } from './cloudSyncService';
 
 /**
@@ -65,7 +66,11 @@ export const saveOrder = async (storage, order) => {
     // ⚠️ KIỂM TRA TRẠNG THÁI NHÀ HÀNG TỪ API
     let restaurants = [];
     try {
-      const res = await fetch('http://localhost:3000/restaurants');
+      // ✅ Dùng configured baseUrl thay vì hardcode localhost
+      const config = getCloudSyncConfig();
+      const apiUrl = config.baseUrl || 'http://localhost:3000';
+
+      const res = await fetch(`${apiUrl}/restaurants`);
       if (res.ok) {
         restaurants = await res.json();
         // Cập nhật cache localStorage luôn để các chỗ khác dùng
@@ -144,7 +149,7 @@ export const saveOrder = async (storage, order) => {
       address: order.user?.address || userProfile?.address || 'Không có địa chỉ',
       totalPrice,
       total,
-      restaurantName: restaurant.name, // ⭐ THÊM TÊN NHÀ HÀNG
+      restaurantName: restaurant.name,
     };
 
     let remoteOrder;
@@ -272,7 +277,6 @@ export const confirmDelivery = async (order, storage) => {
       console.log('✅ Server updated successfully');
     } catch (syncError) {
       console.warn('⚠️ Remote confirm delivery failed (will update local anyway):', syncError);
-      // Vẫn tiếp tục update local, nhưng đánh dấu là chưa sync
     }
 
     // Đợi một chút để server kịp xử lý
@@ -329,7 +333,7 @@ export const confirmDelivery = async (order, storage) => {
       const existingOrder = ordersData.dangGiao[globalIndex];
       const completedOrder = {
         ...existingOrder,
-        ...deliveredOrder, // Giữ thông tin driver, total, ... từ bản mới nhất
+        ...deliveredOrder,
         status: 'completed',
         updatedAt: new Date().toISOString(),
         deliveredAt: new Date().toISOString(),
@@ -339,7 +343,6 @@ export const confirmDelivery = async (order, storage) => {
       ordersData.daGiao.push(completedOrder);
       await storage.setItem('orders', JSON.stringify(ordersData));
     } else {
-      // Nếu đã ở daGiao thì cập nhật trạng thái cho chắc
       ordersData.daGiao = ordersData.daGiao.map(o => {
         if (String(o.id) === String(order.id)) {
           return {
@@ -354,11 +357,6 @@ export const confirmDelivery = async (order, storage) => {
       });
       await storage.setItem('orders', JSON.stringify(ordersData));
     }
-
-    // ⚠️ KHÔNG sync ngay để tránh race condition
-    // Server cần thời gian cập nhật, nếu sync ngay sẽ lấy dữ liệu cũ về
-    // Để polling tự nhiên sync sau vài giây
-    // await syncOrdersForUser(storage, username);
 
     return {
       success: true,

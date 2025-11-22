@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Link } from 'expo-router'
 
 import { getShippingOrders, getDeliveredOrders, confirmDelivery } from '@shared/services/orderService'
 import { formatPrice, formatOrderStatus, formatPaymentMethod } from '@shared/utils/formatters'
@@ -38,29 +39,45 @@ export default function CartScreen() {
         <Text style={styles.orderText}>
           Nhà hàng: {item.restaurantName || 'Chưa có tên'}
         </Text>
-        
+
         {/*  DÙNG formatPrice */}
         <Text style={styles.orderText}>
           Tổng tiền: {formatPrice(totalValue)}đ
         </Text>
-        
+
         {/*  DÙNG formatOrderStatus */}
         <Text style={styles.orderText}>
           Trạng thái: {formatOrderStatus(item.status)}
         </Text>
-        
+
         {/*  DÙNG formatPaymentMethod */}
         <Text style={styles.orderText}>
           Thanh toán: {formatPaymentMethod(item.payment?.method)}
         </Text>
-        
+
         {activeTab === 'shipping' && (
-          <Pressable
-            style={styles.confirmBtn}
-            onPress={() => handleConfirmDelivered(item)}
-          >
-            <Text style={styles.confirmText}>Đã nhận hàng</Text>
-          </Pressable>
+          <View style={styles.buttonRow}>
+            {/* Button theo dõi đơn hàng */}
+            <Link
+              href={{
+                pathname: '/order-tracking',
+                params: { order: JSON.stringify(item) }
+              }}
+              asChild
+            >
+              <Pressable style={styles.trackBtn}>
+                <Text style={styles.trackBtnText}>🗺️ Theo dõi</Text>
+              </Pressable>
+            </Link>
+
+            {/* Button đã nhận hàng */}
+            <Pressable
+              style={styles.confirmBtn}
+              onPress={() => handleConfirmDelivered(item)}
+            >
+              <Text style={styles.confirmText}>✅ Đã nhận</Text>
+            </Pressable>
+          </View>
         )}
       </View>
     )
@@ -140,8 +157,25 @@ const styles = StyleSheet.create({
     color: '#555',
     marginBottom: 4,
   },
-  confirmBtn: {
+  buttonRow: {
+    flexDirection: 'row',
     marginTop: 12,
+    gap: 8,
+  },
+  trackBtn: {
+    flex: 1,
+    backgroundColor: '#10b981',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  trackBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  confirmBtn: {
+    flex: 1,
     backgroundColor: '#3dd9eaff',
     borderRadius: 8,
     paddingVertical: 10,
@@ -150,6 +184,6 @@ const styles = StyleSheet.create({
   confirmText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 15,
+    fontSize: 14,
   },
 })

@@ -18,10 +18,10 @@ import colors from '@shared/theme/colors'
 export default function MapSelectScreen() {
   const router = useRouter()
   const params = useLocalSearchParams()
-  
+
   //Lấy setSelectedLocation từ context
   const { setSelectedLocation: setGlobalLocation } = useLocation()
-  
+
   const [selectedLocation, setSelectedLocation] = useState(null)
   const [searchText, setSearchText] = useState('')
   const [region, setRegion] = useState({
@@ -150,8 +150,8 @@ export default function MapSelectScreen() {
           onChangeText={setSearchText}
           onSubmitEditing={handleSearch}
         />
-        <Pressable 
-          style={styles.searchBtn} 
+        <Pressable
+          style={styles.searchBtn}
           onPress={handleSearch}
           disabled={isSearching}
         >

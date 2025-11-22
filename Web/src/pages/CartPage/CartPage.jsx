@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getShippingOrders,
   getDeliveredOrders,
@@ -9,6 +10,7 @@ import { EVENT_TYPES } from "@shared/services/eventBus";
 import "./CartPage.css";
 
 export default function CartPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dangGiao");
   const [orders, setOrders] = useState({ dangGiao: [], daGiao: [] });
 
@@ -20,7 +22,6 @@ export default function CartPage() {
     loadOrders({ syncRemote: false });
 
     // 🔄 Polling: Tự động refresh mỗi 5 giây để đồng bộ với server
-    // (Khi Mobile đặt hàng, polling sẽ sync vào localStorage, sau đó refresh UI)
     const intervalId = setInterval(() => {
       loadOrders({ syncRemote: false });
     }, 5000);
@@ -30,18 +31,21 @@ export default function CartPage() {
 
   // 🔥 Listen to order status changes
   useEventListener(EVENT_TYPES.ORDER_CONFIRMED, () => {
-    loadOrders({ syncRemote: false }); // Không sync để tránh ghi đè
+    loadOrders({ syncRemote: false });
     console.log('📦 Đơn hàng của bạn đã được xác nhận!');
   });
 
   useEventListener(EVENT_TYPES.ORDER_SHIPPING, () => {
-    loadOrders({ syncRemote: false }); // Không sync để tránh ghi đè
+    loadOrders({ syncRemote: false });
     console.log('🚚 Đơn hàng đang được giao!');
   });
 
   const loadOrders = async (options = {}) => {
+    console.log('📡 Loading orders...');
     const shipping = await getShippingOrders(localStorage, options);
     const delivered = await getDeliveredOrders(localStorage, options);
+    console.log('📦 Shipping orders:', shipping.length, shipping);
+    console.log('✅ Delivered orders:', delivered.length, delivered);
     setOrders({ dangGiao: shipping, daGiao: delivered });
   };
 
@@ -60,6 +64,11 @@ export default function CartPage() {
     } else {
       alert(result.error || 'Lỗi khi hoàn tất đơn hàng');
     }
+  };
+
+  // Navigate to tracking page
+  const handleTrackOrder = (orderId) => {
+    navigate(`/order-tracking?orderId=${orderId}`);
   };
 
   const list = orders[activeTab];
@@ -195,13 +204,14 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* Tổng tiền */}
+              {/* Tổng tiền & Action buttons */}
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 paddingTop: "12px",
-                borderTop: "1px solid #f0f0f0"
+                borderTop: "1px solid #f0f0f0",
+                gap: "12px"
               }}>
                 <div>
                   <div style={{ fontSize: "12px", color: "#64748b" }}>
@@ -218,21 +228,41 @@ export default function CartPage() {
 
                 {/* Nút hành động */}
                 {activeTab === "dangGiao" && (
-                  <button
-                    onClick={() => handleCompleteOrder(order.id)}
-                    style={{
-                      background: "#10b981",
-                      color: "white",
-                      border: "none",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      fontSize: "13px",
-                      fontWeight: "600"
-                    }}
-                  >
-                    ✓ Đã nhận
-                  </button>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {/* Button theo dõi */}
+                    <button
+                      onClick={() => handleTrackOrder(order.id)}
+                      style={{
+                        background: "#3dd9eaff",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 16px",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: "600"
+                      }}
+                    >
+                      🗺️ Theo dõi
+                    </button>
+
+                    {/* Button đã nhận */}
+                    <button
+                      onClick={() => handleCompleteOrder(order.id)}
+                      style={{
+                        background: "#10b981",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 16px",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: "600"
+                      }}
+                    >
+                      ✓ Đã nhận
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
