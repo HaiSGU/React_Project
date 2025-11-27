@@ -79,19 +79,19 @@ export default function RestaurantDashboard() {
         }
     }, [ownerInfo, dateFilter])
 
-    const loadDashboardData = () => {
+    const loadDashboardData = async () => {
         if (!ownerInfo) return
 
-        const statsData = getRestaurantStats(ownerInfo.restaurantId, localStorage)
+        const statsData = await getRestaurantStats(ownerInfo.restaurantId, localStorage)
         setStats(statsData)
 
         const menu = getRestaurantMenu(ownerInfo.restaurantId, localStorage)
         setMenuInfo(menu)
 
-        const filteredOrders = getOrdersByDateFilter(ownerInfo.restaurantId, dateFilter, localStorage)
+        const filteredOrders = await getOrdersByDateFilter(ownerInfo.restaurantId, dateFilter, localStorage)
         setOrders(filteredOrders)
 
-        const chart = getChartData(ownerInfo.restaurantId, localStorage)
+        const chart = await getChartData(ownerInfo.restaurantId, localStorage)
         setChartData(chart)
 
         const voucherList = getRestaurantVouchers(ownerInfo.restaurantId, localStorage)

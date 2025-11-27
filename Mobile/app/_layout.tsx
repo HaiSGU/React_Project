@@ -15,7 +15,7 @@ import { LocationProvider } from '@shared/context/LocationContext';
 
 // Địa chỉ IP thực của máy tính trong mạng local
 // Thay đổi IP này nếu địa chỉ IP máy tính thay đổi
-const LOCAL_IP = '192.168.31.160';
+const LOCAL_IP = '192.168.1.202';
 
 const defaultBaseUrl = Platform.select({
   // Sử dụng IP thực cho cả Android và iOS khi chạy trên thiết bị thật

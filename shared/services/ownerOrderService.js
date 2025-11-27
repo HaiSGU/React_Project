@@ -2,11 +2,21 @@
  * Service quản lý đơn hàng cho restaurant owner
  */
 
+import { updateOrderOnServer, syncOrdersToStorage } from './cloudSyncService';
+
 /**
  * Lấy tất cả đơn hàng của nhà hàng
+ * ⭐ Đã sửa: Sync từ server trước khi đọc localStorage
  */
-export const getRestaurantOrders = (restaurantId, storage) => {
+export const getRestaurantOrders = async (restaurantId, storage) => {
   try {
+    // ⭐ SYNC FROM SERVER TRƯỚC
+    try {
+      await syncOrdersToStorage(storage);
+    } catch (syncError) {
+      console.warn('Sync failed, using cached data:', syncError);
+    }
+
     const allOrders = [];
 
     // 1. Đọc từ key global 'orders'
@@ -50,8 +60,8 @@ export const getRestaurantOrders = (restaurantId, storage) => {
 /**
  * Lấy đơn hàng hôm nay
  */
-export const getTodayOrders = (restaurantId, storage) => {
-  const orders = getRestaurantOrders(restaurantId, storage)
+export const getTodayOrders = async (restaurantId, storage) => {
+  const orders = await getRestaurantOrders(restaurantId, storage)
   const today = new Date().toDateString()
 
   return orders.filter(order => {
@@ -72,8 +82,6 @@ export const calculateRevenue = (orders) => {
 /**
  * Cập nhật trạng thái đơn hàng
  */
-import { updateOrderOnServer, syncOrdersToStorage } from './cloudSyncService';
-
 export const updateOrderStatus = async (orderId, newStatus, storage = localStorage) => {
   try {
     const timestamp = new Date().toISOString();
@@ -146,9 +154,9 @@ export const calculateRevenueBreakdown = (orders) => {
 /**
  * Lấy số liệu thống kê
  */
-export const getRestaurantStats = (restaurantId, storage) => {
-  const allOrders = getRestaurantOrders(restaurantId, storage)
-  const todayOrders = getTodayOrders(restaurantId, storage)
+export const getRestaurantStats = async (restaurantId, storage) => {
+  const allOrders = await getRestaurantOrders(restaurantId, storage)
+  const todayOrders = await getTodayOrders(restaurantId, storage)
 
   const todayRevenueBreakdown = calculateRevenueBreakdown(todayOrders)
   const totalRevenueBreakdown = calculateRevenueBreakdown(allOrders)
@@ -180,8 +188,8 @@ export const getRestaurantStats = (restaurantId, storage) => {
 /**
  * Lấy dữ liệu biểu đồ 7 ngày gần đây
  */
-export const getChartData = (restaurantId, storage) => {
-  const allOrders = getRestaurantOrders(restaurantId, storage)
+export const getChartData = async (restaurantId, storage) => {
+  const allOrders = await getRestaurantOrders(restaurantId, storage)
   const chartData = []
 
   for (let i = 6; i >= 0; i--) {
@@ -209,8 +217,8 @@ export const getChartData = (restaurantId, storage) => {
 /**
  * Lấy đơn hàng theo bộ lọc ngày
  */
-export const getOrdersByDateFilter = (restaurantId, dateFilter, storage) => {
-  const allOrders = getRestaurantOrders(restaurantId, storage)
+export const getOrdersByDateFilter = async (restaurantId, dateFilter, storage) => {
+  const allOrders = await getRestaurantOrders(restaurantId, storage)
   const now = new Date()
 
   switch (dateFilter) {
