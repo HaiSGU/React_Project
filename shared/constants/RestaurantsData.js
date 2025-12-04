@@ -64,7 +64,7 @@ export const RESTAURANTS_DATA = [
   {
     id: 4,
     name: "Phúc Long",
-    category: ['coffee','milktea'],
+    category: ['coffee', 'milktea'],
     imageName: 'phuclong.png',
     address: "456 Đường XYZ, Quận 7",
     rating: 4.6,
@@ -84,7 +84,7 @@ export const RESTAURANTS_DATA = [
   {
     id: 5,
     name: "Highlands Coffee",
-    category: ['coffee','milktea'],
+    category: ['coffee', 'milktea'],
     imageName: 'highland.png',
     address: "456 Đường XYZ, Quận 7",
     rating: 4.6,
@@ -280,7 +280,7 @@ export const RESTAURANTS_DATA = [
   {
     id: 16,
     name: "Sukiya",
-    category: ["asia","rice"],
+    category: ["asia", "rice"],
     imageName: "sukiya.png",
     address: "Vincom Đồng Khởi, Quận 1",
     rating: 4.7,
@@ -339,6 +339,206 @@ export const RESTAURANTS_DATA = [
       password: 'ngogia123',
       email: 'admin@ngogia.com',
       phone: '0901234586',
+    }
+  },
+  {
+    id: 21,
+    name: "Gogi House - BBQ Hàn Quốc",
+    category: "asia",
+    imageName: 'Jollibee.png', // Placeholder - cần thêm ảnh thật sau
+    address: "88 Nguyễn Đình Chiểu, Quận 3",
+    rating: 4.8,
+    menu: [],
+    isFeatured: true,
+    coordinates: {
+      latitude: 10.7789,
+      longitude: 106.6919
+    },
+    owner: {
+      username: 'gogi_admin',
+      password: 'gogi123',
+      email: 'admin@gogi.com',
+      phone: '0901234587',
+    }
+  },
+  {
+    id: 22,
+    name: "Ichiran Ramen",
+    category: ["asia", "noodle"],
+    imageName: 'KFC.jpg', // Placeholder
+    address: "45 Lê Lợi, Quận 1",
+    rating: 4.9,
+    menu: [],
+    isFeatured: true,
+    coordinates: {
+      latitude: 10.7749,
+      longitude: 106.6999
+    },
+    owner: {
+      username: 'ichiran_admin',
+      password: 'ichiran123',
+      email: 'admin@ichiran.com',
+      phone: '0901234588',
+    }
+  },
+  {
+    id: 23,
+    name: "Pizza 4P's",
+    category: "fastfood",
+    imageName: 'pizzahut.jpg',
+    address: "8 Thủ Khoa Huân, Quận 1",
+    rating: 4.7,
+    menu: [],
+    isFeatured: true,
+    coordinates: {
+      latitude: 10.7729,
+      longitude: 106.7019
+    },
+    owner: {
+      username: 'pizza4ps_admin',
+      password: 'pizza4ps123',
+      email: 'admin@pizza4ps.com',
+      phone: '0901234589',
+    }
+  },
+  {
+    id: 24,
+    name: "Haidilao Hot Pot",
+    category: "asia",
+    imageName: 'Texas.png', // Placeholder
+    address: "72 Lê Thánh Tôn, Quận 1",
+    rating: 4.8,
+    menu: [],
+    isFeatured: false,
+    coordinates: {
+      latitude: 10.7769,
+      longitude: 106.7039
+    },
+    owner: {
+      username: 'haidilao_admin',
+      password: 'haidilao123',
+      email: 'admin@haidilao.com',
+      phone: '0901234590',
+    }
+  },
+  {
+    id: 25,
+    name: "Phở Lệ",
+    category: "noodle",
+    imageName: 'PhoHoa.png',
+    address: "413-415 Nguyễn Trãi, Quận 5",
+    rating: 4.6,
+    menu: [],
+    isFeatured: true,
+    coordinates: {
+      latitude: 10.7549,
+      longitude: 106.6709
+    },
+    owner: {
+      username: 'phole_admin',
+      password: 'phole123',
+      email: 'admin@phole.com',
+      phone: '0901234591',
+    }
+  },
+  {
+    id: 26,
+    name: "Bếp Thái Koh Yam",
+    category: "asia",
+    imageName: 'maycha.png', // Placeholder
+    address: "19 Nguyễn Trãi, Quận 1",
+    rating: 4.5,
+    menu: [],
+    isFeatured: false,
+    coordinates: {
+      latitude: 10.7689,
+      longitude: 106.6929
+    },
+    owner: {
+      username: 'kohyam_admin',
+      password: 'kohyam123',
+      email: 'admin@kohyam.com',
+      phone: '0901234592',
+    }
+  },
+  {
+    id: 27,
+    name: "Five Guys Burgers",
+    category: "fastfood",
+    imageName: 'lotteria.png', // Placeholder
+    address: "Vincom Center, Quận 1",
+    rating: 4.4,
+    menu: [],
+    isFeatured: true,
+    coordinates: {
+      latitude: 10.7799,
+      longitude: 106.6989
+    },
+    owner: {
+      username: 'fiveguys_admin',
+      password: 'fiveguys123',
+      email: 'admin@fiveguys.com',
+      phone: '0901234593',
+    }
+  },
+  {
+    id: 28,
+    name: "Tous Les Jours",
+    category: "coffee",
+    imageName: 'highland.png', // Placeholder
+    address: "35 Nguyễn Huệ, Quận 1",
+    rating: 4.5,
+    menu: [],
+    isFeatured: false,
+    coordinates: {
+      latitude: 10.7739,
+      longitude: 106.7009
+    },
+    owner: {
+      username: 'tlj_admin',
+      password: 'tlj123',
+      email: 'admin@tlj.com',
+      phone: '0901234594',
+    }
+  },
+  {
+    id: 29,
+    name: "Ốc Oanh - Hải Sản",
+    category: "asia",
+    imageName: 'sabichuong.jpg', // Placeholder
+    address: "304 Võ Văn Tần, Quận 3",
+    rating: 4.6,
+    menu: [],
+    isFeatured: true,
+    coordinates: {
+      latitude: 10.7819,
+      longitude: 106.6909
+    },
+    owner: {
+      username: 'ocoanh_admin',
+      password: 'ocoanh123',
+      email: 'admin@ocoanh.com',
+      phone: '0901234595',
+    }
+  },
+  {
+    id: 30,
+    name: "BBQ Garden - Nướng Sân Vườn",
+    category: "asia",
+    imageName: 'chaybode.jpg', // Placeholder
+    address: "128 Xô Viết Nghệ Tĩnh, Bình Thạnh",
+    rating: 4.7,
+    menu: [],
+    isFeatured: true,
+    coordinates: {
+      latitude: 10.8019,
+      longitude: 106.7109
+    },
+    owner: {
+      username: 'bbqgarden_admin',
+      password: 'bbqgarden123',
+      email: 'admin@bbqgarden.com',
+      phone: '0901234596',
     }
   },
 ];

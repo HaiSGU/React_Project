@@ -3,7 +3,7 @@
     "name": "Foodfastapp",
     "slug": "Foodfastapp",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "../shared/assets/images/foodfastlogo.jpg",
     "scheme": "foodfastapp",
     "userInterfaceStyle": "automatic",

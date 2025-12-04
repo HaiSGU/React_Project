@@ -13,22 +13,12 @@ import { configureCloudSync, syncUsersToStorage } from '@shared/services/cloudSy
 // Import LocationProvider
 import { LocationProvider } from '@shared/context/LocationContext';
 
-// Địa chỉ IP thực của máy tính trong mạng local
-// Thay đổi IP này nếu địa chỉ IP máy tính thay đổi
-const LOCAL_IP = '192.168.1.202';
+// ⚠️ Import API config từ file tập trung
+// Mỗi khi đổi mạng, chỉ cần sửa IP trong Mobile/config/api.config.js
+// hoặc chạy script: .\update-ip.ps1
+import { API_BASE_URL as CONFIG_API_URL } from '../config/api.config';
 
-const defaultBaseUrl = Platform.select({
-  // Sử dụng IP thực cho cả Android và iOS khi chạy trên thiết bị thật
-  // Nếu chạy trên emulator, có thể dùng: http://10.0.2.2:3000 (Android) hoặc http://localhost:3000 (iOS)
-  android: `http://${LOCAL_IP}:3000`,
-  ios: `http://${LOCAL_IP}:3000`,
-  default: `http://${LOCAL_IP}:3000`,
-});
-
-const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ||
-  process.env.EXPO_PUBLIC_API_URL ||
-  defaultBaseUrl;
+const API_BASE_URL = CONFIG_API_URL;
 
 configureCloudSync({
   baseUrl: API_BASE_URL,

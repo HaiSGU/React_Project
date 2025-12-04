@@ -1,44 +1,13 @@
-# ✅ GitHub Pre-Push Checklist
-
-## 🔍 Pre-Push Verification - Completed!
-
-### 1. ✅ Security Check
-- [x] No `.env` files (checked - none found)
-- [x] No hardcoded API keys
-- [x] Admin password: DEV fallback only (`admin123` - for development)
-- [x] `.gitignore` configured correctly
-
-### 2. ✅ .gitignore Review
-```gitignore
-✅ node_modules/
-✅ .env, .env.*
-✅ npm-debug.log*
-✅ build/, dist/
-✅ .DS_Store, Thumbs.db
-```
-
-**⚠️ Missing (Optional):**
-```gitignore
-# Add these for completeness:
-.vscode/
-.idea/
-*.log
-.expo/
-*.orig
-package-lock.json  # (if using yarn)
-```
-
-### 3. ⚠️ Items to Add to .gitignore
-
-<function_calls>
-<invoke name="write_to_file">
-<parameter name="CodeContent"># Tự động bỏ qua tất cả các thư mục node_modules
+# Tự động bỏ qua tất cả các thư mục node_modules
 node_modules/
 
 # Bỏ qua các file môi trường
 .env
 .env.*
 !.env.example
+
+# ⚠️ QUAN TRỌNG: Bỏ qua file config IP (mỗi developer có IP riêng)
+Mobile/config/api.config.js
 
 # Bỏ qua file log
 npm-debug.log*
@@ -81,7 +50,11 @@ Desktop.ini
 # Testing
 coverage/
 
-# Database
+# Database backups
 *.sqlite
 *.db
 db.json.backup
+
+# Temporary instruction files
+IP_UPDATED.txt
+QUICK_IP_GUIDE.txt

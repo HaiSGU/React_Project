@@ -6,13 +6,9 @@ import React, { useState, useEffect } from 'react'
 import { useQuantities } from '@shared/hooks/useQuantities'
 import colors from '@shared/theme/colors'
 
-// Cấu hình API URL
-const LOCAL_IP = '192.168.1.202';
-const BASE_URL = Platform.select({
-  android: `http://${LOCAL_IP}:3000`,
-  ios: `http://${LOCAL_IP}:3000`,
-  default: `http://${LOCAL_IP}:3000`,
-});
+// ⚠️ Import API config từ file tập trung
+import { API_BASE_URL } from '../../config/api.config';
+const BASE_URL = API_BASE_URL;
 
 export default function MenuScreen() {
   const router = useRouter()

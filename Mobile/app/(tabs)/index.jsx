@@ -15,13 +15,9 @@ import SearchBar from '../../components/SearchBar'
 import ShipperImg from "@shared/assets/images/shipperimage.jpeg"
 import colors from '@shared/theme/colors'
 
-// Cấu hình API URL (giống _layout.tsx)
-const LOCAL_IP = '192.168.1.202';
-const BASE_URL = Platform.select({
-  android: `http://${LOCAL_IP}:3000`,
-  ios: `http://${LOCAL_IP}:3000`,
-  default: `http://${LOCAL_IP}:3000`,
-});
+// ⚠️ Import API config từ file tập trung
+import { API_BASE_URL } from '../../config/api.config';
+const BASE_URL = API_BASE_URL;
 
 const App = () => {
   const router = useRouter()
